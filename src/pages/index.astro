@@ -1,17 +1,304 @@
 ---
+import AdminLayout from "../layouts/AdminLayout.astro";
+import { getDashboard } from "../lib/api";
 
+
+  const from =
+  Astro.url.searchParams.get(
+    "from",
+  ) ?? "";
+
+const to =
+  Astro.url.searchParams.get(
+    "to",
+  ) ?? "";
+
+const data =
+  await getDashboard(
+    from,
+    to,
+  );
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<AdminLayout title="Dashboard">
+  <h1>Dashboard</h1>
+<form method="GET" class="filters">
+  <input
+      type="date"
+      onfocus="this.showPicker()"
+    name="from"
+    value={
+      Astro.url.searchParams.get(
+        "from",
+      ) ?? ""
+    }
+  />
+
+  <input
+      type="date"
+      onfocus="this.showPicker()"
+    name="to"
+    value={
+      Astro.url.searchParams.get(
+        "to",
+      ) ?? ""
+    }
+  />
+
+  <button type="submit">
+    Apply
+  </button>
+  <a
+  href="/"
+  class="reset-btn"
+>
+  Reset
+</a>
+</form>
+  <div class="stats">
+    <div class="stat-card">
+      <h3>Total Engineers</h3>
+      <p>
+        {data.total_engineers}
+      </p>
+    </div>
+
+    <div class="stat-card">
+      <h3>Total Photos</h3>
+      <p>
+        {data.total_photos}
+      </p>
+    </div>
+
+    <div class="stat-card">
+      <h3>Photos Today</h3>
+      <p>
+        {data.photos_today}
+      </p>
+    </div>
+
+    <div class="stat-card">
+      <h3>GPS Risk</h3>
+
+      <p
+        class={
+          data.gps_risk_engineers >
+          0
+            ? "danger"
+            : "success"
+        }
+      >
+        {
+          data.gps_risk_engineers
+        }
+      </p>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>
+      High Risk Engineers
+    </h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Code</th>
+          <th>Risk</th>
+          <th>View</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {data.high_risk_engineers.map(
+          (
+            engineer: any,
+          ) => (
+            <tr>
+              <td>
+                {
+                  engineer.full_name
+                }
+              </td>
+
+              <td>
+                {
+                  engineer.engineer_code
+                }
+              </td>
+
+              <td>
+                ⚠ High
+              </td>
+
+              <td>
+                <a
+                  class="btn"
+                  href={`/engineers/${engineer.id}`}
+                >
+                  View
+                </a>
+              </td>
+            </tr>
+          ),
+        )}
+      </tbody>
+    </table>
+  </div>
+</AdminLayout>
+
+<style>
+  .stats {
+    display: grid;
+    grid-template-columns:
+      repeat(
+        auto-fit,
+        minmax(
+          220px,
+          1fr
+        )
+      );
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+.filters {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.filters input {
+  padding: 10px;
+}
+
+.filters button {
+  padding: 10px 16px;
+  cursor: pointer;
+}
+  .stat-card {
+    background: white;
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow:
+      0 2px 8px
+      rgba(
+        0,
+        0,
+        0,
+        0.05
+      );
+  }
+
+  .stat-card h3 {
+    margin: 0;
+    font-size: 14px;
+    color: #666;
+  }
+.filters {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.filters input[type="date"] {
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+  min-width: 160px;
+}
+
+.filters button,
+.btn-reset {
+  height: 40px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.filters button {
+  background: #2563eb;
+  color: white;
+}
+
+.btn-reset {
+  background: #6b7280;
+  color: white;
+}
+
+.filters button:hover {
+  background: #1d4ed8;
+}
+
+.btn-reset:hover {
+  background: #4b5563;
+}
+.reset-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+  background: #6b7280;
+  color: white;
+  text-decoration: none;
+  border-radius: 6px;
+}
+  .stat-card p {
+    margin-top: 8px;
+    font-size: 28px;
+    font-weight: 700;
+  }
+
+  .section {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  th,
+  td {
+    padding: 12px;
+    border: 1px solid #e5e7eb;
+    text-align: left;
+  }
+
+  th {
+    background: #f8fafc;
+  }
+
+  .btn {
+    display: inline-block;
+    padding: 6px 12px;
+    background: #2563eb;
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+  }
+
+  .danger {
+    color: #dc2626;
+  }
+
+  .success {
+    color: #16a34a;
+  }input[  type="date"
+      onfocus="this.showPicker()"] {
+  cursor: pointer;
+}
+</style>

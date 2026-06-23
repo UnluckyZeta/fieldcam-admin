@@ -1,0 +1,68 @@
+---
+import EngineersTable from "../components/EngineersTable.astro";
+import AdminLayout from "../layouts/AdminLayout.astro";
+
+import { getEngineers } from "../lib/api";
+
+const data = await getEngineers();
+
+const engineers =
+  data.engineers ?? [];
+---
+
+<AdminLayout title="Engineers">
+  <div class="card">
+    <h2>Create Engineer</h2>
+
+   <form id="create-engineer-form">
+  <input
+    id="full_name"
+    placeholder="Full Name"
+  />
+
+  <input
+    id="email"
+    placeholder="Email"
+  />
+
+  <button type="submit">
+    Create Engineer
+  </button>
+</form>
+  </div>
+<input
+  id="search"
+  class="search-input"
+  placeholder="Search engineer..."
+/>
+  <EngineersTable
+    engineers={engineers}
+  />
+</AdminLayout>
+
+<style>
+  .card {
+    background: white;
+    padding: 16px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+  }
+
+  input {
+    padding: 10px;
+    margin-right: 10px;
+  }
+
+  button {
+    padding: 10px;
+    cursor: pointer;
+  }
+  .search-input {
+  width: 300px;
+  margin-bottom: 16px;
+}
+</style>
+<script type="module">
+  import "../scripts/engineers";
+
+</script>

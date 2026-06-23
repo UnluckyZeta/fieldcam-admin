@@ -1,0 +1,194 @@
+---
+import type { Engineer } from "../lib/types";
+
+type Props = {
+  engineers: Engineer[];
+};
+
+const { engineers } =
+  Astro.props as Props;
+
+---
+
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Email</th>
+      <th>Code</th>
+      <th>Status</th>
+      <th>Device ID</th>
+      <th>Last Photo</th>
+      <th>GPS</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    {engineers.map((engineer) => (
+      <tr>
+        <td>{engineer.full_name}</td>
+
+        <td>{engineer.email}</td>
+
+        <td>{engineer.engineer_code}</td>
+
+        <td>{engineer.status}</td>
+<td title={engineer.device_id}>
+  {
+    engineer.device_id
+      ? engineer.device_id.slice(0, 8)
+      : "Not Registered"
+  }
+</td>
+<td>
+  {
+    engineer.last_photo_at
+      ? new Date(
+          engineer.last_photo_at,
+        ).toLocaleDateString()
+      : "Never"
+  }
+</td>
+        <td>
+          <span
+            class={
+              engineer.gps_risk === "high"
+                ? "danger"
+                : "success"
+            }
+          >
+            {engineer.gps_risk === "high"
+              ? "High"
+              : "Normal"}
+          </span>
+        </td>
+
+<td class="actions">
+  <a
+    class="btn btn-view"
+    href={`/engineers/${engineer.id}`}
+  >
+    View
+  </a>
+
+  <button
+    class="btn btn-edit"
+    onclick={`editEngineerUi(
+      '${engineer.id}',
+      '${engineer.full_name}',
+      '${engineer.email}'
+    )`}
+  >
+    Edit
+  </button>
+
+  <button
+    class="btn btn-delete"
+    onclick={`deleteEngineerUi(
+      '${engineer.id}'
+    )`}
+  >
+    Delete
+  </button>
+  <button class="btn btn-password"
+  onclick={`resetPasswordUi(
+    '${engineer.id}'
+  )`}
+>
+  Reset Password
+</button>
+
+  <button
+    class="btn btn-reset"
+    onclick={`resetDeviceUi(
+      '${engineer.id}'
+    )`}
+  >
+    Reset Device
+  </button>
+</td>
+      </tr>
+    ))}
+  </tbody>
+</table>
+
+<style>
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+  }
+
+  th,
+  td {
+    padding: 12px;
+    border: 1px solid #ddd;
+  }
+
+  .danger {
+    color: red;
+    font-weight: bold;
+  }
+
+  .success {
+    color: green;
+    font-weight: bold;
+  }
+  .actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn {
+  border: none;
+  border-radius: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+  text-decoration: none;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-view {
+  background: #2563eb;
+  color: white;
+}
+
+.btn-edit {
+  background: #f59e0b;
+  color: white;
+}
+
+.btn-delete {
+  background: #dc2626;
+  color: white;
+}
+.btn-password {
+  background: #7c3aed;
+  color: white;
+}
+.btn-reset {
+  background: #6b7280;
+  color: white;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+th {
+  background: #f8fafc;
+  font-weight: 600;
+}
+
+tr:hover {
+  background: #f9fafb;
+}
+</style>

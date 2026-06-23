@@ -1,0 +1,293 @@
+---
+export const prerender = false;
+
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import { getEngineer } from "../../lib/api";
+
+const { id } = Astro.params;
+
+const from =
+  Astro.url.searchParams.get(
+    "from",
+  ) ?? "";
+
+const to =
+  Astro.url.searchParams.get(
+    "to",
+  ) ?? "";
+
+const data =
+  await getEngineer(
+    id!,
+    from,
+    to,
+  );
+
+const engineer =
+  data.engineer;
+---
+
+<AdminLayout title="Engineer Details">
+  <h1>
+    {engineer.full_name}
+  </h1>
+
+<div class="stats">
+  <div class="stat-card">
+    <h3>Email</h3>
+    <p>{engineer.email}</p>
+  </div>
+
+  <div class="stat-card">
+    <h3>Engineer Code</h3>
+    <p>{engineer.engineer_code}</p>
+  </div>
+
+  <div class="stat-card">
+    <h3>Device ID</h3>
+    <p>
+      {engineer.device_id ??
+        "Not Registered"}
+    </p>
+  </div>
+
+  <div class="stat-card">
+    <h3>Total Photos</h3>
+    <p>{data.total_photos}</p>
+  </div>
+
+  <div class="stat-card">
+    <h3>Last Photo</h3>
+    <p>
+      {data.last_photo
+        ? new Date(
+            data.last_photo.taken_at,
+          ).toLocaleDateString()
+        : "Never"}
+    </p>
+  </div>
+  <div class="stat-card">
+  <h3>Last Location</h3>
+
+  <p>
+    {
+      data.last_photo?.address ??
+      "Unknown"
+    }
+  </p>
+</div>
+</div>
+<form method="GET" class="filters">
+  <input
+      type="date"
+      onfocus="this.showPicker()"
+    name="from"
+    value={
+      Astro.url.searchParams.get(
+        "from",
+      ) ?? ""
+    }
+  />
+
+  <input
+      type="date"
+      onfocus="this.showPicker()"
+    name="to"
+    value={
+      Astro.url.searchParams.get(
+        "to",
+      ) ?? ""
+    }
+  />
+
+  <button type="submit">
+    Filter
+  </button>
+  <a
+  href={`/engineers/${id}`}
+  class="btn-reset"
+>
+  Reset
+</a>
+</form>
+
+<h2>Recent Photos</h2>
+
+<table class="photos-table">
+  <thead>
+    <tr>
+      <th>Tag</th>
+      <th>Date</th>
+      <th>Address</th>
+      <th>Risk</th>
+      <th>Verify</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    {data.recent_photos.map(
+      (photo: any) => (
+        <tr>
+          <td>
+            {photo.photo_tag}
+          </td>
+
+          <td>
+            {new Date(
+              photo.taken_at,
+            ).toLocaleString()}
+          </td>
+
+          <td>
+            {photo.address}
+          </td>
+
+<td>
+  <span
+    class={
+      photo.gps_risk === "high"
+        ? "danger"
+        : "success"
+    }
+  >
+    {
+      photo.gps_risk === "high"
+        ? "⚠ High"
+        : "✅ Normal"
+    }
+  </span>
+</td>
+<td>
+  <a
+    class="btn"
+    href={`/verify?tag=${photo.photo_tag}`}
+  >
+    Verify
+  </a>
+</td>
+        </tr>
+      ),
+    )}
+  </tbody>
+</table>
+</AdminLayout>
+
+<style>
+  .stats {
+  display: grid;
+  grid-template-columns:
+    repeat(
+      auto-fit,
+      minmax(220px, 1fr)
+    );
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow:
+    0 2px 8px
+    rgba(0, 0, 0, 0.05);
+}
+
+.stat-card h3 {
+  margin: 0;
+  font-size: 14px;
+  color: #666;
+}
+.filters {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.filters input[type="date"] {
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+  min-width: 160px;
+}
+
+.filters button,
+.btn-reset {
+  height: 40px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.filters button {
+  background: #2563eb;
+  color: white;
+}
+
+.btn-reset {
+  background: #6b7280;
+  color: white;
+}
+
+.filters button:hover {
+  background: #1d4ed8;
+}
+
+.btn-reset:hover {
+  background: #4b5563;
+}
+.stat-card p {
+  margin-top: 8px;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.photos-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+}
+
+.photos-table th,
+.photos-table td {
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  text-align: left;
+}
+
+.photos-table th {
+  background: #f8fafc;
+}
+
+.photos-table tr:hover {
+  background: #f9fafb;
+}
+
+.btn {
+  display: inline-block;
+  padding: 6px 12px;
+  background: #2563eb;
+  color: white;
+  text-decoration: none;
+  border-radius: 6px;
+}.danger {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.success {
+  color: #16a34a;
+  font-weight: 600;
+}
+</style>

@@ -1,0 +1,100 @@
+---
+import AdminLayout from "../layouts/AdminLayout.astro";
+import { verifyPhoto } from "../lib/api";
+
+const tag =
+  Astro.url.searchParams.get("tag");
+
+let result = null;
+
+if (tag) {
+  result = await verifyPhoto(tag);
+}
+---
+
+<AdminLayout title="Verify Photo">
+  <h1>Verify Photo</h1>
+
+  <form method="GET">
+    <input
+      name="tag"
+      placeholder="FC-BDC243FC"
+      value={tag ?? ""}
+    />
+
+    <button type="submit">
+      Verify
+    </button>
+  </form>
+
+  {
+    result?.found && (
+      <div class="card">
+   
+
+        <p>
+          Engineer:
+          {result.photo.full_name}
+        </p>
+
+        <p>
+          Engineer Code:
+          {result.photo.engineer_code}
+        </p>
+
+        <p>
+          Photo Tag:
+          {result.photo.photo_tag}
+        </p>
+
+        <p>
+          Date:
+          {result.photo.taken_at}
+        </p>
+
+        <p>
+          Address:
+          {result.photo.address}
+        </p>
+
+        <p>
+          GPS:
+          {result.photo.latitude},
+          {result.photo.longitude}
+        </p>
+      </div>
+    )
+  }
+
+  {
+    tag &&
+      !result?.found && (
+        <div class="card error">
+          ❌ Photo not found
+        </div>
+      )
+  }
+</AdminLayout>
+
+<style>
+  form {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  input {
+    flex: 1;
+    padding: 10px;
+  }
+
+  .card {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+  }
+
+  .error {
+    color: red;
+  }
+</style>

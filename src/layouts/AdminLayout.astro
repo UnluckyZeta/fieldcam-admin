@@ -1,0 +1,44 @@
+---
+import Sidebar from "../components/Sidebar.astro";
+
+const { title = "FieldCam Admin" } = Astro.props;
+---
+
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1"
+    />
+
+    <title>{title}</title>
+  </head>
+  <body>
+    <div class="app">
+      <Sidebar />
+
+      <main>
+        <slot />
+      </main>
+    </div>
+  </body>
+</html>
+
+<style>
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f5f5f5;
+  }
+
+  .app {
+    display: flex;
+  }
+
+  main {
+    flex: 1;
+    padding: 24px;
+  }
+</style>
