@@ -4,6 +4,7 @@ import {
   deleteEngineer,
   resetDevice,
   resetPassword,
+  updateEngineerRegion,
 } from "../lib/api";
 
 export async function createEngineerUi() {
@@ -120,6 +121,50 @@ export async function deleteEngineerUi(
 
   location.reload();
 }
+async function editRegionUi(
+  engineerId: string,
+  currentRegion = "",
+  currentSubregion = "",
+) {
+  const region = prompt(
+    "Region",
+    currentRegion,
+  );
+
+  if (region === null) {
+    return;
+  }
+
+  const subregion = prompt(
+    "Subregion",
+    currentSubregion,
+  );
+
+  if (subregion === null) {
+    return;
+  }
+
+  const result =
+    await updateEngineerRegion(
+      engineerId,
+      region,
+      subregion,
+    );
+
+  if (!result.success) {
+    alert(
+      result.error ??
+        "Failed to update region",
+    );
+    return;
+  }
+
+  alert(
+    "Region updated successfully",
+  );
+
+  location.reload();
+}
 export async function resetPasswordUi(
   userId: string,
 ) {
@@ -158,6 +203,8 @@ export async function resetPasswordUi(
 
 (window as any).deleteEngineerUi =
   deleteEngineerUi;
+  (window as any).editRegionUi =
+  editRegionUi;
 (window as any).resetDeviceUi =
   resetDeviceUi;
   document

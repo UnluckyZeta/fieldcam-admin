@@ -122,6 +122,27 @@ export async function exportLogs(
 
   return response.json();
 }
+export async function updateEngineerRegion(
+  engineerId: string,
+  region: string,
+  subregion: string,
+): Promise<ApiResponse> {
+  const response = await fetch(
+    `${BASE_URL}/update-engineer-region`,
+    {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify({
+        engineer_id: engineerId,
+        region,
+        subregion,
+      }),
+    },
+  );
+
+  return response.json();
+}
+
 export async function createEngineer(
   full_name: string,
   email: string,

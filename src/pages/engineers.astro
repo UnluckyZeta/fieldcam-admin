@@ -14,27 +14,34 @@ const engineers =
   <div class="card">
     <h2>Create Engineer</h2>
 
-   <form id="create-engineer-form">
-  <input
-    id="full_name"
-    placeholder="Full Name"
-  />
+    <form
+      id="create-engineer-form"
+      class="create-form"
+    >
+      <input
+        id="full_name"
+        placeholder="Full Name"
+      />
 
-  <input
-    id="email"
-    placeholder="Email"
-  />
+      <input
+        id="email"
+        placeholder="Email"
+      />
 
-  <button type="submit">
-    Create Engineer
-  </button>
-</form>
+      <button type="submit">
+        Create Engineer
+      </button>
+    </form>
   </div>
-<input
-  id="search"
-  class="search-input"
-  placeholder="Search engineer..."
-/>
+
+  <div class="toolbar">
+    <input
+      id="search"
+      class="search-input"
+      placeholder="Search engineer..."
+    />
+  </div>
+
   <EngineersTable
     engineers={engineers}
   />
@@ -43,26 +50,81 @@ const engineers =
 <style>
   .card {
     background: white;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow:
+      0 2px 8px
+      rgba(
+        0,
+        0,
+        0,
+        0.05
+      );
+  }
+
+  .card h2 {
+    margin-top: 0;
+    margin-bottom: 16px;
+  }
+
+  .create-form {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .create-form input,
+  .search-input {
+    height: 40px;
+    padding: 0 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+    background: white;
+  }
+
+  .create-form input {
+    min-width: 240px;
+  }
+
+  .create-form button {
+    height: 40px;
+    padding: 0 16px;
+    border: none;
+    border-radius: 6px;
+    background: #16a34a;
+    color: white;
+    font-weight: 500;
+    cursor: pointer;
+  }
+
+  .create-form button:hover {
+    background: #15803d;
+  }
+
+  .toolbar {
+    background: white;
     padding: 16px;
     border-radius: 8px;
     margin-bottom: 20px;
+    box-shadow:
+      0 2px 8px
+      rgba(
+        0,
+        0,
+        0,
+        0.05
+      );
   }
 
-  input {
-    padding: 10px;
-    margin-right: 10px;
-  }
-
-  button {
-    padding: 10px;
-    cursor: pointer;
-  }
   .search-input {
-  width: 300px;
-  margin-bottom: 16px;
-}
+    width: 100%;
+    max-width: 400px;
+  }
 </style>
+
 <script type="module">
   import "../scripts/engineers";
-
 </script>

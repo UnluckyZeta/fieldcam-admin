@@ -20,6 +20,8 @@ const { engineers } =
       <th>Device ID</th>
       <th>Last Photo</th>
       <th>GPS</th>
+      <th>Region</th>
+<th>Subregion</th>
       <th>Actions</th>
     </tr>
   </thead>
@@ -63,7 +65,13 @@ const { engineers } =
               : "Normal"}
           </span>
         </td>
+<td title="Auto-detected from latest photo">
+  {engineer.region || "-"}
+</td>
 
+<td title="Auto-detected from latest photo">
+  {engineer.subregion || "-"}
+</td>
 <td class="actions">
   <a
     class="btn btn-view"

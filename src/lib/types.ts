@@ -16,6 +16,8 @@ export type Engineer = {
   gps_risk?: "high" | "normal";
 
   days_inactive?: number;
+  region: string | null;
+subregion: string | null;
 };
 
 export type EngineersResponse = {
