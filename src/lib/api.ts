@@ -104,6 +104,24 @@ body: JSON.stringify({
 
   return response.json();
 }
+export async function exportLogs(
+  from = "",
+  to = "",
+) {
+  const response = await fetch(
+    `${BASE_URL}/export-logs`,
+    {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify({
+        from,
+        to,
+      }),
+    },
+  );
+
+  return response.json();
+}
 export async function createEngineer(
   full_name: string,
   email: string,

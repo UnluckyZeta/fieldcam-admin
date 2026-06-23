@@ -22,39 +22,42 @@ const data =
 
 <AdminLayout title="Dashboard">
   <h1>Dashboard</h1>
-<form method="GET" class="filters">
-  <input
+<div class="toolbar">
+  <form method="GET" class="filters">
+    <input
       type="date"
+      name="from"
+      value={from}
       onfocus="this.showPicker()"
-    name="from"
-    value={
-      Astro.url.searchParams.get(
-        "from",
-      ) ?? ""
-    }
-  />
+    />
 
-  <input
+    <input
       type="date"
+      name="to"
+      value={to}
       onfocus="this.showPicker()"
-    name="to"
-    value={
-      Astro.url.searchParams.get(
-        "to",
-      ) ?? ""
-    }
-  />
+    />
 
-  <button type="submit">
-    Apply
-  </button>
-  <a
-  href="/"
-  class="reset-btn"
->
-  Reset
-</a>
-</form>
+    <button type="submit">
+      Apply
+    </button>
+
+    <a
+      href="/"
+      class="btn-reset"
+    >
+      Reset
+    </a>
+
+    <button
+      id="export-btn"
+      type="button"
+      class="btn-export"
+    >
+      Export CSV
+    </button>
+  </form>
+</div>
   <div class="stats">
     <div class="stat-card">
       <h3>Total Engineers</h3>
@@ -302,3 +305,6 @@ const data =
   cursor: pointer;
 }
 </style>
+<script type="module">
+  import "../scripts/dashboard";
+</script>
