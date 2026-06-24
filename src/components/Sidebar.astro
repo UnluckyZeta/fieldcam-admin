@@ -1,9 +1,16 @@
 <nav class="sidebar">
   <a href="/">Dashboard</a>
   <a href="/engineers">Engineers</a>
-  <a href="/logs">Logs</a>
   <a href="/verify">Verify</a>
-  <a href="/settings">Settings</a>
+  <a href="/settings">Settings</a><a href="/admins">
+  Admins
+</a>
+  <button
+  onclick="logout()"
+  class="logout-btn"
+>
+  Logout
+</button>
 </nav>
 
 <style>
@@ -24,4 +31,21 @@
     text-decoration: none;
     color: black;
   }
+  .logout-btn {
+  width: 100%;
+  margin-top: auto;
+  padding: 10px;
+  border: none;
+  border-radius: 6px;
+  background: #dc2626;
+  color: white;
+  cursor: pointer;
+}
+
+.logout-btn:hover {
+  background: #b91c1c;
+}
 </style>
+<script type="module">
+  import "../../src/scripts/auth";
+</script>

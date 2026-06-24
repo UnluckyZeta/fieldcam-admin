@@ -3,7 +3,25 @@ export const prerender = false;
 
 import AdminLayout from "../../layouts/AdminLayout.astro";
 import { getEngineer } from "../../lib/api";
-
+function formatEgyptDate(
+  date: string,
+) {
+  return new Date(date)
+    .toLocaleString(
+      "en-US",
+      {
+        timeZone:
+          "Africa/Cairo",
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      },
+    )
+    .replace(",", " •");
+}
 const { id } = Astro.params;
 
 const from =
@@ -25,6 +43,7 @@ const data =
 
 const engineer =
   data.engineer;
+  
 ---
 
 <AdminLayout title="Engineer Details">
@@ -104,11 +123,11 @@ const engineer =
   <div class="stat-card">
     <h3>Last Photo</h3>
     <p>
-      {data.last_photo
-        ? new Date(
-            data.last_photo.taken_at,
-          ).toLocaleDateString()
-        : "Never"}
+     {data.last_photo
+  ? formatEgyptDate(
+      data.last_photo.taken_at,
+    )
+  : "Never"}
     </p>
   </div>
   <div class="stat-card">
@@ -121,6 +140,37 @@ const engineer =
     }
   </p>
 </div>
+<div class="stat-card">
+  <h3>Phone</h3>
+
+  <p>
+    {engineer.phone ??
+      "Not Set"}
+  </p>
+</div>
+
+<div class="stat-card">
+  <h3>
+    Current Device
+  </h3>
+
+  <p>
+    {engineer.device_id ??
+      "Unknown"}
+  </p>
+</div>
+
+<div class="stat-card">
+  <h3>
+    Devices Used
+  </h3>
+
+  <p>
+    {data.device_count}
+  </p>
+</div>
+
+
 <div class="stat-card region-card">
   <h3>Region Settings</h3>
 
@@ -195,9 +245,9 @@ const engineer =
           </td>
 
           <td>
-            {new Date(
-              photo.taken_at,
-            ).toLocaleString()}
+          {formatEgyptDate(
+  photo.taken_at,
+)}
           </td>
 
           <td>
@@ -219,6 +269,7 @@ const engineer =
     }
   </span>
 </td>
+
 <td>
   <a
     class="btn"
@@ -227,6 +278,61 @@ const engineer =
     Verify
   </a>
 </td>
+        </tr>
+      ),
+    )}
+  </tbody>
+</table>
+<h2>
+  Device History
+</h2>
+
+<table class="photos-table">
+  <thead>
+    <tr>
+      <th>
+        Device ID
+      </th>
+
+      <th>
+        First Seen
+      </th>
+
+      <th>
+        Last Seen
+      </th>
+
+      <th>
+        Photos
+      </th>
+    </tr>
+  </thead>
+
+  <tbody>
+    {data.device_history.map(
+      (device: any) => (
+        <tr>
+          <td>
+            {
+              device.device_id
+            }
+          </td>
+
+          <td>
+            {new Date(
+              device.first_seen,
+            ).toLocaleDateString()}
+          </td>
+
+          <td>
+            {new Date(
+              device.last_seen,
+            ).toLocaleDateString()}
+          </td>
+
+          <td>
+            {device.photos}
+          </td>
         </tr>
       ),
     )}

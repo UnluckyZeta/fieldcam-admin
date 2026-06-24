@@ -1,7 +1,13 @@
 ---
 import Sidebar from "../components/Sidebar.astro";
 
-const { title = "FieldCam Admin" } = Astro.props;
+const {
+  title = "FieldCam Admin",
+} = Astro.props;
+
+const isLoginPage =
+  Astro.url.pathname ===
+  "/login";
 ---
 
 <html lang="en">
@@ -15,30 +21,67 @@ const { title = "FieldCam Admin" } = Astro.props;
 
     <title>{title}</title>
   </head>
-  <body>
-    <div class="app">
-      <Sidebar />
+{
+  !isLoginPage && (
+    <script type="module">
+      import { supabase }
+        from "../lib/supabase";
 
-      <main>
-        <slot />
-      </main>
-    </div>
+      const {
+        data: {
+          session,
+        },
+      } =
+        await supabase.auth.getSession();
+
+      if (!session) {
+        location.href =
+          "/login";
+      }
+    </script>
+  )
+}
+  <body>
+    {
+      isLoginPage ? (
+        <main class="login-main">
+          <slot />
+        </main>
+      ) : (
+        <div class="app">
+          <Sidebar />
+
+          <main>
+            <slot />
+          </main>
+        </div>
+      )
+    }
   </body>
 </html>
 
 <style>
   body {
     margin: 0;
-    font-family: Arial, sans-serif;
+    font-family: Arial,
+      sans-serif;
     background: #f5f5f5;
   }
 
   .app {
     display: flex;
+    min-height: 100vh;
   }
 
   main {
     flex: 1;
     padding: 24px;
+  }
+
+  .login-main {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
 </style>

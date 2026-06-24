@@ -145,7 +145,7 @@ export async function updateEngineerRegion(
 
 export async function createEngineer(
   full_name: string,
-  email: string,
+  email: string,phone:string
 ): Promise<ApiResponse> {
   const response = await fetch(
     `${BASE_URL}/createe-engineer`,
@@ -154,14 +154,32 @@ export async function createEngineer(
       headers: getHeaders(),
       body: JSON.stringify({
         full_name,
-        email,
+        email,phone
       }),
     },
   );
 
   return response.json();
 }
+export async function getDeviceHistory(
+  engineerId: string,
+) {
+  const response =
+    await fetch(
+      `${BASE_URL}/get-device-history`,
+      {
+        method: "POST",
+        headers:
+          getHeaders(),
+        body: JSON.stringify({
+          engineer_id:
+            engineerId,
+        }),
+      },
+    );
 
+  return response.json();
+}
 export async function updateEngineer(
   id: string,
   full_name: string,
@@ -236,3 +254,43 @@ export async function resetDevice(
   return response.json();
 }
 console.log("BASE_URL =", BASE_URL);
+export async function getAdmins() {
+  const response =
+    await fetch(
+      `${BASE_URL}/get-admins`,
+      {
+        method: "POST",
+        headers:
+          getHeaders(),
+      },
+    );
+
+  return response.json();
+}
+
+export async function createAdmin(
+  full_name: string,
+  email: string,
+  role: string,
+  region: string,
+) {
+  const response =
+    await fetch(
+      `${BASE_URL}/create-admin`,
+      {
+        method: "POST",
+        headers:
+          getHeaders(),
+        body: JSON.stringify(
+          {
+            full_name,
+            email,
+            role,
+            region,
+          },
+        ),
+      },
+    );
+
+  return response.json();
+}

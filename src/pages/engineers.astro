@@ -27,7 +27,10 @@ const engineers =
         id="email"
         placeholder="Email"
       />
-
+<input
+  id="phone"
+  placeholder="Phone Number"
+/>
       <button type="submit">
         Create Engineer
       </button>
@@ -127,4 +130,10 @@ const engineers =
 
 <script type="module">
   import "../scripts/engineers";
+  import {
+    requireAdmin,
+  } from "../lib/auth";
+
+  requireAdmin();
+
 </script>

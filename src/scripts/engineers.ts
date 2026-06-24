@@ -21,11 +21,17 @@ export async function createEngineerUi() {
         "email"
       ) as HTMLInputElement
     ).value;
-
+ const phone =
+    (
+      document.getElementById(
+        "phone"
+      ) as HTMLInputElement
+    ).value;
   const result =
     await createEngineer(
       fullName,
       email,
+      phone
     );
 
   if (result.error) {

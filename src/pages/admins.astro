@@ -1,0 +1,172 @@
+---
+import AdminLayout
+  from "../layouts/AdminLayout.astro";
+
+import {
+  getAdmins,
+} from "../lib/api";
+
+const data =
+  await getAdmins();
+
+const admins =
+  data.admins ?? [];
+---
+
+<AdminLayout title="Admins">
+
+<h1>
+  Admin Management
+</h1>
+
+<div class="card">
+  <h2>
+    Create Admin
+  </h2>
+
+  <form
+    id="create-admin-form"
+  >
+    <input
+      id="full_name"
+      placeholder="Full Name"
+    />
+
+    <input
+      id="email"
+      placeholder="Email"
+    />
+
+    <select
+      id="role"
+    >
+      <option value="regional_admin">
+        Regional Admin
+      </option>
+
+      <option value="super_admin">
+        Super Admin
+      </option>
+    </select>
+
+    <input
+      id="region"
+      placeholder="Region"
+    />
+
+    <button
+      type="submit"
+    >
+      Create
+    </button>
+  </form>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Email</th>
+      <th>Role</th>
+      <th>Region</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    {admins.map(
+      (
+        admin: any,
+      ) => (
+        <tr>
+          <td>
+            {
+              admin.full_name
+            }
+          </td>
+
+          <td>
+            {
+              admin.email
+            }
+          </td>
+
+          <td>
+            {
+              admin.role
+            }
+          </td>
+
+          <td>
+            {
+              admin.region ??
+              "-"
+            }
+          </td>
+        </tr>
+      ),
+    )}
+  </tbody>
+</table>
+
+</AdminLayout>
+<script type="module">
+  import "../scripts/admin";
+</script>
+<style>
+    .card {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+}
+
+#create-admin-form {
+  display: grid;
+  grid-template-columns:
+    repeat(
+      auto-fit,
+      minmax(220px, 1fr)
+    );
+  gap: 12px;
+}
+
+#create-admin-form input,
+#create-admin-form select {
+  height: 42px;
+  padding: 0 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+}
+
+#create-admin-form button {
+  height: 42px;
+  border: none;
+  border-radius: 6px;
+  background: #2563eb;
+  color: white;
+  cursor: pointer;
+}
+
+table {
+  width: 100%;
+  background: white;
+  border-collapse: collapse;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+th,
+td {
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  text-align: left;
+}
+
+th {
+  background: #f8fafc;
+}
+
+tr:hover {
+  background: #f9fafb;
+}
+</style>

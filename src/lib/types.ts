@@ -29,3 +29,11 @@ export type ApiResponse = {
   success?: boolean;
   error?: string;
 };
+export type AdminUser = {
+  id: string;
+  email: string;
+  full_name: string | null;
+  role: "super_admin" | "regional_admin";
+  region: string | null;
+  created_at: string;
+};

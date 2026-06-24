@@ -3,15 +3,20 @@ import AdminLayout from "../layouts/AdminLayout.astro";
 import { getDashboard } from "../lib/api";
 
 
-  const from =
+const today =
+  new Date()
+    .toISOString()
+    .split("T")[0];
+
+const from =
   Astro.url.searchParams.get(
     "from",
-  ) ?? "";
+  ) ?? today;
 
 const to =
   Astro.url.searchParams.get(
     "to",
-  ) ?? "";
+  ) ?? today;
 
 const data =
   await getDashboard(
@@ -307,4 +312,10 @@ const data =
 </style>
 <script type="module">
   import "../scripts/dashboard";
+    import {
+    requireAdmin,
+  } from "../lib/auth";
+
+  requireAdmin();
+
 </script>
