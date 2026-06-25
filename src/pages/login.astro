@@ -165,7 +165,7 @@ await fetch(
         "application/json",
 
       "x-admin-password":
-        "A123456",
+        import.meta.env.PUBLIC_ADMIN_PASSWORD
     },
     body: JSON.stringify({}),
   },
