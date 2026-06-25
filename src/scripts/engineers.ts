@@ -11,27 +11,29 @@ export async function createEngineerUi() {
   const fullName =
     (
       document.getElementById(
-        "full_name"
+        "full_name",
       ) as HTMLInputElement
     ).value;
 
   const email =
     (
       document.getElementById(
-        "email"
+        "email",
       ) as HTMLInputElement
     ).value;
- const phone =
+
+  const phone =
     (
       document.getElementById(
-        "phone"
+        "phone",
       ) as HTMLInputElement
     ).value;
+
   const result =
     await createEngineer(
       fullName,
       email,
-      phone
+      phone,
     );
 
   if (result.error) {
@@ -39,9 +41,40 @@ export async function createEngineerUi() {
     return;
   }
 
-  location.reload();
-}
+  (
+    document.getElementById(
+      "engineer-email",
+    ) as HTMLElement
+  ).textContent =
+    result.email;
 
+  (
+    document.getElementById(
+      "engineer-password",
+    ) as HTMLElement
+  ).textContent =
+    result.password;
+
+  (
+    document.getElementById(
+      "engineer-code",
+    ) as HTMLElement
+  ).textContent =
+    result.engineer_code;
+
+  (
+    document.getElementById(
+      "create-engineer-result",
+    ) as HTMLElement
+  ).style.display =
+    "block";
+
+  (
+    document.getElementById(
+      "create-engineer-form",
+    ) as HTMLFormElement
+  ).reset();
+}
 export async function editEngineerUi(
   id: string,
   fullName: string,
@@ -254,5 +287,38 @@ export async function resetPasswordUi(
               ? ""
               : "none";
         });
+    },
+  );
+  document
+  .getElementById(
+    "copy-engineer-creds",
+  )
+  ?.addEventListener(
+    "click",
+    async () => {
+      const email =
+        document.getElementById(
+          "engineer-email",
+        )?.textContent ?? "";
+
+      const password =
+        document.getElementById(
+          "engineer-password",
+        )?.textContent ?? "";
+
+      const code =
+        document.getElementById(
+          "engineer-code",
+        )?.textContent ?? "";
+
+      await navigator.clipboard.writeText(
+`Engineer Code: ${code}
+Email: ${email}
+Password: ${password}`
+      );
+
+      alert(
+        "Copied to clipboard",
+      );
     },
   );

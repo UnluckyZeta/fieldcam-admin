@@ -19,7 +19,16 @@ phone:string
   region: string | null;
 subregion: string | null;
 };
+export type CreateEngineerResponse = {
+  success: boolean;
+  error?: string;
 
+  email: string;
+  password: string;
+  engineer_code: string;
+  user_id: string;
+  full_name: string;
+};
 export type EngineersResponse = {
   engineers: Engineer[];
   totalPhotos: number;

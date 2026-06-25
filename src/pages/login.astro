@@ -136,8 +136,10 @@ document
 const { data: admin } =
   await supabase
     .from("admin_users")
-    .select("id")
-    .eq("id", user.id)
+  .select(`
+      id,
+      role
+    `).eq("id", user.id)
     .maybeSingle();
 
 if (!admin) {
@@ -151,6 +153,9 @@ if (!admin) {
 }
 document.cookie =
   `admin_id=${user.id}; path=/`;
+  document.cookie =
+  `admin_role=${admin.role}; path=/`;
+
 await fetch(
   `${import.meta.env.PUBLIC_SUPABASE_FUNCTION_URL}/sync-regions`,
   {

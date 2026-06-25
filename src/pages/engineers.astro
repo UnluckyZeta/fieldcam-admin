@@ -44,6 +44,37 @@ const engineers =
         Create Engineer
       </button>
     </form>
+    <div
+  id="create-engineer-result"
+  class="result-card"
+  style="display:none;"
+>
+  <h3>
+    ✅ Engineer Created
+  </h3>
+
+  <div>
+    <strong>Email:</strong>
+    <span id="engineer-email"></span>
+  </div>
+
+  <div>
+    <strong>Password:</strong>
+    <span id="engineer-password"></span>
+  </div>
+
+  <div>
+    <strong>Engineer Code:</strong>
+    <span id="engineer-code"></span>
+  </div>
+
+  <button
+    id="copy-engineer-creds"
+    class="btn-copy"
+  >
+    Copy Credentials
+  </button>
+</div>
   </div>
 
   <div class="toolbar">
@@ -112,6 +143,28 @@ const engineers =
     cursor: pointer;
   }
 
+  .result-card {
+  margin-top: 20px;
+  padding: 16px;
+  background: #ecfdf5;
+  border: 1px solid #86efac;
+  border-radius: 8px;
+}
+
+.result-card h3 {
+  margin-top: 0;
+  margin-bottom: 12px;
+}
+
+.btn-copy {
+  margin-top: 12px;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 16px;
+  cursor: pointer;
+  background: #16a34a;
+  color: white;
+}
   .create-form button:hover {
     background: #15803d;
   }

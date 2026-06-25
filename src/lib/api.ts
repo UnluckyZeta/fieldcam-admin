@@ -1,5 +1,6 @@
 import type {
   ApiResponse,
+  CreateEngineerResponse,
   EngineersResponse,
 } from "./types";
 
@@ -146,7 +147,7 @@ export async function updateEngineerRegion(
 export async function createEngineer(
   full_name: string,
   email: string,phone:string
-): Promise<ApiResponse> {
+): Promise<CreateEngineerResponse> {
   const response = await fetch(
     `${BASE_URL}/createe-engineer`,
     {
@@ -154,7 +155,7 @@ export async function createEngineer(
       headers: getHeaders(),
       body: JSON.stringify({
         full_name,
-        email,phone
+        email,phone 
       }),
     },
   );
@@ -256,7 +257,9 @@ export async function resetDevice(
   return response.json();
 }
 console.log("BASE_URL =", BASE_URL);
-export async function getAdmins() {
+export async function getAdmins(
+  admin_id: string,
+) {
   const response =
     await fetch(
       `${BASE_URL}/get-admins`,
@@ -264,6 +267,9 @@ export async function getAdmins() {
         method: "POST",
         headers:
           getHeaders(),
+        body: JSON.stringify({
+          admin_id,
+        }),
       },
     );
 
@@ -328,6 +334,24 @@ export async function updateAdmin(
           email,
           role,
           region,
+        }),
+      },
+    );
+
+  return response.json();
+}
+export async function deleteAdmin(
+  admin_id: string,
+) {
+  const response =
+    await fetch(
+      `${BASE_URL}/delete-admin`,
+      {
+        method: "POST",
+        headers:
+          getHeaders(),
+        body: JSON.stringify({
+          admin_id,
         }),
       },
     );

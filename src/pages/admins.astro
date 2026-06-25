@@ -6,11 +6,23 @@ import {
   getAdmins,
 } from "../lib/api";
 
+const adminId =
+  Astro.cookies
+    .get("admin_id")
+    ?.value ?? "";
+
 const data =
-  await getAdmins();
+  await getAdmins(
+    adminId,
+  );
+
+if (!data.success) {
+  return Astro.redirect("/");
+}
 
 const admins =
   data.admins ?? [];
+    
 ---
 
 <AdminLayout title="Admins">
@@ -61,6 +73,32 @@ const admins =
     </button>
   
   </form>
+<div
+  id="create-admin-result"
+  class="result-card"
+  style="display:none;"
+>
+  <h3>
+    ✅ Admin Created
+  </h3>
+
+  <div>
+    <strong>Email:</strong>
+    <span id="created-email"></span>
+  </div>
+
+  <div>
+    <strong>Password:</strong>
+    <span id="created-password"></span>
+  </div>
+
+  <button
+    id="copy-admin-creds"
+    class="btn-copy"
+  >
+    Copy Credentials
+  </button>
+</div>
 </div>
 
 <table>
@@ -126,7 +164,16 @@ const admins =
   )`}
 >
   Reset Password
-</button></td>
+</button>
+<button
+  class="btn btn-delete"
+  onclick={`deleteAdminUi(
+    '${admin.id}'
+  )`}
+>
+  Delete
+</button>
+</td>
         </tr>
       ),
     )}
@@ -213,5 +260,54 @@ tr:hover {
 
 .btn-password {
   background: #7c3aed;
+}
+.btn-delete {
+  background: #ed3a3a;
+}
+.result-card {
+  margin-top: 20px;
+  padding: 16px;
+  background: #ecfdf5;
+  border: 1px solid #86efac;
+  border-radius: 8px;
+}
+
+.result-card h3 {
+  margin-top: 0;
+}
+
+.result-row {
+  margin-bottom: 8px;
+}
+
+.btn-copy {
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  background: #16a34a;
+  color: white;
+}
+.result-card {
+  margin-top: 20px;
+  padding: 16px;
+  background: #ecfdf5;
+  border: 1px solid #86efac;
+  border-radius: 8px;
+}
+
+.result-card h3 {
+  margin-top: 0;
+  margin-bottom: 12px;
+}
+
+.btn-copy {
+  margin-top: 12px;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 16px;
+  cursor: pointer;
+  background: #16a34a;
+  color: white;
 }
 </style>
