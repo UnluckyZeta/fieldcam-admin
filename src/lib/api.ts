@@ -34,7 +34,7 @@ function getHeaders() {
 
 export async function getEngineers(
   from = "",
-  to = "",
+  to = "",admin_id=""
 ): Promise<EngineersResponse> {
   const response = await fetch(
     `${BASE_URL}/list-eng`,
@@ -43,7 +43,7 @@ export async function getEngineers(
       headers: getHeaders(),
       body: JSON.stringify({
         from,
-        to,
+        to,admin_id
       }),
     },
   );
@@ -89,7 +89,7 @@ export async function verifyPhoto(
   return response.json();
 }
 export async function getDashboard(  from = "",
-  to = "",) {
+  to = "",admin_id="") {
   
   const response = await fetch(
     `${BASE_URL}/dashboard`,
@@ -98,7 +98,7 @@ export async function getDashboard(  from = "",
       headers: getHeaders(),
 body: JSON.stringify({
         from,
-        to,
+        to,admin_id
       }),    },
   );
 
@@ -289,6 +289,19 @@ export async function createAdmin(
             region,
           },
         ),
+      },
+    );
+
+  return response.json();
+}
+export async function syncRegions() {
+  const response =
+    await fetch(
+      `${BASE_URL}/sync-regions`,
+      {
+        method: "POST",
+        headers:
+          getHeaders(),
       },
     );
 

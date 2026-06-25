@@ -3,8 +3,17 @@ import EngineersTable from "../components/EngineersTable.astro";
 import AdminLayout from "../layouts/AdminLayout.astro";
 
 import { getEngineers } from "../lib/api";
+const adminId =
+  Astro.cookies
+    .get("admin_id")
+    ?.value ?? "";
 
-const data = await getEngineers();
+const data =
+  await getEngineers(
+    "",
+    "",
+    adminId,
+  );
 
 const engineers =
   data.engineers ?? [];

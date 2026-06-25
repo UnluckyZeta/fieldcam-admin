@@ -80,6 +80,7 @@ import AdminLayout from "../layouts/AdminLayout.astro";
 }
 </style>
 <script type="module">
+
 import { supabase }
   from "../lib/supabase";
 
@@ -132,25 +133,13 @@ document
 } =
   await supabase.auth.getUser();
 
-console.log(
-  "USER ID:",
-  user?.id,
-);
-
-console.log(
-  "EMAIL:",
-  user?.email,
-);
 const { data: admin } =
   await supabase
     .from("admin_users")
     .select("id")
     .eq("id", user.id)
     .maybeSingle();
-console.log(
-  "ADMIN:",
-  admin,
-);
+
 if (!admin) {
   await supabase.auth.signOut();
 
@@ -160,8 +149,24 @@ if (!admin) {
 
   return;
 }
+document.cookie =
+  `admin_id=${user.id}; path=/`;
+await fetch(
+  `${import.meta.env.PUBLIC_SUPABASE_FUNCTION_URL}/sync-regions`,
+  {
+    method: "POST",
+    headers: {
+      "Content-Type":
+        "application/json",
 
+      "x-admin-password":
+        "A123456",
+    },
+    body: JSON.stringify({}),
+  },
+);
       location.href = "/";
     },
   );
+  
 </script>
