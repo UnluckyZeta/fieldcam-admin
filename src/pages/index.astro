@@ -126,7 +126,7 @@ const adminId =
       </thead>
 
       <tbody>
-        {data.high_risk_engineers.map(
+        {data.high_risk_engineers??[].map(
           (
             engineer: any,
           ) => (
