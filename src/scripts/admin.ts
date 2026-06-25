@@ -1,6 +1,8 @@
+import { editAdminUi } from "../lib/admin";
 import {
   createAdmin,
 } from "../lib/api";
+import { resetPasswordUi } from "./engineers";
 
 async function
 createAdminUi() {
@@ -84,3 +86,12 @@ document
       await createAdminUi();
     },
   );
+  (
+  window as any
+).editAdminUi =
+  editAdminUi;
+
+(
+  window as any
+).resetPasswordUi =
+  resetPasswordUi;

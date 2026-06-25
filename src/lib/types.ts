@@ -6,7 +6,7 @@ export type Engineer = {
 
   device_id?: string;
   last_photo_at?: string;
-
+phone:string
   status:
     | "active"
     | "warning"

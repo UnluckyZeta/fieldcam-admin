@@ -184,6 +184,7 @@ export async function updateEngineer(
   id: string,
   full_name: string,
   email: string,
+  phone: string,
 ): Promise<ApiResponse> {
   const response = await fetch(
     `${BASE_URL}/update-engineer`,
@@ -194,6 +195,7 @@ export async function updateEngineer(
         id,
         full_name,
         email,
+        phone,
       }),
     },
   );
@@ -302,6 +304,31 @@ export async function syncRegions() {
         method: "POST",
         headers:
           getHeaders(),
+      },
+    );
+
+  return response.json();
+}
+export async function updateAdmin(
+  id: string,
+  full_name: string,
+  email: string,
+  role: string,
+  region: string,
+) {
+  const response =
+    await fetch(
+      `${BASE_URL}/update-admin`,
+      {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify({
+          id,
+          full_name,
+          email,
+          role,
+          region,
+        }),
       },
     );
 

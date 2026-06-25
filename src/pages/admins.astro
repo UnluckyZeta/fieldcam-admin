@@ -59,6 +59,7 @@ const admins =
     >
       Create
     </button>
+  
   </form>
 </div>
 
@@ -69,10 +70,12 @@ const admins =
       <th>Email</th>
       <th>Role</th>
       <th>Region</th>
+      <th>Actions</th>
     </tr>
   </thead>
 
   <tbody>
+    
     {admins.map(
       (
         admin: any,
@@ -102,6 +105,28 @@ const admins =
               "-"
             }
           </td>
+          <td class="actions">
+  <button
+  class="btn btn-edit"
+  onclick={`editAdminUi(
+    '${admin.id}',
+    '${admin.full_name}',
+    '${admin.email}',
+    '${admin.role}',
+    '${admin.region ?? ""}'
+  )`}
+>
+  Edit
+</button>
+
+<button
+  class="btn btn-password"
+  onclick={`resetPasswordUi(
+    '${admin.id}'
+  )`}
+>
+  Reset Password
+</button></td>
         </tr>
       ),
     )}
@@ -168,5 +193,25 @@ th {
 
 tr:hover {
   background: #f9fafb;
+}
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn {
+  border: none;
+  border-radius: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+  color: white;
+}
+
+.btn-edit {
+  background: #f59e0b;
+}
+
+.btn-password {
+  background: #7c3aed;
 }
 </style>

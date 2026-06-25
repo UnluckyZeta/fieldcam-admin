@@ -46,6 +46,7 @@ export async function editEngineerUi(
   id: string,
   fullName: string,
   email: string,
+  phone: string | null,
 ) {
   const newName =
     prompt(
@@ -67,22 +68,27 @@ export async function editEngineerUi(
     return;
   }
 
+  const newPhone =
+    prompt(
+      "Phone",
+      phone ?? "",
+    );
+
   const result =
     await updateEngineer(
       id,
       newName,
       newEmail,
+      newPhone ?? "",
     );
 
   if (result.error) {
     alert(result.error);
-
     return;
   }
 
   location.reload();
 }
-
 export async function resetDeviceUi(
   id: string,
 ) {
