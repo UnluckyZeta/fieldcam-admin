@@ -36,7 +36,8 @@ export type EngineersResponse = {
 
 export type ApiResponse = {
   success?: boolean;
-  error?: string;
+  error?: string;  address?: string;
+
 };
 export type AdminUser = {
   id: string;

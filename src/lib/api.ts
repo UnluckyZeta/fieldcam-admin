@@ -358,3 +358,23 @@ export async function deleteAdmin(
 
   return response.json();
 }
+export async function saveAddress(
+  photoId: string,
+  latitude: number,
+  longitude: number,
+): Promise<ApiResponse> {
+  const response = await fetch(
+    `${BASE_URL}/save-address`,
+    {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify({
+        photo_id: photoId,
+        latitude,
+        longitude,
+      }),
+    },
+  );
+
+  return response.json();
+}

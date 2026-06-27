@@ -29,67 +29,105 @@ console.log(result);
     </button>
   </form>
 
-  {
-    result?.found && (
-      <div class="card">
-   
-
-        <p>
-          Engineer:
-          {result.photo.full_name}
-        </p>
-
-        <p>
-          Engineer Code:
-          {result.photo.engineer_code}
-        </p>
- <p>
-  Email:
-  {result.photo.email ??
-    "Not Available"}
-</p>
-
-<p>
-  Phone:
-  {result.photo.phone ??
-    "Not Available"}
-</p>
-
-        <p>
-          Photo Tag:
-          {result.photo.photo_tag}
-        </p>
-
-        <p>
-          Date:
 {
-  new Date(
-    result.photo.taken_at,
-  ).toLocaleString(
-    "en-GB",
-    {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    },
-  )
-}        </p>
+  result?.found && (
+    <div class="card">
 
-        <p>
-          Address:
-          {result.photo.address}
-        </p>
+      <h2>Photo Information</h2>
 
-        <p>
-          GPS:
-          {result.photo.latitude},
-          {result.photo.longitude}
-        </p>
+      <div class="info-grid">
+
+        <div>
+          <strong>Engineer</strong>
+          <p>{result.photo.full_name}</p>
+        </div>
+
+        <div>
+          <strong>Engineer Code</strong>
+          <p>{result.photo.engineer_code}</p>
+        </div>
+
+        <div>
+          <strong>Email</strong>
+          <p>{result.photo.email ?? "Not Available"}</p>
+        </div>
+
+        <div>
+          <strong>Phone</strong>
+          <p>{result.photo.phone ?? "Not Available"}</p>
+        </div>
+
+        <div>
+          <strong>Photo Tag</strong>
+          <p>{result.photo.photo_tag}</p>
+        </div>
+
+        <div>
+          <strong>Date</strong>
+          <p>
+            {
+              new Date(
+                result.photo.taken_at,
+              ).toLocaleString(
+                "en-GB",
+                {
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                },
+              )
+            }
+          </p>
+        </div>
+
       </div>
-    )
-  }
+
+      <hr />
+
+      <h2>Location</h2>
+
+      <p>
+        <strong>Address</strong><br />
+        {result.photo.address ?? "Address unavailable"}
+      </p>
+
+      <p>
+        <strong>Coordinates</strong><br />
+        {result.photo.latitude},
+        {result.photo.longitude}
+      </p>
+
+    <div class="map-card">
+  <iframe
+    width="100%"
+    height="350"
+    loading="lazy"
+    style="border:0;border-radius:12px;"
+    src={`https://www.google.com/maps?q=${result.photo.latitude},${result.photo.longitude}&z=18&output=embed`}
+  >
+  </iframe>
+</div>
+{
+  !result.photo.address && (
+    <div class="save-address">
+      <button
+        id="save-address-btn"
+        onclick={`saveAddressUi(
+          '${result.photo.id}',
+          ${result.photo.latitude},
+          ${result.photo.longitude}
+        )`}
+      >
+        💾 Get & Save Address
+      </button>
+    </div>
+  )
+}
+    </div>
+  )
+}
 
   {
     tag &&
@@ -102,24 +140,220 @@ console.log(result);
 </AdminLayout>
 
 <style>
+form {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+input {
+  flex: 1;
+  padding: 12px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 15px;
+}
+
+button {
+  padding: 12px 22px;
+  border: none;
+  border-radius: 8px;
+  background: #2563eb;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #1d4ed8;
+}
+
+/* ===================== */
+
+.card {
+  background: white;
+  border-radius: 14px;
+  padding: 28px;
+  box-shadow:
+    0 6px 24px rgba(0,0,0,.08);
+}
+
+/* ===================== */
+
+.verified-banner {
+  background: #dcfce7;
+  color: #166534;
+  padding: 18px;
+  border-radius: 10px;
+  text-align: center;
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 28px;
+}
+
+.invalid-banner {
+  background: #fee2e2;
+  color: #991b1b;
+  padding: 18px;
+  border-radius: 10px;
+  text-align: center;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+/* ===================== */
+
+.section-title {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+
+hr {
+  margin: 30px 0;
+  border: none;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* ===================== */
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
+  gap: 20px;
+}
+
+.info-card {
+  background: #f8fafc;
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.info-card strong {
+  display: block;
+  margin-bottom: 6px;
+  color: #6b7280;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+}
+
+.info-card p {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+  word-break: break-word;
+}
+
+/* ===================== */
+
+.address-box {
+  background: #f8fafc;
+  border-left: 5px solid #2563eb;
+  border-radius: 10px;
+  padding: 18px;
+  margin-bottom: 20px;
+}
+
+.address-box strong {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.address-box p {
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* ===================== */
+
+.map-card {
+  margin-top: 20px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #d1d5db;
+  box-shadow:
+    0 2px 8px rgba(0,0,0,.05);
+}
+
+.map-card iframe {
+  display: block;
+}
+
+/* ===================== */
+
+.save-address {
+  margin-top: 22px;
+  display: flex;
+  justify-content: center;
+}
+
+#save-address-btn {
+  background: #16a34a;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 14px 24px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: .2s;
+}
+
+#save-address-btn:hover {
+  background: #15803d;
+}
+
+#save-address-btn:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* ===================== */
+
+.gps-good {
+  color: #16a34a;
+  font-weight: 700;
+}
+
+.gps-bad {
+  color: #dc2626;
+  font-weight: 700;
+}
+
+/* ===================== */
+
+.error {
+  background: #fee2e2;
+  padding: 20px;
+  border-radius: 10px;
+  color: #991b1b;
+  font-weight: 600;
+}
+
+/* ===================== */
+
+@media (max-width:768px) {
+
   form {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 24px;
+    flex-direction: column;
   }
 
-  input {
-    flex: 1;
-    padding: 10px;
+  button {
+    width: 100%;
   }
 
   .card {
-    background: white;
     padding: 20px;
-    border-radius: 8px;
   }
 
-  .error {
-    color: red;
+  .info-grid {
+    grid-template-columns: 1fr;
   }
+
+}
 </style>
+<script type="module">
+  import "../scripts/verify";
+</script>
