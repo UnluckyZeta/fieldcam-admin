@@ -28,12 +28,19 @@ export async function createEngineerUi() {
         "phone",
       ) as HTMLInputElement
     ).value;
-
+const region =
+  (
+    document.getElementById(
+      "region",
+    ) as HTMLInputElement
+  ).value
+    .trim()
+    .toLowerCase();
   const result =
     await createEngineer(
       fullName,
       email,
-      phone,
+      phone,region
     );
 
   if (result.error) {

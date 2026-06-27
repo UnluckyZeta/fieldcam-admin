@@ -146,7 +146,7 @@ export async function updateEngineerRegion(
 
 export async function createEngineer(
   full_name: string,
-  email: string,phone:string
+  email: string,phone:string ,region:string
 ): Promise<CreateEngineerResponse> {
   const response = await fetch(
     `${BASE_URL}/createe-engineer`,
@@ -155,7 +155,7 @@ export async function createEngineer(
       headers: getHeaders(),
       body: JSON.stringify({
         full_name,
-        email,phone 
+        email,phone,region
       }),
     },
   );
