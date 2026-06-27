@@ -110,6 +110,7 @@ const adminId =
     </div>
   </div>
 
+<div class="dashboard-grid">
   <div class="section">
     <h2>
       High Risk Engineers
@@ -161,6 +162,69 @@ const adminId =
       </tbody>
     </table>
   </div>
+  <div class="section">
+  <h2>
+    Engineers Active Today
+  </h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Engineer</th>
+        <th>Code</th>
+        <th>Photos</th>
+        <th>Last Photo</th>
+        <th></th>
+      </tr>
+    </thead>
+
+    <tbody>
+      {
+        data.engineers_today?.map(
+          (engineer: any) => (
+            <tr>
+              <td>
+                {engineer.full_name}
+              </td>
+
+              <td>
+                {engineer.engineer_code}
+              </td>
+
+              <td>
+                {engineer.photos}
+              </td>
+
+              <td>
+                {
+                  new Date(
+                    engineer.last_photo,
+                  ).toLocaleTimeString(
+                    "en-GB",
+                    {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    },
+                  )
+                }
+              </td>
+
+              <td>
+                <a
+                  class="btn"
+                  href={`/engineers/${engineer.id}`}
+                >
+                  View
+                </a>
+              </td>
+            </tr>
+          ),
+        )
+      }
+    </tbody>
+  </table>
+</div>
+</div>
 </AdminLayout>
 
 <style>
@@ -315,6 +379,18 @@ const adminId =
   }input[  type="date"
       onfocus="this.showPicker()"] {
   cursor: pointer;
+}
+.dashboard-grid{
+  display:grid;
+  gap:24px;
+  margin-top:24px;
+}
+
+@media(max-width:1000px){
+
+.dashboard-grid{
+}
+
 }
 </style>
 <script type="module">
