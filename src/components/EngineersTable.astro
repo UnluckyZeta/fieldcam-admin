@@ -10,8 +10,8 @@ const { engineers } =
 
 ---
 
-<table>
-  <thead>
+<table id="engineers-table">
+    <thead>
     <tr>
       <th>Name</th>
       <th>Email</th>
@@ -200,5 +200,24 @@ th {
 
 tr:hover {
   background: #f9fafb;
+}
+.sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: background .2s;
+}
+
+.sortable:hover {
+  background: #eff6ff;
+}
+
+.sort-asc::after {
+  content: " ▲";
+  color: #2563eb;
+}
+
+.sort-desc::after {
+  content: " ▼";
+  color: #2563eb;
 }
 </style>

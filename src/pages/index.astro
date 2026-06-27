@@ -167,7 +167,7 @@ const adminId =
     Engineers Active Today
   </h2>
 
-  <table>
+  <table id="today-table">
     <thead>
       <tr>
         <th>Engineer</th>
@@ -391,6 +391,25 @@ const adminId =
 .dashboard-grid{
 }
 
+}
+.sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: background .2s;
+}
+
+.sortable:hover {
+  background: #eff6ff;
+}
+
+.sort-asc::after {
+  content: " ▲";
+  color: #2563eb;
+}
+
+.sort-desc::after {
+  content: " ▼";
+  color: #2563eb;
 }
 </style>
 <script type="module">

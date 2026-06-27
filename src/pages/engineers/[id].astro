@@ -225,7 +225,7 @@ const engineer =
 
 <h2>Recent Photos</h2>
 
-<table class="photos-table">
+<table class="photos-table" id="photos-table">
   <thead>
     <tr>
       <th>Tag</th>
@@ -512,7 +512,27 @@ const engineer =
   color: #16a34a;
   font-weight: 600;
 }
+.sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: background .2s;
+}
+
+.sortable:hover {
+  background: #eff6ff;
+}
+
+.sort-asc::after {
+  content: " ▲";
+  color: #2563eb;
+}
+
+.sort-desc::after {
+  content: " ▼";
+  color: #2563eb;
+}
 </style>
 <script type="module">
   import "../../scripts/engineers";
+  
 </script>

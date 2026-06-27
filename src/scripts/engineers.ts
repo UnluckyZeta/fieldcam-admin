@@ -6,6 +6,7 @@ import {
   resetPassword,
   updateEngineerRegion,
 } from "../lib/api";
+import { makeTableSortable } from "./table-sort";
 
 export async function createEngineerUi() {
   const fullName =
@@ -329,3 +330,5 @@ Password: ${password}`
       );
     },
   );
+  makeTableSortable("engineers-table");
+  makeTableSortable("photos-table");

@@ -1,6 +1,7 @@
 import {
   exportLogs,
 } from "../lib/api";
+import { makeTableSortable } from "./table-sort";
 
 async function exportCsv() {
   const params =
@@ -85,3 +86,4 @@ window.addEventListener(
       );
   },
 );
+makeTableSortable("today-table");
