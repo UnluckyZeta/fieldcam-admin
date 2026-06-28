@@ -20,28 +20,40 @@ const isLoginPage =
     />
 
     <title>{title}</title>
+
+    {
+      !isLoginPage && (
+        <script type="module">
+          import { supabase }
+            from "../lib/supabase";
+
+          const {
+            data: {
+              session,
+            },
+          } =
+            await supabase.auth.getSession();
+
+          if (!session) {
+            location.replace(
+              "/login",
+            );
+          } else {
+            document.body.style.visibility =
+              "visible";
+          }
+        </script>
+      )
+    }
   </head>
-{
-  !isLoginPage && (
-    <script type="module">
-      import { supabase }
-        from "../lib/supabase";
 
-      const {
-        data: {
-          session,
-        },
-      } =
-        await supabase.auth.getSession();
-
-      if (!session) {
-        location.href =
-          "/login";
-      }
-    </script>
-  )
-}
-  <body>
+  <body
+    style={
+      !isLoginPage
+        ? "visibility:hidden"
+        : ""
+    }
+  >
     {
       isLoginPage ? (
         <main class="login-main">
@@ -63,7 +75,8 @@ const isLoginPage =
 <style>
   body {
     margin: 0;
-    font-family: Arial,
+    font-family:
+      Arial,
       sans-serif;
     background: #f5f5f5;
   }
