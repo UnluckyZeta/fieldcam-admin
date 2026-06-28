@@ -1,7 +1,7 @@
 ---
 import AdminLayout
   from "../layouts/AdminLayout.astro";
-
+import "tom-select/dist/css/tom-select.css";
 import {
   getAdmins,
 } from "../lib/api";
@@ -61,10 +61,29 @@ const admins =
       </option>
     </select>
 
-    <input
-      id="region"
-      placeholder="Region"
-    />
+    <select
+  id="regions"
+  multiple
+>
+  <option value="cairo">Cairo</option>
+  <option value="giza">Giza</option>
+  <option value="alexandria">Alexandria</option>
+  <option value="dakahlia">Dakahlia</option>
+  <option value="sharqia">Sharqia</option>
+  <option value="gharbia">Gharbia</option>
+  <option value="beheira">Beheira</option>
+  <option value="port said">Port Said</option>
+  <option value="ismailia">Ismailia</option>
+  <option value="suez">Suez</option>
+  <option value="kafr el sheikh">Kafr El Sheikh</option>
+  <option value="damietta">Damietta</option>
+  <option value="minya">Minya</option>
+  <option value="assiut">Assiut</option>
+  <option value="sohag">Sohag</option>
+  <option value="qena">Qena</option>
+  <option value="luxor">Luxor</option>
+  <option value="aswan">Aswan</option>
+</select>
 
     <button
       type="submit"
@@ -137,12 +156,19 @@ const admins =
             }
           </td>
 
-          <td>
-            {
-              admin.region ??
-              "-"
-            }
-          </td>
+        <td title={admin.region}>
+  {
+    admin.region
+      ? admin.region
+          .split(",")
+          .map((region: string) => (
+            <span class="region-chip">
+              {region}
+            </span>
+          ))
+      : "-"
+  }
+</td>
           <td class="actions">
   <button
   class="btn btn-edit"
@@ -280,6 +306,17 @@ tr:hover {
   margin-bottom: 8px;
 }
 
+.region-chip {
+  display: inline-flex;
+  align-items: center;
+  margin: 2px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #2563eb;
+  font-size: 12px;
+  font-weight: 600;
+}
 .btn-copy {
   border: none;
   padding: 10px 16px;

@@ -1,4 +1,6 @@
 import { editAdminUi } from "../lib/admin";
+  import TomSelect from "tom-select";
+
 import {
   createAdmin,
   deleteAdmin,
@@ -28,12 +30,15 @@ createAdminUi() {
       ) as HTMLSelectElement
     ).value;
 
-  const region =
-    (
-      document.getElementById(
-        "region",
-      ) as HTMLInputElement
-    ).value;
+ const region = Array.from(
+  (
+    document.getElementById(
+      "regions",
+    ) as HTMLSelectElement
+  ).selectedOptions,
+)
+  .map((o) => o.value.toLowerCase())
+  .join(",");
 
   const result =
     await createAdmin(
@@ -164,3 +169,11 @@ Password: ${password}`,
       );
     },
   );
+
+new TomSelect("#regions", {
+  plugins: ["remove_button"],
+  create: false,
+  persist: false,
+  maxItems: null,
+  placeholder: "Select regions...",
+});
