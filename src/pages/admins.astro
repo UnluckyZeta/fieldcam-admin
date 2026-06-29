@@ -156,16 +156,20 @@ const admins =
             }
           </td>
 
-        <td title={admin.region}>
+<td>
   {
     admin.region
-      ? admin.region
-          .split(",")
-          .map((region: string) => (
-            <span class="region-chip">
-              {region}
-            </span>
-          ))
+      ? (
+          <div class="region-list">
+            {admin.region
+              .split(",")
+              .map((region: string) => (
+                <span class="region-chip">
+                  {region}
+                </span>
+              ))}
+          </div>
+        )
       : "-"
   }
 </td>
@@ -267,9 +271,21 @@ th {
 tr:hover {
   background: #f9fafb;
 }
+
+td.actions {
+  vertical-align: top;
+  white-space: nowrap;
+  padding-top: 12px;
+}
 .actions {
   display: flex;
-  gap: 8px;
+  flex-direction: column;
+  gap: 6px;
+  align-items: stretch;
+}
+
+.actions .btn {
+  width: 100%;
 }
 
 .btn {
@@ -306,10 +322,16 @@ tr:hover {
   margin-bottom: 8px;
 }
 
+.region-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+}
+
 .region-chip {
   display: inline-flex;
   align-items: center;
-  margin: 2px;
   padding: 4px 10px;
   border-radius: 999px;
   background: #eff6ff;

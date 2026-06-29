@@ -2,7 +2,25 @@
 import AdminLayout from "../layouts/AdminLayout.astro";
 import { getDashboard } from "../lib/api";
 
-
+function formatEgyptDate(
+  date: string,
+) {
+  return new Date(date)
+    .toLocaleString(
+      "en-US",
+      {
+        timeZone:
+          "Africa/Cairo",
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      },
+    )
+    .replace(",", " •");
+}
 const today =
   new Date()
     .toISOString()
@@ -196,17 +214,9 @@ const adminId =
               </td>
 
               <td>
-                {
-                  new Date(
-                    engineer.last_photo,
-                  ).toLocaleTimeString(
-                    "en-GB",
-                    {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    },
-                  )
-                }
+           {formatEgyptDate(
+engineer.last_photo,
+)}
               </td>
 
               <td>
