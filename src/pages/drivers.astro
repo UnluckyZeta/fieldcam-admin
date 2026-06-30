@@ -1,0 +1,266 @@
+---
+import AdminLayout from "../layouts/AdminLayout.astro";
+import { supabaseServer } from "../lib/supabase-server";
+
+// Server-side fetch of drivers
+const adminId = Astro.cookies.get("admin_id")?.value ?? "";
+if (!adminId) {
+  return Astro.redirect("/login");
+}
+
+const { data: drivers, error } = await supabaseServer
+  .from("drivers")
+  .select("*")
+  .order("created_at", { ascending: false });
+
+if (error) {
+  console.error("Failed to load drivers:", error);
+}
+
+const driverList = drivers || [];
+---
+
+<AdminLayout title="Drivers Management">
+  <div class="card">
+    <h2>Create Driver Account</h2>
+
+    <form id="create-driver-form" class="create-form">
+      <input id="full_name" placeholder="Full Name" required />
+      <input id="email" type="email" placeholder="Email Address" required />
+      <input id="phone" placeholder="Phone (optional)" />
+      <button type="submit">Create Driver</button>
+    </form>
+
+    <div id="create-driver-result" class="result-card" style="display:none;">
+      <h3>✅ Driver Created Successfully</h3>
+      <div>
+        <strong>Email:</strong> <span id="driver-email"></span>
+      </div>
+      <div>
+        <strong>Password:</strong> <span id="driver-password"></span>
+      </div>
+      <div>
+        <strong>Driver Code:</strong> <span id="driver-code"></span>
+      </div>
+      <button id="copy-driver-creds" class="btn-copy">Copy Credentials</button>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <input id="search" class="search-input" placeholder="Search drivers by name, email..." />
+  </div>
+
+  <div class="table-container">
+    <table id="drivers-table" class="data-table">
+      <thead>
+        <tr>
+          <th>Driver Code</th>
+          <th>Full Name</th>
+          <th>Email</th>
+          <th>Phone</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {driverList.map((driver) => (
+          <tr>
+            <td><code>{driver.driver_code}</code></td>
+            <td><strong>{driver.full_name}</strong></td>
+            <td>{driver.email || "—"}</td>
+            <td>{driver.phone || "—"}</td>
+            <td class="actions">
+              <button onclick={`resetPasswordUi("${driver.id}")`} class="btn btn-reset">Reset PW</button>
+              <button onclick={`deleteDriverUi("${driver.id}")`} class="btn btn-delete">Delete</button>
+            </td>
+          </tr>
+        ))}
+        {driverList.length === 0 && (
+          <tr>
+            <td colspan="6" class="empty-state">No drivers found. Create one above to get started.</td>
+          </tr>
+        )}
+      </tbody>
+    </table>
+  </div>
+</AdminLayout>
+
+<style>
+  .card {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+
+  .card h2 {
+    margin-top: 0;
+    margin-bottom: 16px;
+  }
+
+  .create-form {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .create-form input,
+  .search-input {
+    height: 40px;
+    padding: 0 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+    background: white;
+  }
+
+  .create-form input {
+    min-width: 200px;
+    flex: 1;
+  }
+
+  .create-form button {
+    height: 40px;
+    padding: 0 20px;
+    border: none;
+    border-radius: 6px;
+    background: #111827;
+    color: white;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .create-form button:hover {
+    background: #374151;
+  }
+
+  .result-card {
+    margin-top: 20px;
+    padding: 16px;
+    background: #ecfdf5;
+    border: 1px solid #86efac;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .result-card h3 {
+    margin: 0 0 4px 0;
+    color: #065f46;
+  }
+
+  .btn-copy {
+    align-self: flex-start;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 16px;
+    cursor: pointer;
+    background: #10b981;
+    color: white;
+    font-weight: 500;
+    margin-top: 8px;
+  }
+
+  .btn-copy:hover {
+    background: #059669;
+  }
+
+  .toolbar {
+    background: white;
+    padding: 16px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+
+  .search-input {
+    width: 100%;
+    max-width: 400px;
+  }
+
+  .table-container {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    overflow-x: auto;
+  }
+
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 14px;
+  }
+
+  .data-table th {
+    background: #f8fafc;
+    padding: 14px 16px;
+    font-weight: 600;
+    border-bottom: 1px solid #e2e8f0;
+    color: #475569;
+  }
+
+  .data-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  .data-table tr:hover {
+    background: #f8fafc;
+  }
+
+  code {
+    background: #f1f5f9;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 13px;
+  }
+
+  .actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .btn {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+
+  .btn-reset {
+    background: #f1f5f9;
+    color: #475569;
+  }
+
+  .btn-reset:hover {
+    background: #e2e8f0;
+  }
+
+  .btn-delete {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+
+  .btn-delete:hover {
+    background: #fca5a5;
+  }
+
+  .empty-state {
+    text-align: center;
+    color: #94a3b8;
+    padding: 32px !important;
+  }
+</style>
+
+<script>
+  import "../scripts/drivers";
+  import { requireAdmin } from "../lib/auth";
+  requireAdmin();
+</script>

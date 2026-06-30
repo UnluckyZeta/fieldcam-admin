@@ -1,0 +1,367 @@
+---
+import AdminLayout from "../layouts/AdminLayout.astro";
+import { supabaseServer } from "../lib/supabase-server";
+
+const adminId = Astro.cookies.get("admin_id")?.value ?? "";
+if (!adminId) {
+  return Astro.redirect("/login");
+}
+
+// 1. Fetch daily runs
+const { data: runs, error: runsError } = await supabaseServer
+  .from("driver_days")
+  .select("*")
+  .order("date", { ascending: false });
+
+if (runsError) {
+  console.error("Failed to load driver days:", runsError);
+}
+
+const rawRuns = runs || [];
+
+// Helper to extract the relative file path from the stored public URL
+const getPathFromUrl = (url: string | null) => {
+  if (!url) return null;
+  const parts = url.split('/odometer-photos/');
+  return parts.length > 1 ? decodeURIComponent(parts[1]) : null;
+};
+
+// 2. Fetch driver and rider lists for in-memory mapping (bypasses PostgREST join limits on Views)
+const { data: drivers } = await supabaseServer.from("drivers").select("id, full_name");
+const { data: riders } = await supabaseServer.from("riders").select("id, full_name, rider_code, rider_type");
+
+const driverMap = new Map((drivers || []).map((d) => [d.id, d]));
+const riderMap = new Map((riders || []).map((r) => [r.id, r]));
+
+const mappedRuns = await Promise.all(
+  rawRuns.map(async (run) => {
+    const driver = driverMap.get(run.driver_id);
+    const firstRider = run.first_rider_id ? riderMap.get(run.first_rider_id) : null;
+    const lastRider = run.last_rider_id ? riderMap.get(run.last_rider_id) : null;
+
+    // Generate secure signed URLs for private odometer photos
+    let startPhotoUrl = null;
+    let endPhotoUrl = null;
+
+    if (run.odometer_start_photo_url) {
+      const path = getPathFromUrl(run.odometer_start_photo_url);
+      if (path) {
+        const { data } = await supabaseServer.storage.from("odometer-photos").createSignedUrl(path, 3600);
+        startPhotoUrl = data?.signedUrl || null;
+      }
+    }
+
+    if (run.odometer_end_photo_url) {
+      const path = getPathFromUrl(run.odometer_end_photo_url);
+      if (path) {
+        const { data } = await supabaseServer.storage.from("odometer-photos").createSignedUrl(path, 3600);
+        endPhotoUrl = data?.signedUrl || null;
+      }
+    }
+
+    // Calculate work duration (refined to show minutes/seconds for short test logs)
+    let durationStr = "—";
+    if (run.work_start_time && run.work_end_time) {
+      const diffMs = new Date(run.work_end_time).getTime() - new Date(run.work_start_time).getTime();
+      const hours = Math.floor(diffMs / 3600000);
+      const mins = Math.floor((diffMs % 3600000) / 60000);
+      const secs = Math.round((diffMs % 60000) / 1000);
+
+      if (hours > 0) {
+        durationStr = `${hours}h ${mins}m`;
+      } else if (mins > 0) {
+        durationStr = `${mins}m ${secs}s`;
+      } else {
+        durationStr = `${secs}s`;
+      }
+    }
+
+    // Format timestamps
+    const formatTime = (isoString: string | null) => {
+      if (!isoString) return "—";
+      return new Date(isoString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    };
+
+    return {
+      ...run,
+      driver_name: driver?.full_name || "Unknown Driver",
+      first_rider_name: firstRider?.full_name || "—",
+      first_rider_code: firstRider?.rider_code || "",
+      last_rider_name: lastRider?.full_name || "—",
+      last_rider_code: lastRider?.rider_code || "",
+      start_time_formatted: formatTime(run.work_start_time),
+      end_time_formatted: formatTime(run.work_end_time),
+      duration: durationStr,
+      odometer_start_photo_url: startPhotoUrl,
+      odometer_end_photo_url: endPhotoUrl
+    };
+  })
+);
+---
+
+<AdminLayout title="Daily Runs & Odometer Reports">
+  <div class="header-section">
+    <h2>Daily Shift Logs</h2>
+    <p class="subtitle">Monitor driver work times, scanned engineers/workers, and daily odometer photos.</p>
+  </div>
+
+  <div class="toolbar">
+    <input id="search" class="search-input" placeholder="Search logs by driver, date..." />
+  </div>
+
+  <div class="table-container">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Driver</th>
+          <th>Start Shift</th>
+          <th>End Shift</th>
+          <th>Total Hours</th>
+          <th>Odometer (Start / End)</th>
+          <th>Daily distance</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {mappedRuns.map((run) => (
+          <tr>
+            <td><strong>{run.date}</strong></td>
+            <td>
+              <div class="driver-info">
+                <span class="name">{run.driver_name}</span>
+              </div>
+            </td>
+            <td>
+              <div class="rider-scan-info">
+                <span class="time">{run.start_time_formatted}</span>
+                {run.first_rider_name !== "—" && (
+                  <span class="rider-desc">👤 {run.first_rider_name} <br/> <code>({run.first_rider_code})</code></span>
+                )}
+              </div>
+            </td>
+            <td>
+              <div class="rider-scan-info">
+                <span class="time">{run.end_time_formatted}</span>
+                {run.last_rider_name !== "—" && (
+                  <span class="rider-desc">👤 {run.last_rider_name} <br/> <code>({run.last_rider_code})</code></span>
+                )}
+              </div>
+            </td>
+            <td><strong>{run.duration}</strong></td>
+            <td>
+              <div class="odometer-info">
+                <div class="odo-block">
+                  <span>Start: {run.odometer_start_reading_km ? `${run.odometer_start_reading_km} km` : "—"}</span>
+                  {run.odometer_start_photo_url && (
+                    <a href={run.odometer_start_photo_url} target="_blank" class="photo-link">🖼️ View Photo</a>
+                  )}
+                </div>
+                <div class="odo-block">
+                  <span>End: {run.odometer_end_reading_km ? `${run.odometer_end_reading_km} km` : "—"}</span>
+                  {run.odometer_end_photo_url && (
+                    <a href={run.odometer_end_photo_url} target="_blank" class="photo-link">🖼️ View Photo</a>
+                  )}
+                </div>
+              </div>
+            </td>
+            <td>
+              {run.odometer_end_reading_km && run.odometer_start_reading_km ? (
+                <span class="km-highlight">{(run.odometer_end_reading_km - run.odometer_start_reading_km).toFixed(1)} km</span>
+              ) : (
+                <span class="text-muted">—</span>
+              )}
+            </td>
+            <td>
+              <span class={`status-badge ${run.status}`}>
+                {run.status === "completed" ? "Completed" : "In Progress"}
+              </span>
+            </td>
+          </tr>
+        ))}
+        {mappedRuns.length === 0 && (
+          <tr>
+            <td colspan="8" class="empty-state">No daily logs found. Start shifts in the mobile app to see data here.</td>
+          </tr>
+        )}
+      </tbody>
+    </table>
+  </div>
+</AdminLayout>
+
+<style>
+  .header-section {
+    margin-bottom: 24px;
+  }
+  .header-section h2 {
+    margin: 0 0 6px 0;
+    font-size: 24px;
+    color: #111827;
+  }
+  .subtitle {
+    margin: 0;
+    color: #6b7280;
+    font-size: 14px;
+  }
+
+  .toolbar {
+    background: white;
+    padding: 16px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+
+  .search-input {
+    width: 100%;
+    max-width: 400px;
+    height: 40px;
+    padding: 0 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+    background: white;
+  }
+
+  .table-container {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    overflow-x: auto;
+    margin-bottom: 40px;
+  }
+
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 14px;
+  }
+
+  .data-table th {
+    background: #f8fafc;
+    padding: 14px 16px;
+    font-weight: 600;
+    border-bottom: 1px solid #e2e8f0;
+    color: #475569;
+  }
+
+  .data-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: top;
+  }
+
+  .data-table tr:hover {
+    background: #f8fafc;
+  }
+
+  .driver-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .driver-info .name {
+    font-weight: 600;
+    color: #111827;
+  }
+  .driver-info .plate {
+    font-size: 12px;
+    color: #6b7280;
+  }
+
+  .rider-scan-info {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .rider-scan-info .time {
+    font-weight: 600;
+    color: #111827;
+  }
+  .rider-scan-info .rider-desc {
+    font-size: 12px;
+    color: #4b5563;
+    line-height: 1.4;
+  }
+
+  .odometer-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .odo-block {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 12px;
+  }
+  .photo-link {
+    color: #2563eb;
+    text-decoration: none;
+    font-size: 11px;
+    font-weight: 500;
+  }
+  .photo-link:hover {
+    text-decoration: underline;
+  }
+
+  .km-highlight {
+    font-weight: 600;
+    color: #047857;
+    background: #ecfdf5;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 13px;
+    display: inline-block;
+  }
+
+  .text-muted {
+    color: #9ca3af;
+  }
+
+  code {
+    background: #f1f5f9;
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 11px;
+  }
+
+  .status-badge {
+    padding: 4px 8px;
+    border-radius: 9999px;
+    font-size: 11px;
+    font-weight: 600;
+    display: inline-block;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .status-badge.in_progress {
+    background: #eff6ff;
+    color: #1d4ed8;
+  }
+
+  .status-badge.completed {
+    background: #ecfdf5;
+    color: #047857;
+  }
+
+  .empty-state {
+    text-align: center;
+    color: #94a3b8;
+    padding: 32px !important;
+  }
+</style>
+
+<script>
+  // Simple table search filter
+  document.getElementById("search")?.addEventListener("input", (event) => {
+    const value = (event.target as HTMLInputElement).value.toLowerCase();
+    document.querySelectorAll("tbody tr").forEach((row) => {
+      const text = row.textContent?.toLowerCase() ?? "";
+      (row as HTMLElement).style.display = text.includes(value) ? "" : "none";
+    });
+  });
+</script>

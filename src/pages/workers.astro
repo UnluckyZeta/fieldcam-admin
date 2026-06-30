@@ -1,0 +1,269 @@
+---
+import AdminLayout from "../layouts/AdminLayout.astro";
+import { supabaseServer } from "../lib/supabase-server";
+
+// Server-side fetch of workers
+const adminId = Astro.cookies.get("admin_id")?.value ?? "";
+if (!adminId) {
+  return Astro.redirect("/login");
+}
+
+const { data: workers, error } = await supabaseServer
+  .from("workers")
+  .select("*")
+  .order("created_at", { ascending: false });
+
+if (error) {
+  console.error("Failed to load workers:", error);
+}
+
+const workerList = workers || [];
+---
+
+<AdminLayout title="Workers Management">
+  <div class="card">
+    <h2>Create Worker Account</h2>
+
+    <form id="create-worker-form" class="create-form">
+      <input id="full_name" placeholder="Full Name" required />
+      <input id="email" type="email" placeholder="Email Address" required />
+      <input id="phone" placeholder="Phone (optional)" />
+      <input id="department" placeholder="Department (optional)" />
+      <button type="submit">Create Worker</button>
+    </form>
+
+    <div id="create-worker-result" class="result-card" style="display:none;">
+      <h3>✅ Worker Created Successfully</h3>
+      <div>
+        <strong>Email:</strong> <span id="worker-email"></span>
+      </div>
+      <div>
+        <strong>Password:</strong> <span id="worker-password"></span>
+      </div>
+      <div>
+        <strong>Worker Code:</strong> <span id="worker-code"></span>
+      </div>
+      <button id="copy-worker-creds" class="btn-copy">Copy Credentials</button>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <input id="search" class="search-input" placeholder="Search workers by name, email, department..." />
+  </div>
+
+  <div class="table-container">
+    <table id="workers-table" class="data-table">
+      <thead>
+        <tr>
+          <th>Worker Code</th>
+          <th>Full Name</th>
+          <th>Email</th>
+          <th>Phone</th>
+          <th>Department</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {workerList.map((worker) => (
+          <tr>
+            <td><code>{worker.worker_code}</code></td>
+            <td><strong>{worker.full_name}</strong></td>
+            <td>{worker.email}</td>
+            <td>{worker.phone || "—"}</td>
+            <td>{worker.department || "—"}</td>
+            <td class="actions">
+              <button onclick={`resetPasswordUi("${worker.id}")`} class="btn btn-reset">Reset PW</button>
+              <button onclick={`deleteWorkerUi("${worker.id}")`} class="btn btn-delete">Delete</button>
+            </td>
+          </tr>
+        ))}
+        {workerList.length === 0 && (
+          <tr>
+            <td colspan="6" class="empty-state">No workers found. Create one above to get started.</td>
+          </tr>
+        )}
+      </tbody>
+    </table>
+  </div>
+</AdminLayout>
+
+<style>
+  .card {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+
+  .card h2 {
+    margin-top: 0;
+    margin-bottom: 16px;
+  }
+
+  .create-form {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .create-form input,
+  .search-input {
+    height: 40px;
+    padding: 0 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+    background: white;
+  }
+
+  .create-form input {
+    min-width: 200px;
+    flex: 1;
+  }
+
+  .create-form button {
+    height: 40px;
+    padding: 0 20px;
+    border: none;
+    border-radius: 6px;
+    background: #2563eb;
+    color: white;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .create-form button:hover {
+    background: #1d4ed8;
+  }
+
+  .result-card {
+    margin-top: 20px;
+    padding: 16px;
+    background: #ecfdf5;
+    border: 1px solid #86efac;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .result-card h3 {
+    margin: 0 0 4px 0;
+    color: #065f46;
+  }
+
+  .btn-copy {
+    align-self: flex-start;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 16px;
+    cursor: pointer;
+    background: #10b981;
+    color: white;
+    font-weight: 500;
+    margin-top: 8px;
+  }
+
+  .btn-copy:hover {
+    background: #059669;
+  }
+
+  .toolbar {
+    background: white;
+    padding: 16px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+
+  .search-input {
+    width: 100%;
+    max-width: 400px;
+  }
+
+  .table-container {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    overflow-x: auto;
+  }
+
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 14px;
+  }
+
+  .data-table th {
+    background: #f8fafc;
+    padding: 14px 16px;
+    font-weight: 600;
+    border-bottom: 1px solid #e2e8f0;
+    color: #475569;
+  }
+
+  .data-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  .data-table tr:hover {
+    background: #f8fafc;
+  }
+
+  code {
+    background: #f1f5f9;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 13px;
+  }
+
+  .actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .btn {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+
+  .btn-reset {
+    background: #f1f5f9;
+    color: #475569;
+  }
+
+  .btn-reset:hover {
+    background: #e2e8f0;
+  }
+
+  .btn-delete {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+
+  .btn-delete:hover {
+    background: #fca5a5;
+  }
+
+  .empty-state {
+    text-align: center;
+    color: #94a3b8;
+    padding: 32px !important;
+  }
+</style>
+
+<script>
+  import "../scripts/workers";
+  import { requireAdmin } from "../lib/auth";
+  requireAdmin();
+</script>
