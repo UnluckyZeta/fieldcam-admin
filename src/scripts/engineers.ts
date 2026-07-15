@@ -5,6 +5,7 @@ import {
   resetDevice,
   resetPassword,
   updateEngineerRegion,
+  getEngineers,
 } from "../lib/api";
 import { makeTableSortable } from "./table-sort";
 
@@ -330,5 +331,117 @@ Password: ${password}`
       );
     },
   );
+  
+  function renderEngineersTable(engineers: any[]) {
+    const tbody = document.querySelector("#engineers-table tbody");
+    if (!tbody) return;
+
+    if (engineers.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="10" style="text-align: center; color: #94a3b8; padding: 32px;">
+            No engineers found. Create one above to get started.
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    tbody.innerHTML = engineers.map(engineer => {
+      const lastPhotoDate = engineer.last_photo_at
+        ? new Date(engineer.last_photo_at).toLocaleDateString()
+        : "Never";
+        
+      const gpsRiskClass = engineer.gps_risk === "high" ? "danger" : "success";
+      const gpsRiskText = engineer.gps_risk === "high" ? "High" : "Normal";
+      const deviceIdText = engineer.device_id ? engineer.device_id.slice(0, 8) : "Not Registered";
+
+      return `
+        <tr>
+          <td>${engineer.full_name || ""}</td>
+          <td>${engineer.email || ""}</td>
+          <td>${engineer.engineer_code || ""}</td>
+          <td>${engineer.status || ""}</td>
+          <td title="${engineer.device_id || ""}">
+            ${deviceIdText}
+          </td>
+          <td>
+            ${lastPhotoDate}
+          </td>
+          <td>
+            <span class="${gpsRiskClass}">
+              ${gpsRiskText}
+            </span>
+          </td>
+          <td title="Auto-detected from latest photo">
+            ${engineer.region || "-"}
+          </td>
+          <td title="Auto-detected from latest photo">
+            ${engineer.subregion || "-"}
+          </td>
+          <td class="actions">
+            <a class="btn btn-view" href="/engineers/${engineer.id}">
+              View
+            </a>
+            <button
+              class="btn btn-edit"
+              onclick="editEngineerUi('${engineer.id}', '${engineer.full_name.replace(/'/g, "\\'")}', '${engineer.email.replace(/'/g, "\\'")}', '${(engineer.phone || "").replace(/'/g, "\\'")}')"
+            >
+              Edit
+            </button>
+            <button
+              class="btn btn-delete"
+              onclick="deleteEngineerUi('${engineer.id}')"
+            >
+              Delete
+            </button>
+            <button class="btn btn-password" onclick="resetPasswordUi('${engineer.id}')">
+              Reset Password
+            </button>
+            <button
+              class="btn btn-reset"
+              onclick="resetDeviceUi('${engineer.id}')"
+            >
+              Reset Device
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join("");
+  }
+
+  async function initEngineersList() {
+    const adminId = document.cookie
+      .split("; ")
+      .find(row => row.startsWith("admin_id="))
+      ?.split("=")[1] || "";
+
+    // 1. Try loading from cache
+    const cached = localStorage.getItem("fieldcam_engineers");
+    if (cached) {
+      try {
+        const engineers = JSON.parse(cached);
+        renderEngineersTable(engineers);
+      } catch (e) {
+        console.error("Failed to parse cached engineers", e);
+      }
+    }
+
+    // 2. Fetch fresh from server
+    try {
+      const data = await getEngineers("", "", adminId);
+      const engineers = data.engineers ?? [];
+      localStorage.setItem("fieldcam_engineers", JSON.stringify(engineers));
+      renderEngineersTable(engineers);
+    } catch (err) {
+      console.error("Failed to fetch fresh engineers", err);
+    }
+  }
+
+  // Start initialization
+  if (document.getElementById("engineers-table")) {
+    initEngineersList();
+  }
+
   makeTableSortable("engineers-table");
   makeTableSortable("photos-table");

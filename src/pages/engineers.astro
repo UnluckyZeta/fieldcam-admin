@@ -8,15 +8,7 @@ const adminId =
     .get("admin_id")
     ?.value ?? "";
 
-const data =
-  await getEngineers(
-    "",
-    "",
-    adminId,
-  );
-
-const engineers =
-  data.engineers ?? [];
+const engineers = [];
 ---
 
 <AdminLayout title="Engineers">
