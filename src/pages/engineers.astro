@@ -91,11 +91,34 @@ const engineers = [];
   </div>
 
   <div class="toolbar">
-    <input
-      id="search"
-      class="search-input"
-      placeholder="Search engineer..."
-    />
+    <div class="toolbar-controls">
+      <input
+        id="search"
+        class="search-input"
+        placeholder="Search by name, engineer code, or email..."
+      />
+      <select id="region-filter" class="filter-select">
+        <option value="">All Regions</option>
+        <option value="cairo">Cairo</option>
+        <option value="giza">Giza</option>
+        <option value="alexandria">Alexandria</option>
+        <option value="dakahlia">Dakahlia</option>
+        <option value="sharqia">Sharqia</option>
+        <option value="gharbia">Gharbia</option>
+        <option value="beheira">Beheira</option>
+        <option value="port said">Port Said</option>
+        <option value="ismailia">Ismailia</option>
+        <option value="suez">Suez</option>
+        <option value="kafr el sheikh">Kafr El Sheikh</option>
+        <option value="damietta">Damietta</option>
+        <option value="minya">Minya</option>
+        <option value="assiut">Assiut</option>
+        <option value="sohag">Sohag</option>
+        <option value="qena">Qena</option>
+        <option value="luxor">Luxor</option>
+        <option value="aswan">Aswan</option>
+      </select>
+    </div>
   </div>
 
   <EngineersTable
@@ -132,7 +155,9 @@ const engineers = [];
   }
 
   .create-form input,
-  .search-input {
+  .create-form select,
+  .search-input,
+  .filter-select {
     height: 40px;
     padding: 0 12px;
     border: 1px solid #d1d5db;
@@ -197,9 +222,22 @@ const engineers = [];
       );
   }
 
+  .toolbar-controls {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
   .search-input {
-    width: 100%;
+    flex: 1;
+    min-width: 260px;
     max-width: 400px;
+  }
+
+  .filter-select {
+    min-width: 180px;
+    cursor: pointer;
   }
 </style>
 

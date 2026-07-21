@@ -273,31 +273,38 @@ export async function resetPasswordUi(
       await createEngineerUi();
     },
   );
-  document
-  .getElementById("search")
-  ?.addEventListener(
-    "input",
-    (event) => {
-      const value = (
-        event.target as HTMLInputElement
-      ).value.toLowerCase();
+  let cachedEngineersData: any[] = [];
 
-      document
-        .querySelectorAll("tbody tr")
-        .forEach((row) => {
-          const text =
-            row.textContent?.toLowerCase() ??
-            "";
+  function applyEngineersFilter() {
+    const searchInput = document.getElementById("search") as HTMLInputElement | null;
+    const regionSelect = document.getElementById("region-filter") as HTMLSelectElement | null;
 
-          (
-            row as HTMLElement
-          ).style.display =
-            text.includes(value)
-              ? ""
-              : "none";
-        });
-    },
-  );
+    const searchQuery = searchInput?.value.toLowerCase().trim() ?? "";
+    const selectedRegion = regionSelect?.value.toLowerCase().trim() ?? "";
+
+    const filtered = cachedEngineersData.filter((engineer) => {
+      const fullName = (engineer.full_name || "").toLowerCase();
+      const code = (engineer.engineer_code || "").toLowerCase();
+      const email = (engineer.email || "").toLowerCase();
+      const region = (engineer.region || engineer.auto_region || "").toLowerCase();
+
+      const matchesSearch =
+        !searchQuery ||
+        fullName.includes(searchQuery) ||
+        code.includes(searchQuery) ||
+        email.includes(searchQuery);
+
+      const matchesRegion = !selectedRegion || region === selectedRegion;
+
+      return matchesSearch && matchesRegion;
+    });
+
+    renderEngineersTable(filtered);
+  }
+
+  document.getElementById("search")?.addEventListener("input", applyEngineersFilter);
+  document.getElementById("region-filter")?.addEventListener("change", applyEngineersFilter);
+
   document
   .getElementById(
     "copy-engineer-creds",
@@ -340,7 +347,7 @@ Password: ${password}`
       tbody.innerHTML = `
         <tr>
           <td colspan="10" style="text-align: center; color: #94a3b8; padding: 32px;">
-            No engineers found. Create one above to get started.
+            No engineers found matching your search.
           </td>
         </tr>
       `;
@@ -373,11 +380,11 @@ Password: ${password}`
               ${gpsRiskText}
             </span>
           </td>
-          <td title="Auto-detected from latest photo">
-            ${engineer.region || "-"}
+          <td title="Assigned or Auto-detected region">
+            ${engineer.region || engineer.auto_region || "-"}
           </td>
-          <td title="Auto-detected from latest photo">
-            ${engineer.subregion || "-"}
+          <td title="Assigned or Auto-detected subregion">
+            ${engineer.subregion || engineer.auto_subregion || "-"}
           </td>
           <td class="actions">
             <a class="btn btn-view" href="/engineers/${engineer.id}">
@@ -385,7 +392,7 @@ Password: ${password}`
             </a>
             <button
               class="btn btn-edit"
-              onclick="editEngineerUi('${engineer.id}', '${engineer.full_name.replace(/'/g, "\\'")}', '${engineer.email.replace(/'/g, "\\'")}', '${(engineer.phone || "").replace(/'/g, "\\'")}')"
+              onclick="editEngineerUi('${engineer.id}', '${engineer.full_name ? engineer.full_name.replace(/'/g, "\\'") : ""}', '${engineer.email ? engineer.email.replace(/'/g, "\\'") : ""}', '${(engineer.phone || "").replace(/'/g, "\\'")}')"
             >
               Edit
             </button>
@@ -420,8 +427,8 @@ Password: ${password}`
     const cached = localStorage.getItem("fieldcam_engineers");
     if (cached) {
       try {
-        const engineers = JSON.parse(cached);
-        renderEngineersTable(engineers);
+        cachedEngineersData = JSON.parse(cached);
+        applyEngineersFilter();
       } catch (e) {
         console.error("Failed to parse cached engineers", e);
       }
@@ -430,9 +437,9 @@ Password: ${password}`
     // 2. Fetch fresh from server
     try {
       const data = await getEngineers("", "", adminId);
-      const engineers = data.engineers ?? [];
-      localStorage.setItem("fieldcam_engineers", JSON.stringify(engineers));
-      renderEngineersTable(engineers);
+      cachedEngineersData = data.engineers ?? [];
+      localStorage.setItem("fieldcam_engineers", JSON.stringify(cachedEngineersData));
+      applyEngineersFilter();
     } catch (err) {
       console.error("Failed to fetch fresh engineers", err);
     }

@@ -39,6 +39,7 @@ const data =
     id!,
     from,
     to,
+    1000,
   );
 
 const engineer =
@@ -283,6 +284,16 @@ const engineer =
     )}
   </tbody>
 </table>
+
+<div id="photos-pagination" class="pagination-container">
+  <span id="pagination-info" class="pagination-info">Showing photos...</span>
+  <div class="pagination-controls">
+    <button id="btn-prev-page" class="btn-page" disabled>&laquo; Prev</button>
+    <div id="page-numbers" class="page-numbers-group"></div>
+    <button id="btn-next-page" class="btn-page">Next &raquo;</button>
+  </div>
+</div>
+
 <h2>
   Device History
 </h2>
@@ -531,8 +542,159 @@ const engineer =
   content: " ▼";
   color: #2563eb;
 }
+
+/* Photos Table Pagination Styles */
+.pagination-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+  margin-bottom: 28px;
+  padding: 12px 16px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.pagination-info {
+  font-size: 14px;
+  color: #4b5563;
+  font-weight: 500;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.page-numbers-group {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.btn-page {
+  padding: 6px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: white;
+  color: #374151;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.btn-page:hover:not(:disabled) {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.btn-page.active {
+  background: #2563eb;
+  color: white;
+  border-color: #2563eb;
+  font-weight: 700;
+}
+
+.btn-page:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 </style>
 <script type="module">
   import "../../scripts/engineers";
-  
+
+  function setupTablePagination(tableId, pageSize = 50) {
+    const table = document.getElementById(tableId);
+    if (!table) return;
+
+    const tbody = table.querySelector("tbody");
+    if (!tbody) return;
+
+    const rows = Array.from(tbody.querySelectorAll("tr"));
+    const totalRows = rows.length;
+    if (totalRows === 0) {
+      const container = document.getElementById("photos-pagination");
+      if (container) container.style.display = "none";
+      return;
+    }
+
+    if (totalRows <= pageSize) {
+      const container = document.getElementById("photos-pagination");
+      if (container) {
+        container.style.display = "flex";
+        const paginationInfo = document.getElementById("pagination-info");
+        if (paginationInfo) paginationInfo.textContent = `Showing all ${totalRows} photos`;
+        const prevBtn = document.getElementById("btn-prev-page");
+        const nextBtn = document.getElementById("btn-next-page");
+        if (prevBtn) prevBtn.disabled = true;
+        if (nextBtn) nextBtn.disabled = true;
+      }
+      return;
+    }
+
+    let currentPage = 1;
+    const totalPages = Math.ceil(totalRows / pageSize);
+
+    const prevBtn = document.getElementById("btn-prev-page");
+    const nextBtn = document.getElementById("btn-next-page");
+    const pageNumbersDiv = document.getElementById("page-numbers");
+    const paginationInfo = document.getElementById("pagination-info");
+
+    function renderPage(page) {
+      currentPage = page;
+      const startIdx = (page - 1) * pageSize;
+      const endIdx = Math.min(startIdx + pageSize, totalRows);
+
+      rows.forEach((row, idx) => {
+        row.style.display = idx >= startIdx && idx < endIdx ? "" : "none";
+      });
+
+      if (paginationInfo) {
+        paginationInfo.textContent = `Showing ${startIdx + 1}–${endIdx} of ${totalRows} photos`;
+      }
+
+      if (prevBtn) prevBtn.disabled = currentPage === 1;
+      if (nextBtn) nextBtn.disabled = currentPage === totalPages;
+
+      if (pageNumbersDiv) {
+        pageNumbersDiv.innerHTML = "";
+        for (let i = 1; i <= totalPages; i++) {
+          const btn = document.createElement("button");
+          btn.className = `btn-page ${i === currentPage ? "active" : ""}`;
+          btn.textContent = String(i);
+          btn.addEventListener("click", () => renderPage(i));
+          pageNumbersDiv.appendChild(btn);
+        }
+      }
+    }
+
+    if (prevBtn) {
+      prevBtn.addEventListener("click", () => {
+        if (currentPage > 1) renderPage(currentPage - 1);
+      });
+    }
+
+    if (nextBtn) {
+      nextBtn.addEventListener("click", () => {
+        if (currentPage < totalPages) renderPage(currentPage + 1);
+      });
+    }
+
+    renderPage(1);
+  }
+
+  function initPagination() {
+    setupTablePagination("photos-table", 50);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initPagination);
+  } else {
+    initPagination();
+  }
 </script>

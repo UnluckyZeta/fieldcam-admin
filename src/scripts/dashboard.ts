@@ -84,6 +84,20 @@ window.addEventListener(
         "click",
         exportCsv,
       );
+
+    document
+      .getElementById("dashboard-search")
+      ?.addEventListener("input", (e) => {
+        const query = (e.target as HTMLInputElement).value.toLowerCase().trim();
+        const tables = document.querySelectorAll(".dashboard-grid table");
+        tables.forEach((table) => {
+          const rows = table.querySelectorAll("tbody tr");
+          rows.forEach((row) => {
+            const text = row.textContent?.toLowerCase() ?? "";
+            (row as HTMLElement).style.display = text.includes(query) ? "" : "none";
+          });
+        });
+      });
   },
 );
 makeTableSortable("today-table");

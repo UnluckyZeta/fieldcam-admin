@@ -17,14 +17,9 @@ const ADMIN_PASSWORD =
     .PUBLIC_ADMIN_PASSWORD ??
   import.meta.env
     .ADMIN_PASSWORD;
-console.log(
-  import.meta.env
-    .PUBLIC_SUPABASE_FUNCTION_URL,
-);
+
 function getHeaders() {
-  console.log({
-    ADMIN_PASSWORD,
-  });
+
   return {
     "Content-Type": "application/json",
     Authorization: `Bearer ${TOKEN}`,
@@ -55,17 +50,19 @@ export async function getEngineer(
   engineer_id: string,
   from = "",
   to = "",
+  limit = 1000,
 ) {
   const response = await fetch(
     `${BASE_URL}/engineer-details`,
     {
       method: "POST",
       headers: getHeaders(),
-     body: JSON.stringify({
-  engineer_id,
-  from,
-  to,
-}),
+      body: JSON.stringify({
+        engineer_id,
+        from,
+        to,
+        limit,
+      }),
     },
   );
 
@@ -256,7 +253,6 @@ export async function resetDevice(
 
   return response.json();
 }
-console.log("BASE_URL =", BASE_URL);
 export async function getAdmins(
   admin_id: string,
 ) {

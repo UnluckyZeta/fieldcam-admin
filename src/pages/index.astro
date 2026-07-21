@@ -1,6 +1,6 @@
 ---
 import AdminLayout from "../layouts/AdminLayout.astro";
-import { getDashboard } from "../lib/api";
+import { getDashboard, getEngineers } from "../lib/api";
 
 function formatEgyptDate(
   date: string,
@@ -42,11 +42,14 @@ const adminId =
     ?.value ?? "";
     
 
-    const data =
-  await getDashboard(
-    from,
-    to,adminId
-  );
+const [data, engineersData] = await Promise.all([
+  getDashboard(from, to, adminId),
+  getEngineers("", "", adminId),
+]);
+
+const profilesMap = new Map(
+  (engineersData.engineers ?? []).map((e: any) => [e.id, e])
+);
    
 ---
 
@@ -78,6 +81,13 @@ const adminId =
     >
       Reset
     </a>
+
+    <input
+      id="dashboard-search"
+      type="text"
+      class="search-input"
+      placeholder="Search engineer by name or code..."
+    />
 
     <button
       id="export-btn"
@@ -139,43 +149,54 @@ const adminId =
         <tr>
           <th>Name</th>
           <th>Code</th>
+          <th>Region</th>
+          <th>Subregion</th>
           <th>Risk</th>
           <th>View</th>
         </tr>
       </thead>
 
       <tbody>
-        {data.high_risk_engineers??[].map(
+        {(data.high_risk_engineers ?? []).map(
           (
             engineer: any,
-          ) => (
-            <tr>
-              <td>
-                {
-                  engineer.full_name
-                }
-              </td>
+          ) => {
+            const p = profilesMap.get(engineer.id);
+            const region = engineer.region || p?.region || "-";
+            const subregion = engineer.subregion || p?.subregion || "-";
+            return (
+              <tr>
+                <td>
+                  {engineer.full_name}
+                </td>
 
-              <td>
-                {
-                  engineer.engineer_code
-                }
-              </td>
+                <td>
+                  {engineer.engineer_code}
+                </td>
 
-              <td>
-                ⚠ High
-              </td>
+                <td>
+                  {region}
+                </td>
 
-              <td>
-                <a
-                  class="btn"
-                  href={`/engineers/${engineer.id}`}
-                >
-                  View
-                </a>
-              </td>
-            </tr>
-          ),
+                <td>
+                  {subregion}
+                </td>
+
+                <td>
+                  ⚠ High
+                </td>
+
+                <td>
+                  <a
+                    class="btn"
+                    href={`/engineers/${engineer.id}`}
+                  >
+                    View
+                  </a>
+                </td>
+              </tr>
+            );
+          },
         )}
       </tbody>
     </table>
@@ -190,45 +211,58 @@ const adminId =
       <tr>
         <th>Engineer</th>
         <th>Code</th>
+        <th>Region</th>
+        <th>Subregion</th>
         <th>Photos</th>
         <th>Last Photo</th>
-        <th></th>
+        <th>View</th>
       </tr>
     </thead>
 
     <tbody>
       {
         data.engineers_today?.map(
-          (engineer: any) => (
-            <tr>
-              <td>
-                {engineer.full_name}
-              </td>
+          (engineer: any) => {
+            const p = profilesMap.get(engineer.id);
+            const region = engineer.region || p?.region || "-";
+            const subregion = engineer.subregion || p?.subregion || "-";
+            return (
+              <tr>
+                <td>
+                  {engineer.full_name}
+                </td>
 
-              <td>
-                {engineer.engineer_code}
-              </td>
+                <td>
+                  {engineer.engineer_code}
+                </td>
 
-              <td>
-                {engineer.photos}
-              </td>
+                <td>
+                  {region}
+                </td>
 
-              <td>
-           {formatEgyptDate(
-engineer.last_photo,
-)}
-              </td>
+                <td>
+                  {subregion}
+                </td>
 
-              <td>
-                <a
-                  class="btn"
-                  href={`/engineers/${engineer.id}`}
-                >
-                  View
-                </a>
-              </td>
-            </tr>
-          ),
+                <td>
+                  {engineer.photos}
+                </td>
+
+                <td>
+                  {formatEgyptDate(engineer.last_photo)}
+                </td>
+
+                <td>
+                  <a
+                    class="btn"
+                    href={`/engineers/${engineer.id}`}
+                  >
+                    View
+                  </a>
+                </td>
+              </tr>
+            );
+          },
         )
       }
     </tbody>

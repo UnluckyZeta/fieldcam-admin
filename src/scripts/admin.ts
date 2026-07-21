@@ -49,7 +49,6 @@ createAdminUi() {
     );
 
 if (!result.success) {
-  console.log(result);
 
   alert(
     JSON.stringify(
