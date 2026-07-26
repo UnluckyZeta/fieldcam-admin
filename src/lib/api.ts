@@ -105,6 +105,7 @@ body: JSON.stringify({
 export async function exportLogs(
   from = "",
   to = "",
+  engineer_id = "",
 ) {
   const response = await fetch(
     `${BASE_URL}/export-logs`,
@@ -114,6 +115,7 @@ export async function exportLogs(
       body: JSON.stringify({
         from,
         to,
+        engineer_id,
       }),
     },
   );

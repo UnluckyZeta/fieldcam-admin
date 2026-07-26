@@ -222,6 +222,24 @@ const engineer =
 >
   Reset
 </a>
+
+  <button
+    id="export-btn"
+    type="button"
+    class="btn-export"
+    data-engineer-id={id}
+  >
+    Export CSV
+  </button>
+
+  <button
+    id="export-all-btn"
+    type="button"
+    class="btn-export-all"
+    data-engineer-id={id}
+  >
+    Export All Time
+  </button>
 </form>
 
 <h2>Recent Photos</h2>
@@ -474,6 +492,13 @@ const engineer =
 .btn-reset:hover {
   background: #4b5563;
 }
+.btn-export-all {
+  background: #16a34a !important;
+  color: white;
+}
+.btn-export-all:hover {
+  background: #15803d !important;
+}
 
 .photos-table {
   width: 100%;
@@ -607,6 +632,64 @@ const engineer =
 </style>
 <script type="module">
   import "../../scripts/engineers";
+  import { exportLogs } from "../../lib/api";
+
+  async function exportCsv(allTime = false) {
+    const exportBtn = document.getElementById("export-btn");
+    const engineerId = exportBtn ? exportBtn.getAttribute("data-engineer-id") : "";
+
+    const fromInput = document.querySelector('input[name="from"]') as HTMLInputElement;
+    const toInput = document.querySelector('input[name="to"]') as HTMLInputElement;
+
+    const from = (!allTime && fromInput) ? fromInput.value : "";
+    const to = (!allTime && toInput) ? toInput.value : "";
+
+    try {
+      const result = await exportLogs(from, to, engineerId);
+      const rows = result.logs ?? [];
+
+      const csv = [
+        [
+          "Engineer",
+          "Engineer Code",
+          "Photo Tag",
+          "Latitude",
+          "Longitude",
+          "Address",
+          "Taken At",
+        ].join(","),
+        ...rows.map(
+          (row: any) =>
+            [
+              row.full_name,
+              row.engineer_code,
+              row.photo_tag,
+              row.latitude,
+              row.longitude,
+              `"${row.address ?? ""}"`,
+              row.taken_at,
+            ].join(","),
+        ),
+      ].join("\n");
+
+      const blob = new Blob([csv], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = allTime
+        ? `fieldcam-logs-${engineerId}-all-time.csv`
+        : `fieldcam-logs-${engineerId}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      alert("Failed to export: " + err);
+    }
+  }
+
+  function setupExportButtons() {
+    document.getElementById("export-btn")?.addEventListener("click", () => exportCsv(false));
+    document.getElementById("export-all-btn")?.addEventListener("click", () => exportCsv(true));
+  }
 
   function setupTablePagination(tableId, pageSize = 50) {
     const table = document.getElementById(tableId);
@@ -690,6 +773,7 @@ const engineer =
 
   function initPagination() {
     setupTablePagination("photos-table", 50);
+    setupExportButtons();
   }
 
   if (document.readyState === "loading") {
