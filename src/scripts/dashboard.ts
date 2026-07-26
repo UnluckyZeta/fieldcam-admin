@@ -3,11 +3,10 @@ import {
 } from "../lib/api";
 import { makeTableSortable } from "./table-sort";
 
-async function exportCsv() {
-  const params =
-    new URLSearchParams(
-      window.location.search,
-    );
+async function exportCsv(allTime = false) {
+  const params = allTime
+    ? new URLSearchParams()
+    : new URLSearchParams(window.location.search);
 
   const from =
     params.get("from") ?? "";
@@ -63,8 +62,9 @@ async function exportCsv() {
 
   a.href = url;
 
-  a.download =
-    "fieldcam-logs.csv";
+  a.download = allTime
+    ? "fieldcam-logs-all-time.csv"
+    : "fieldcam-logs.csv";
 
   a.click();
 
@@ -82,7 +82,16 @@ window.addEventListener(
       )
       ?.addEventListener(
         "click",
-        exportCsv,
+        () => exportCsv(false),
+      );
+
+    document
+      .getElementById(
+        "export-all-btn",
+      )
+      ?.addEventListener(
+        "click",
+        () => exportCsv(true),
       );
 
     document

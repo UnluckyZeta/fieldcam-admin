@@ -96,6 +96,14 @@ const profilesMap = new Map(
     >
       Export CSV
     </button>
+
+    <button
+      id="export-all-btn"
+      type="button"
+      class="btn-export-all"
+    >
+      Export All Time
+    </button>
   </form>
 </div>
   <div class="stats">
@@ -366,6 +374,13 @@ const profilesMap = new Map(
 
 .btn-reset:hover {
   background: #4b5563;
+}
+.btn-export-all {
+  background: #16a34a !important;
+  color: white;
+}
+.btn-export-all:hover {
+  background: #15803d !important;
 }
 .reset-btn {
   display: inline-flex;
