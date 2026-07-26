@@ -59,6 +59,13 @@ const offlineEngineers = (engineersData.engineers ?? []).filter(
   (e: any) => !activeIds.has(e.id)
 );
 
+// Compute photos count in the selected date range
+const photosInRange = (data.engineers_today ?? []).reduce(
+  (acc: number, e: any) => acc + (Number(e.photos) || 0),
+  0
+);
+const isDefaultToday = from === today && to === today;
+
 ---
 
 <AdminLayout title="Dashboard">
@@ -123,16 +130,16 @@ const offlineEngineers = (engineersData.engineers ?? []).filter(
     </div>
 
     <div class="stat-card">
-      <h3>Total Photos</h3>
+      <h3>{isDefaultToday ? "Photos Today" : "Photos in Range"}</h3>
       <p>
-        {data.total_photos}
+        {photosInRange}
       </p>
     </div>
 
     <div class="stat-card">
-      <h3>Photos Today</h3>
+      <h3>{isDefaultToday ? "Total Photos (All Time)" : "Active Engineers"}</h3>
       <p>
-        {data.photos_today}
+        {isDefaultToday ? data.total_photos : (data.engineers_today ?? []).length}
       </p>
     </div>
 
