@@ -50,7 +50,15 @@ const [data, engineersData] = await Promise.all([
 const profilesMap = new Map(
   (engineersData.engineers ?? []).map((e: any) => [e.id, e])
 );
-   
+
+// Compute offline engineers: those with NO activity in the selected date range
+const activeIds = new Set(
+  (data.engineers_today ?? []).map((e: any) => e.id)
+);
+const offlineEngineers = (engineersData.engineers ?? []).filter(
+  (e: any) => !activeIds.has(e.id)
+);
+
 ---
 
 <AdminLayout title="Dashboard">
@@ -142,6 +150,13 @@ const profilesMap = new Map(
         {
           data.gps_risk_engineers
         }
+      </p>
+    </div>
+
+    <div class="stat-card stat-card-warn">
+      <h3>Offline Engineers</h3>
+      <p class={offlineEngineers.length > 0 ? "danger" : "success"}>
+        {offlineEngineers.length}
       </p>
     </div>
   </div>
@@ -276,6 +291,54 @@ const profilesMap = new Map(
     </tbody>
   </table>
 </div>
+
+  <div class="section section-offline">
+    <h2>
+      🔴 Offline Engineers
+      <span class="offline-count">({offlineEngineers.length})</span>
+    </h2>
+    <p class="offline-hint">
+      Engineers who captured <strong>0 photos</strong> in the selected date range.
+    </p>
+
+    {offlineEngineers.length === 0 ? (
+      <p class="all-active-msg">✅ All engineers are active!</p>
+    ) : (
+      <table id="offline-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Code</th>
+            <th>Email</th>
+            <th>Region</th>
+            <th>Subregion</th>
+            <th>View</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {offlineEngineers.map((engineer: any) => {
+            const region = engineer.region || engineer.auto_region || "-";
+            const subregion = engineer.subregion || engineer.auto_subregion || "-";
+            return (
+              <tr>
+                <td>{engineer.full_name}</td>
+                <td>{engineer.engineer_code}</td>
+                <td>{engineer.email}</td>
+                <td>{region}</td>
+                <td>{subregion}</td>
+                <td>
+                  <a class="btn" href={`/engineers/${engineer.id}`}>
+                    View
+                  </a>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    )}
+  </div>
 </div>
 </AdminLayout>
 
@@ -469,6 +532,36 @@ const profilesMap = new Map(
 .sort-desc::after {
   content: " ▼";
   color: #2563eb;
+}
+
+.section-offline h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.offline-count {
+  font-size: 16px;
+  color: #6b7280;
+  font-weight: 400;
+}
+
+.offline-hint {
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: 16px;
+}
+
+.all-active-msg {
+  font-size: 16px;
+  color: #16a34a;
+  font-weight: 600;
+  padding: 24px 0;
+  text-align: center;
+}
+
+.stat-card-warn {
+  border-left: 4px solid #f59e0b;
 }
 </style>
 <script type="module">

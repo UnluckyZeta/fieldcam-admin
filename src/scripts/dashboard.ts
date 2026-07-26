@@ -106,3 +106,4 @@ window.addEventListener(
   },
 );
 makeTableSortable("today-table");
+makeTableSortable("offline-table");
