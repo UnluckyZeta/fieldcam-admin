@@ -4,15 +4,11 @@ import {
 import { makeTableSortable } from "./table-sort";
 
 async function exportCsv(allTime = false) {
-  const params = allTime
-    ? new URLSearchParams()
-    : new URLSearchParams(window.location.search);
+  const fromInput = document.querySelector('input[name="from"]') as HTMLInputElement;
+  const toInput = document.querySelector('input[name="to"]') as HTMLInputElement;
 
-  const from =
-    params.get("from") ?? "";
-
-  const to =
-    params.get("to") ?? "";
+  const from = (!allTime && fromInput) ? fromInput.value : "";
+  const to = (!allTime && toInput) ? toInput.value : "";
 
   const result =
     await exportLogs(
