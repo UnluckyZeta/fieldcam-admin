@@ -1,0 +1,376 @@
+---
+import AdminLayout from "../layouts/AdminLayout.astro";
+import { getDashboard, getEngineers } from "../lib/api";
+
+function formatEgyptDate(date: string) {
+  if (!date) return "Never";
+  return new Date(date)
+    .toLocaleString("en-US", {
+      timeZone: "Africa/Cairo",
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    })
+    .replace(",", " •");
+}
+
+const today = new Date().toISOString().split("T")[0];
+
+const from = Astro.url.searchParams.get("from") ?? today;
+const to = Astro.url.searchParams.get("to") ?? today;
+const adminId = Astro.cookies.get("admin_id")?.value ?? "";
+
+const [data, engineersData] = await Promise.all([
+  getDashboard(from, to, adminId),
+  getEngineers("", "", adminId),
+]);
+
+// Active engineers in date range
+const activeIds = new Set((data.engineers_today ?? []).map((e: any) => e.id));
+
+// Offline engineers = all engineers minus active ones
+const offlineEngineers = (engineersData.engineers ?? []).filter(
+  (e: any) => !activeIds.has(e.id)
+);
+---
+
+<AdminLayout title="Offline Engineers">
+  <div class="page-header">
+    <h1>🔴 Offline Engineers ({offlineEngineers.length})</h1>
+    <p class="subtitle">
+      Showing engineers who captured <strong>0 photos</strong> between {from} and {to}.
+    </p>
+  </div>
+
+  <div class="toolbar">
+    <form method="GET" class="filters">
+      <input
+        type="date"
+        name="from"
+        value={from}
+        onfocus="this.showPicker()"
+      />
+
+      <input
+        type="date"
+        name="to"
+        value={to}
+        onfocus="this.showPicker()"
+      />
+
+      <button type="submit">Apply Filter</button>
+
+      <a href="/offline-engineers" class="btn-reset">Reset</a>
+
+      <input
+        id="search"
+        type="text"
+        class="search-input"
+        placeholder="Search by name, code or email..."
+      />
+
+      <button
+        id="export-btn"
+        type="button"
+        class="btn-export-offline"
+      >
+        Export Offline CSV
+      </button>
+    </form>
+  </div>
+
+  <div class="stats">
+    <div class="stat-card">
+      <h3>Offline Engineers</h3>
+      <p class={offlineEngineers.length > 0 ? "danger" : "success"}>
+        {offlineEngineers.length}
+      </p>
+    </div>
+
+    <div class="stat-card">
+      <h3>Total Engineers</h3>
+      <p>{engineersData.engineers?.length ?? 0}</p>
+    </div>
+
+    <div class="stat-card">
+      <h3>Active Engineers in Range</h3>
+      <p>{activeIds.size}</p>
+    </div>
+  </div>
+
+  <div class="section">
+    {offlineEngineers.length === 0 ? (
+      <div class="empty-state">
+        <p class="all-active-msg">🎉 All engineers were active during this period!</p>
+      </div>
+    ) : (
+      <table id="offline-table" class="offline-table">
+        <thead>
+          <tr>
+            <th class="sortable">Name</th>
+            <th class="sortable">Code</th>
+            <th class="sortable">Email</th>
+            <th class="sortable">Governorate / Region</th>
+            <th class="sortable">Subregion</th>
+            <th class="sortable">Last Active</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {offlineEngineers.map((engineer: any) => {
+            const region = engineer.region || engineer.auto_region || "-";
+            const subregion = engineer.subregion || engineer.auto_subregion || "-";
+            return (
+              <tr>
+                <td><strong>{engineer.full_name || "Unnamed"}</strong></td>
+                <td><code>{engineer.engineer_code || "-"}</code></td>
+                <td>{engineer.email || "-"}</td>
+                <td>{region}</td>
+                <td>{subregion}</td>
+                <td>{engineer.last_photo_at ? formatEgyptDate(engineer.last_photo_at) : "Never"}</td>
+                <td>
+                  <a class="btn-view" href={`/engineers/${engineer.id}`}>
+                    View Profile
+                  </a>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    )}
+  </div>
+</AdminLayout>
+
+<style>
+  .page-header {
+    margin-bottom: 24px;
+  }
+
+  .page-header h1 {
+    margin: 0 0 6px 0;
+    font-size: 24px;
+    color: #111827;
+  }
+
+  .subtitle {
+    margin: 0;
+    font-size: 14px;
+    color: #6b7280;
+  }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .stat-card {
+    background: white;
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+
+  .stat-card h3 {
+    margin: 0;
+    font-size: 14px;
+    color: #666;
+  }
+
+  .stat-card p {
+    margin-top: 8px;
+    margin-bottom: 0;
+    font-size: 28px;
+    font-weight: 700;
+  }
+
+  .toolbar {
+    margin-bottom: 24px;
+  }
+
+  .filters {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .filters input[type="date"] {
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: white;
+    cursor: pointer;
+    min-width: 160px;
+  }
+
+  .search-input {
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    flex: 1;
+    min-width: 220px;
+  }
+
+  .filters button,
+  .btn-reset {
+    height: 40px;
+    padding: 0 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .filters button[type="submit"] {
+    background: #2563eb;
+    color: white;
+  }
+
+  .filters button[type="submit"]:hover {
+    background: #1d4ed8;
+  }
+
+  .btn-reset {
+    background: #6b7280;
+    color: white;
+  }
+
+  .btn-reset:hover {
+    background: #4b5563;
+  }
+
+  .btn-export-offline {
+    background: #f59e0b;
+    color: white;
+  }
+
+  .btn-export-offline:hover {
+    background: #d97706;
+  }
+
+  .section {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+
+  .offline-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .offline-table th,
+  .offline-table td {
+    padding: 12px;
+    border: 1px solid #e5e7eb;
+    text-align: left;
+  }
+
+  .offline-table th {
+    background: #f8fafc;
+    font-weight: 600;
+  }
+
+  .btn-view {
+    display: inline-block;
+    padding: 6px 12px;
+    background: #2563eb;
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    font-size: 13px;
+  }
+
+  .btn-view:hover {
+    background: #1d4ed8;
+  }
+
+  .danger {
+    color: #dc2626;
+  }
+
+  .success {
+    color: #16a34a;
+  }
+
+  .all-active-msg {
+    font-size: 18px;
+    color: #16a34a;
+    font-weight: 600;
+    padding: 40px 0;
+    text-align: center;
+  }
+
+  .sortable {
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .sortable:hover {
+    background: #eff6ff;
+  }
+</style>
+
+<script type="module">
+  import { requireAdmin } from "../lib/auth";
+  import { makeTableSortable } from "../scripts/table-sort";
+
+  requireAdmin();
+
+  // Search functionality
+  document.getElementById("search")?.addEventListener("input", (e) => {
+    const query = e.target.value.toLowerCase().trim();
+    const rows = document.querySelectorAll("#offline-table tbody tr");
+    rows.forEach((row) => {
+      const text = row.textContent?.toLowerCase() ?? "";
+      row.style.display = text.includes(query) ? "" : "none";
+    });
+  });
+
+  // Export CSV functionality
+  document.getElementById("export-btn")?.addEventListener("click", () => {
+    const table = document.getElementById("offline-table");
+    if (!table) {
+      alert("No offline engineers to export.");
+      return;
+    }
+
+    const headers = ["Name", "Code", "Email", "Region", "Subregion", "Last Active"];
+    const rows = table.querySelectorAll("tbody tr");
+    const csvRows = [headers.join(",")];
+
+    rows.forEach((row) => {
+      const cells = row.querySelectorAll("td");
+      const values = [];
+      for (let i = 0; i < cells.length - 1; i++) {
+        const text = (cells[i].textContent ?? "").trim().replace(/"/g, '""');
+        values.push(`"${text}"`);
+      }
+      csvRows.push(values.join(","));
+    });
+
+    const csv = csvRows.join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "fieldcam-offline-engineers.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  makeTableSortable("offline-table");
+</script>

@@ -102,42 +102,6 @@ window.addEventListener(
             (row as HTMLElement).style.display = text.includes(query) ? "" : "none";
           });
         });
-      });
-
-    document
-      .getElementById("export-offline-btn")
-      ?.addEventListener("click", () => {
-        const table = document.getElementById("offline-table");
-        if (!table) {
-          alert("No offline engineers to export.");
-          return;
-        }
-
-        const headers = ["Name", "Code", "Email", "Region", "Subregion"];
-        const rows = table.querySelectorAll("tbody tr");
-        const csvRows = [headers.join(",")];
-
-        rows.forEach((row) => {
-          const cells = row.querySelectorAll("td");
-          // Skip the last "View" column
-          const values: string[] = [];
-          for (let i = 0; i < cells.length - 1; i++) {
-            const text = (cells[i].textContent ?? "").trim().replace(/"/g, '""');
-            values.push(`"${text}"`);
-          }
-          csvRows.push(values.join(","));
-        });
-
-        const csv = csvRows.join("\n");
-        const blob = new Blob([csv], { type: "text/csv" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "fieldcam-offline-engineers.csv";
-        a.click();
-        URL.revokeObjectURL(url);
-      });
-  },
+      });  },
 );
 makeTableSortable("today-table");
-makeTableSortable("offline-table");
