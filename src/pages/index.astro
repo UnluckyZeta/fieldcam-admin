@@ -301,6 +301,14 @@ const offlineEngineers = (engineersData.engineers ?? []).filter(
       Engineers who captured <strong>0 photos</strong> in the selected date range.
     </p>
 
+    <button
+      id="export-offline-btn"
+      type="button"
+      class="btn-export-offline"
+    >
+      Export Offline CSV
+    </button>
+
     {offlineEngineers.length === 0 ? (
       <p class="all-active-msg">✅ All engineers are active!</p>
     ) : (
@@ -562,6 +570,22 @@ const offlineEngineers = (engineersData.engineers ?? []).filter(
 
 .stat-card-warn {
   border-left: 4px solid #f59e0b;
+}
+
+.btn-export-offline {
+  padding: 8px 16px;
+  background: #f59e0b;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 16px;
+}
+
+.btn-export-offline:hover {
+  background: #d97706;
 }
 </style>
 <script type="module">
