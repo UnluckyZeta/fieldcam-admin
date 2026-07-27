@@ -3,6 +3,28 @@ import {
 } from "../lib/api";
 import { makeTableSortable } from "./table-sort";
 
+const EGYPT_REGIONS = [
+  "cairo", "giza", "alexandria", "dakahlia", "sharqia", "gharbia", 
+  "port said", "ismailia", "suez", "beheira", "kafr el sheikh", 
+  "damietta", "minya", "assiut", "sohag", "qena", "luxor", "aswan",
+  "qalyubia", "monufia", "beni suef", "faiyum", "red sea", 
+  "new valley", "matrouh", "north sinai", "south sinai"
+];
+
+function getRegionData(row: any): string {
+  if (row.region && row.region.trim()) return row.region.trim();
+  if (row.auto_region && row.auto_region.trim()) return row.auto_region.trim();
+
+  const address = (row.address ?? "").toLowerCase();
+  if (address) {
+    const found = EGYPT_REGIONS.find((r) => address.includes(r));
+    if (found) {
+      return found.replace(/\b\w/g, (l) => l.toUpperCase());
+    }
+  }
+  return "-";
+}
+
 async function exportCsv(allTime = false) {
   const fromInput = document.querySelector('input[name="from"]') as HTMLInputElement;
   const toInput = document.querySelector('input[name="to"]') as HTMLInputElement;
@@ -24,7 +46,6 @@ async function exportCsv(allTime = false) {
       "Engineer",
       "Engineer Code",
       "Region",
-      "Subregion",
       "Photo Tag",
       "Latitude",
       "Longitude",
@@ -53,14 +74,12 @@ async function exportCsv(allTime = false) {
             timeStr = parts[1] ?? "";
           }
         }
-        const region = row.region || row.auto_region || "";
-        const subregion = row.subregion || row.auto_subregion || "";
+        const region = getRegionData(row);
 
         return [
           `"${(row.full_name ?? "").replace(/"/g, '""')}"`,
           `"${(row.engineer_code ?? "").replace(/"/g, '""')}"`,
           `"${region.replace(/"/g, '""')}"`,
-          `"${subregion.replace(/"/g, '""')}"`,
           `"${(row.photo_tag ?? "").replace(/"/g, '""')}"`,
           row.latitude ?? "",
           row.longitude ?? "",
