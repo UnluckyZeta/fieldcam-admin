@@ -343,35 +343,52 @@ const offlineEngineers = (engineersData.engineers ?? []).filter(
   });
 
   // Export CSV functionality
-  document.getElementById("export-btn")?.addEventListener("click", () => {
-    const table = document.getElementById("offline-table");
-    if (!table) {
-      alert("No offline engineers to export.");
-      return;
-    }
+  document.getElementById("export-btn")?.addEventListener("click", (e) => {
+    const btn = e.currentTarget as HTMLButtonElement;
+    const originalText = btn.textContent ?? "Export Offline CSV";
 
-    const headers = ["Name", "Code", "Email", "Region", "Subregion", "Last Active"];
-    const rows = table.querySelectorAll("tbody tr");
-    const csvRows = [headers.join(",")];
+    btn.disabled = true;
+    btn.textContent = "⏳ Exporting CSV...";
+    btn.style.opacity = "0.7";
+    btn.style.cursor = "wait";
 
-    rows.forEach((row) => {
-      const cells = row.querySelectorAll("td");
-      const values = [];
-      for (let i = 0; i < cells.length - 1; i++) {
-        const text = (cells[i].textContent ?? "").trim().replace(/"/g, '""');
-        values.push(`"${text}"`);
+    try {
+      const table = document.getElementById("offline-table");
+      if (!table) {
+        alert("No offline engineers to export.");
+        return;
       }
-      csvRows.push(values.join(","));
-    });
 
-    const csv = csvRows.join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "fieldcam-offline-engineers.csv";
-    a.click();
-    URL.revokeObjectURL(url);
+      const headers = ["Name", "Code", "Email", "Region", "Subregion", "Last Active"];
+      const rows = table.querySelectorAll("tbody tr");
+      const csvRows = [headers.join(",")];
+
+      rows.forEach((row) => {
+        const cells = row.querySelectorAll("td");
+        const values = [];
+        for (let i = 0; i < cells.length - 1; i++) {
+          const text = (cells[i].textContent ?? "").trim().replace(/"/g, '""');
+          values.push(`"${text}"`);
+        }
+        csvRows.push(values.join(","));
+      });
+
+      const csv = csvRows.join("\n");
+      const blob = new Blob([csv], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "fieldcam-offline-engineers.csv";
+      a.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setTimeout(() => {
+        btn.disabled = false;
+        btn.textContent = originalText;
+        btn.style.opacity = "1";
+        btn.style.cursor = "pointer";
+      }, 500);
+    }
   });
 
   makeTableSortable("offline-table");

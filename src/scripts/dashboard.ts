@@ -68,95 +68,117 @@ function getRegionData(row: any): string {
 }
 
 async function exportCsv(allTime = false) {
-  const fromInput = document.querySelector('input[name="from"]') as HTMLInputElement;
-  const toInput = document.querySelector('input[name="to"]') as HTMLInputElement;
+  const btnId = allTime ? "export-all-btn" : "export-btn";
+  const btn = document.getElementById(btnId) as HTMLButtonElement | null;
+  const originalText = btn ? btn.textContent ?? "" : "";
 
-  const from = (!allTime && fromInput) ? fromInput.value : "";
-  const to = (!allTime && toInput) ? toInput.value : "";
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "⏳ Exporting CSV...";
+    btn.style.opacity = "0.7";
+    btn.style.cursor = "wait";
+  }
 
-  const result =
-    await exportLogs(
-      from,
-      to,
-    );
+  try {
+    const fromInput = document.querySelector('input[name="from"]') as HTMLInputElement;
+    const toInput = document.querySelector('input[name="to"]') as HTMLInputElement;
 
-  const rows =
-    result.logs ?? [];
+    const from = (!allTime && fromInput) ? fromInput.value : "";
+    const to = (!allTime && toInput) ? toInput.value : "";
 
-  const csv = [
-    [
-      "Engineer",
-      "Engineer Code",
-      "Region",
-      "Photo Tag",
-      "Latitude",
-      "Longitude",
-      "Address",
-      "Date",
-      "Time",
-    ].join(","),
-    ...rows.map(
-      (row: any) => {
-        let dateStr = "";
-        let timeStr = "";
-        if (row.taken_at) {
-          try {
-            const d = new Date(row.taken_at);
-            if (!isNaN(d.getTime())) {
-              dateStr = d.toLocaleDateString("en-CA", { timeZone: "Africa/Cairo" });
-              timeStr = d.toLocaleTimeString("en-GB", { timeZone: "Africa/Cairo" });
-            } else {
+    const result =
+      await exportLogs(
+        from,
+        to,
+      );
+
+    const rows =
+      result.logs ?? [];
+
+    const csv = [
+      [
+        "Engineer",
+        "Engineer Code",
+        "Region",
+        "Photo Tag",
+        "Latitude",
+        "Longitude",
+        "Address",
+        "Date",
+        "Time",
+      ].join(","),
+      ...rows.map(
+        (row: any) => {
+          let dateStr = "";
+          let timeStr = "";
+          if (row.taken_at) {
+            try {
+              const d = new Date(row.taken_at);
+              if (!isNaN(d.getTime())) {
+                dateStr = d.toLocaleDateString("en-CA", { timeZone: "Africa/Cairo" });
+                timeStr = d.toLocaleTimeString("en-GB", { timeZone: "Africa/Cairo" });
+              } else {
+                const parts = String(row.taken_at).split(/[T ]/);
+                dateStr = parts[0] ?? "";
+                timeStr = parts[1] ?? "";
+              }
+            } catch {
               const parts = String(row.taken_at).split(/[T ]/);
               dateStr = parts[0] ?? "";
               timeStr = parts[1] ?? "";
             }
-          } catch {
-            const parts = String(row.taken_at).split(/[T ]/);
-            dateStr = parts[0] ?? "";
-            timeStr = parts[1] ?? "";
           }
+          const region = getRegionData(row);
+
+          return [
+            `"${(row.full_name ?? "").replace(/"/g, '""')}"`,
+            `"${(row.engineer_code ?? "").replace(/"/g, '""')}"`,
+            `"${region.replace(/"/g, '""')}"`,
+            `"${(row.photo_tag ?? "").replace(/"/g, '""')}"`,
+            row.latitude ?? "",
+            row.longitude ?? "",
+            `"${(row.address ?? "").replace(/"/g, '""')}"`,
+            dateStr,
+            timeStr,
+          ].join(",");
         }
-        const region = getRegionData(row);
+      ),
+    ].join("\n");
 
-        return [
-          `"${(row.full_name ?? "").replace(/"/g, '""')}"`,
-          `"${(row.engineer_code ?? "").replace(/"/g, '""')}"`,
-          `"${region.replace(/"/g, '""')}"`,
-          `"${(row.photo_tag ?? "").replace(/"/g, '""')}"`,
-          row.latitude ?? "",
-          row.longitude ?? "",
-          `"${(row.address ?? "").replace(/"/g, '""')}"`,
-          dateStr,
-          timeStr,
-        ].join(",");
-      }
-    ),
-  ].join("\n");
+    const blob =
+      new Blob([csv], {
+        type: "text/csv",
+      });
 
-  const blob =
-    new Blob([csv], {
-      type: "text/csv",
-    });
+    const url =
+      URL.createObjectURL(
+        blob,
+      );
 
-  const url =
-    URL.createObjectURL(
-      blob,
+    const a =
+      document.createElement("a");
+
+    a.href = url;
+
+    a.download = allTime
+      ? "fieldcam-logs-all-time.csv"
+      : "fieldcam-logs.csv";
+
+    a.click();
+
+    URL.revokeObjectURL(
+      url,
     );
-
-  const a =
-    document.createElement("a");
-
-  a.href = url;
-
-  a.download = allTime
-    ? "fieldcam-logs-all-time.csv"
-    : "fieldcam-logs.csv";
-
-  a.click();
-
-  URL.revokeObjectURL(
-    url,
-  );
+  } finally {
+    if (btn) {
+      setTimeout(() => {
+        btn.disabled = false;
+        btn.textContent = originalText;
+        btn.style.opacity = "1";
+        btn.style.cursor = "pointer";
+      }, 500);
+    }
+  }
 }
 
 window.addEventListener(
