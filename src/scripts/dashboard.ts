@@ -3,25 +3,67 @@ import {
 } from "../lib/api";
 import { makeTableSortable } from "./table-sort";
 
-const EGYPT_REGIONS = [
-  "cairo", "giza", "alexandria", "dakahlia", "sharqia", "gharbia", 
-  "port said", "ismailia", "suez", "beheira", "kafr el sheikh", 
-  "damietta", "minya", "assiut", "sohag", "qena", "luxor", "aswan",
-  "qalyubia", "monufia", "beni suef", "faiyum", "red sea", 
-  "new valley", "matrouh", "north sinai", "south sinai"
+const EGYPT_GOVERNORATES: { name: string; keywords: string[] }[] = [
+  { name: "Cairo", keywords: ["cairo", "القاهرة", "القاهره"] },
+  { name: "Giza", keywords: ["giza", "الجيزة", "الجيزه"] },
+  { name: "Alexandria", keywords: ["alexandria", "الإسكندرية", "الاسكندرية", "اسكندرية", "الإسكندريه", "الاسكندريه"] },
+  { name: "Qalyubia", keywords: ["qalyubia", "القليوبية", "القليوبيه", "قليوبية"] },
+  { name: "Dakahlia", keywords: ["dakahlia", "الدقهلية", "الدقهليه", "دقهلية"] },
+  { name: "Sharqia", keywords: ["sharqia", "الشرقية", "الشرقيه", "شرقية"] },
+  { name: "Gharbia", keywords: ["gharbia", "الغربية", "الغربيه", "غربية"] },
+  { name: "Monufia", keywords: ["monufia", "المنوفية", "المنوفيه", "منوفية"] },
+  { name: "Beheira", keywords: ["beheira", "البحيرة", "البحيره", "بحيرة"] },
+  { name: "Port Said", keywords: ["port said", "بورسعيد"] },
+  { name: "Ismailia", keywords: ["ismailia", "الإسماعيلية", "الاسماعيلية", "اسماعيلية"] },
+  { name: "Suez", keywords: ["suez", "السويس"] },
+  { name: "Kafr El Sheikh", keywords: ["kafr el sheikh", "كفر الشيخ", "كفرالشيخ"] },
+  { name: "Damietta", keywords: ["damietta", "دمياط"] },
+  { name: "Minya", keywords: ["minya", "المنيا"] },
+  { name: "Beni Suef", keywords: ["beni suef", "بني سويف", "بنى سويف"] },
+  { name: "Faiyum", keywords: ["faiyum", "fayoum", "الفيوم"] },
+  { name: "Assiut", keywords: ["assiut", "أسيوط", "اسيوط"] },
+  { name: "Sohag", keywords: ["sohag", "سوهاج"] },
+  { name: "Qena", keywords: ["qena", "قنا"] },
+  { name: "Luxor", keywords: ["luxor", "الأقصر", "الاقصر"] },
+  { name: "Aswan", keywords: ["aswan", "أسوان", "اسوان"] },
+  { name: "Red Sea", keywords: ["red sea", "البحر الأحمر", "البحر الاحمر"] },
+  { name: "New Valley", keywords: ["new valley", "الوادي الجديد", "الوادى الجديد"] },
+  { name: "Matrouh", keywords: ["matrouh", "مطروح"] },
+  { name: "North Sinai", keywords: ["north sinai", "شمال سيناء"] },
+  { name: "South Sinai", keywords: ["south sinai", "جنوب سيناء"] },
 ];
 
 function getRegionData(row: any): string {
-  if (row.region && row.region.trim()) return row.region.trim();
-  if (row.auto_region && row.auto_region.trim()) return row.auto_region.trim();
+  // 1. Check assigned region from user profile
+  if (row.region && row.region.trim() && row.region.trim() !== "-") {
+    return row.region.trim();
+  }
+  if (row.auto_region && row.auto_region.trim() && row.auto_region.trim() !== "-") {
+    return row.auto_region.trim();
+  }
 
+  // 2. Check address (Arabic & English matching)
   const address = (row.address ?? "").toLowerCase();
   if (address) {
-    const found = EGYPT_REGIONS.find((r) => address.includes(r));
-    if (found) {
-      return found.replace(/\b\w/g, (l) => l.toUpperCase());
+    for (const gov of EGYPT_GOVERNORATES) {
+      for (const kw of gov.keywords) {
+        if (address.includes(kw)) {
+          return gov.name;
+        }
+      }
     }
   }
+
+  // 3. Fallback coordinate check (Egypt latitude range check if available)
+  const lat = parseFloat(row.latitude);
+  const lng = parseFloat(row.longitude);
+  if (!isNaN(lat) && !isNaN(lng)) {
+    if (lat >= 31.0 && lat <= 31.6 && lng >= 30.2 && lng <= 31.2) return "Kafr El Sheikh";
+    if (lat >= 29.8 && lat <= 30.3 && lng >= 31.0 && lng <= 31.5) return "Cairo";
+    if (lat >= 29.7 && lat <= 30.1 && lng >= 30.8 && lng <= 31.4) return "Giza";
+    if (lat >= 31.0 && lat <= 31.4 && lng >= 29.7 && lng <= 30.2) return "Alexandria";
+  }
+
   return "-";
 }
 
