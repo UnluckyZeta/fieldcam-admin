@@ -6,7 +6,7 @@ import { makeTableSortable } from "./table-sort";
 const EGYPT_GOVERNORATES: { name: string; keywords: string[]; latRange?: [number, number]; lngRange?: [number, number] }[] = [
   { name: "Cairo", keywords: ["cairo", "القاهرة", "القاهره", "helwan", "حلوان", "nasr city", "مدينة نصر", "maadi", "المعادي", "new cairo", "القاهرة الجديدة", "شبرا", "shobra"], latRange: [29.8, 30.3], lngRange: [31.1, 31.7] },
   { name: "Giza", keywords: ["giza", "الجيزة", "الجيزه", "october", "أكتوبر", "اكتوبر", "zayed", "زايد", "imbaba", "إمبابة", "امبابة"], latRange: [29.5, 30.2], lngRange: [30.5, 31.1] },
-  { name: "Monufia", keywords: ["monufia", "المنوفية", "المنوفيه", "منوفية", "al khadra", "الخضرة", "الخضره", "shebin", "شبين", "ashmoun", "أشمون", "اشمون", "bagour", "الباجور", "menouf", "منوف"], latRange: [30.2, 30.8], lngRange: [30.7, 31.3] },
+  { name: "Monufia", keywords: ["monufia", "menofia", "menoufia", "monofia", "المنوفية", "المنوفيه", "منوفية", "al khadra", "الخضرة", "الخضره", "shebin", "شبين", "ashmoun", "أشمون", "اشمون", "bagour", "الباجور", "menouf", "منوف"], latRange: [30.2, 30.8], lngRange: [30.7, 31.3] },
   { name: "Qalyubia", keywords: ["qalyubia", "القليوبية", "القليوبيه", "قليوبية", "banha", "بنها", "qalyub", "قليوب"], latRange: [30.1, 30.6], lngRange: [31.1, 31.4] },
   { name: "Gharbia", keywords: ["gharbia", "الغربية", "الغربيه", "غربية", "tanta", "طنطا", "mahalla", "المحلة", "المحله"], latRange: [30.7, 31.1], lngRange: [30.8, 31.3] },
   { name: "Kafr El Sheikh", keywords: ["kafr el sheikh", "كفر الشيخ", "كفرالشيخ", "metoubes", "مطوبس", "desouk", "دسوق", "baltim", "بلطيم"], latRange: [31.0, 31.6], lngRange: [30.3, 31.3] },
