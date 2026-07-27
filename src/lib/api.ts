@@ -28,6 +28,18 @@ function getHeaders() {
   };
 }
 
+function formatCairoStart(dateStr: string) {
+  if (!dateStr) return "";
+  if (dateStr.includes("T")) return dateStr;
+  return `${dateStr}T00:00:00+03:00`;
+}
+
+function formatCairoEnd(dateStr: string) {
+  if (!dateStr) return "";
+  if (dateStr.includes("T")) return dateStr;
+  return `${dateStr}T23:59:59+03:00`;
+}
+
 export async function getEngineers(
   from = "",
   to = "",admin_id=""
@@ -38,8 +50,9 @@ export async function getEngineers(
       method: "POST",
       headers: getHeaders(),
       body: JSON.stringify({
-        from,
-        to,admin_id
+        from: formatCairoStart(from),
+        to: formatCairoEnd(to),
+        admin_id
       }),
     },
   );
@@ -59,8 +72,8 @@ export async function getEngineer(
       headers: getHeaders(),
       body: JSON.stringify({
         engineer_id,
-        from,
-        to,
+        from: formatCairoStart(from),
+        to: formatCairoEnd(to),
         limit,
       }),
     },
@@ -94,10 +107,12 @@ export async function getDashboard(  from = "",
     {
       method: "POST",
       headers: getHeaders(),
-body: JSON.stringify({
-        from,
-        to,admin_id
-      }),    },
+      body: JSON.stringify({
+        from: formatCairoStart(from),
+        to: formatCairoEnd(to),
+        admin_id
+      }),
+    },
   );
 
   return response.json();
@@ -113,8 +128,8 @@ export async function exportLogs(
       method: "POST",
       headers: getHeaders(),
       body: JSON.stringify({
-        from,
-        to,
+        from: formatCairoStart(from),
+        to: formatCairoEnd(to),
         engineer_id,
       }),
     },

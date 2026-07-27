@@ -17,7 +17,9 @@ function formatEgyptDate(date: string) {
     .replace(",", " •");
 }
 
-const today = new Date().toISOString().split("T")[0];
+const today = new Date().toLocaleDateString("en-CA", {
+  timeZone: "Africa/Cairo",
+});
 
 const from = Astro.url.searchParams.get("from") ?? today;
 const to = Astro.url.searchParams.get("to") ?? today;
