@@ -23,23 +23,52 @@ async function exportCsv(allTime = false) {
     [
       "Engineer",
       "Engineer Code",
+      "Region",
+      "Subregion",
       "Photo Tag",
       "Latitude",
       "Longitude",
       "Address",
-      "Taken At",
+      "Date",
+      "Time",
     ].join(","),
     ...rows.map(
-      (row: any) =>
-        [
-          row.full_name,
-          row.engineer_code,
-          row.photo_tag,
-          row.latitude,
-          row.longitude,
-          `"${row.address ?? ""}"`,
-          row.taken_at,
-        ].join(","),
+      (row: any) => {
+        let dateStr = "";
+        let timeStr = "";
+        if (row.taken_at) {
+          try {
+            const d = new Date(row.taken_at);
+            if (!isNaN(d.getTime())) {
+              dateStr = d.toLocaleDateString("en-CA", { timeZone: "Africa/Cairo" });
+              timeStr = d.toLocaleTimeString("en-GB", { timeZone: "Africa/Cairo" });
+            } else {
+              const parts = String(row.taken_at).split(/[T ]/);
+              dateStr = parts[0] ?? "";
+              timeStr = parts[1] ?? "";
+            }
+          } catch {
+            const parts = String(row.taken_at).split(/[T ]/);
+            dateStr = parts[0] ?? "";
+            timeStr = parts[1] ?? "";
+          }
+        }
+        const region = row.region || row.auto_region || "";
+        const subregion = row.subregion || row.auto_subregion || "";
+
+        return [
+          `"${(row.full_name ?? "").replace(/"/g, '""')}"`,
+          `"${(row.engineer_code ?? "").replace(/"/g, '""')}"`,
+          `"${region.replace(/"/g, '""')}"`,
+          `"${subregion.replace(/"/g, '""')}"`,
+          `"${(row.photo_tag ?? "").replace(/"/g, '""')}"`,
+          row.latitude ?? "",
+          row.longitude ?? "",
+          `"${(row.address ?? "").replace(/"/g, '""')}"`,
+          dateStr,
+          timeStr,
+        ].join(",");
+      }
     ),
   ].join("\n");
 
