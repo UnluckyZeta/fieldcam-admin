@@ -3,38 +3,38 @@ import {
 } from "../lib/api";
 import { makeTableSortable } from "./table-sort";
 
-const EGYPT_GOVERNORATES: { name: string; keywords: string[] }[] = [
-  { name: "Cairo", keywords: ["cairo", "القاهرة", "القاهره"] },
-  { name: "Giza", keywords: ["giza", "الجيزة", "الجيزه"] },
-  { name: "Alexandria", keywords: ["alexandria", "الإسكندرية", "الاسكندرية", "اسكندرية", "الإسكندريه", "الاسكندريه"] },
-  { name: "Qalyubia", keywords: ["qalyubia", "القليوبية", "القليوبيه", "قليوبية"] },
-  { name: "Dakahlia", keywords: ["dakahlia", "الدقهلية", "الدقهليه", "دقهلية"] },
-  { name: "Sharqia", keywords: ["sharqia", "الشرقية", "الشرقيه", "شرقية"] },
-  { name: "Gharbia", keywords: ["gharbia", "الغربية", "الغربيه", "غربية"] },
-  { name: "Monufia", keywords: ["monufia", "المنوفية", "المنوفيه", "منوفية"] },
-  { name: "Beheira", keywords: ["beheira", "البحيرة", "البحيره", "بحيرة"] },
-  { name: "Port Said", keywords: ["port said", "بورسعيد"] },
-  { name: "Ismailia", keywords: ["ismailia", "الإسماعيلية", "الاسماعيلية", "اسماعيلية"] },
-  { name: "Suez", keywords: ["suez", "السويس"] },
-  { name: "Kafr El Sheikh", keywords: ["kafr el sheikh", "كفر الشيخ", "كفرالشيخ"] },
-  { name: "Damietta", keywords: ["damietta", "دمياط"] },
-  { name: "Minya", keywords: ["minya", "المنيا"] },
-  { name: "Beni Suef", keywords: ["beni suef", "بني سويف", "بنى سويف"] },
-  { name: "Faiyum", keywords: ["faiyum", "fayoum", "الفيوم"] },
-  { name: "Assiut", keywords: ["assiut", "أسيوط", "اسيوط"] },
-  { name: "Sohag", keywords: ["sohag", "سوهاج"] },
-  { name: "Qena", keywords: ["qena", "قنا"] },
-  { name: "Luxor", keywords: ["luxor", "الأقصر", "الاقصر"] },
-  { name: "Aswan", keywords: ["aswan", "أسوان", "اسوان"] },
-  { name: "Red Sea", keywords: ["red sea", "البحر الأحمر", "البحر الاحمر"] },
+const EGYPT_GOVERNORATES: { name: string; keywords: string[]; latRange?: [number, number]; lngRange?: [number, number] }[] = [
+  { name: "Cairo", keywords: ["cairo", "القاهرة", "القاهره", "helwan", "حلوان", "nasr city", "مدينة نصر", "maadi", "المعادي", "new cairo", "القاهرة الجديدة", "شبرا", "shobra"], latRange: [29.8, 30.3], lngRange: [31.1, 31.7] },
+  { name: "Giza", keywords: ["giza", "الجيزة", "الجيزه", "october", "أكتوبر", "اكتوبر", "zayed", "زايد", "imbaba", "إمبابة", "امبابة"], latRange: [29.5, 30.2], lngRange: [30.5, 31.1] },
+  { name: "Monufia", keywords: ["monufia", "المنوفية", "المنوفيه", "منوفية", "al khadra", "الخضرة", "الخضره", "shebin", "شبين", "ashmoun", "أشمون", "اشمون", "bagour", "الباجور", "menouf", "منوف"], latRange: [30.2, 30.8], lngRange: [30.7, 31.3] },
+  { name: "Qalyubia", keywords: ["qalyubia", "القليوبية", "القليوبيه", "قليوبية", "banha", "بنها", "qalyub", "قليوب"], latRange: [30.1, 30.6], lngRange: [31.1, 31.4] },
+  { name: "Gharbia", keywords: ["gharbia", "الغربية", "الغربيه", "غربية", "tanta", "طنطا", "mahalla", "المحلة", "المحله"], latRange: [30.7, 31.1], lngRange: [30.8, 31.3] },
+  { name: "Kafr El Sheikh", keywords: ["kafr el sheikh", "كفر الشيخ", "كفرالشيخ", "metoubes", "مطوبس", "desouk", "دسوق", "baltim", "بلطيم"], latRange: [31.0, 31.6], lngRange: [30.3, 31.3] },
+  { name: "Dakahlia", keywords: ["dakahlia", "الدقهلية", "الدقهليه", "دقهلية", "mansoura", "المنصورة", "المنصوره", "talkha", "طلخا"], latRange: [30.8, 31.5], lngRange: [31.2, 31.8] },
+  { name: "Sharqia", keywords: ["sharqia", "الشرقية", "الشرقيه", "شرقية", "zagazig", "الزقازيق", "belbeis", "بلبيس"], latRange: [30.3, 31.1], lngRange: [31.4, 32.2] },
+  { name: "Beheira", keywords: ["beheira", "البحيرة", "البحيره", "بحيرة", "damanhour", "دمنهور", "kafr el dawwar", "كفر الدوار"], latRange: [30.4, 31.3], lngRange: [29.8, 30.8] },
+  { name: "Alexandria", keywords: ["alexandria", "الإسكندرية", "الاسكندرية", "اسكندرية", "الإسكندريه", "الاسكندريه", "borg el arab", "برج العرب"], latRange: [30.9, 31.4], lngRange: [29.5, 30.3] },
+  { name: "Port Said", keywords: ["port said", "بورسعيد"], latRange: [31.1, 31.4], lngRange: [32.1, 32.4] },
+  { name: "Ismailia", keywords: ["ismailia", "الإسماعيلية", "الاسماعيلية", "اسماعيلية"], latRange: [30.4, 30.8], lngRange: [32.1, 32.5] },
+  { name: "Suez", keywords: ["suez", "السويس"], latRange: [29.8, 30.1], lngRange: [32.3, 32.6] },
+  { name: "Damietta", keywords: ["damietta", "دمياط"], latRange: [31.3, 31.6], lngRange: [31.6, 32.0] },
+  { name: "Minya", keywords: ["minya", "المنيا"], latRange: [27.9, 28.7], lngRange: [30.5, 31.0] },
+  { name: "Beni Suef", keywords: ["beni suef", "بني سويف", "بنى سويف"], latRange: [28.9, 29.3], lngRange: [30.8, 31.3] },
+  { name: "Faiyum", keywords: ["faiyum", "fayoum", "الفيوم"], latRange: [29.1, 29.6], lngRange: [30.3, 31.0] },
+  { name: "Assiut", keywords: ["assiut", "أسيوط", "اسيوط"], latRange: [27.0, 27.5], lngRange: [30.9, 31.4] },
+  { name: "Sohag", keywords: ["sohag", "سوهاج"], latRange: [26.4, 26.8], lngRange: [31.5, 31.9] },
+  { name: "Qena", keywords: ["qena", "قنا"], latRange: [25.9, 26.4], lngRange: [32.5, 32.9] },
+  { name: "Luxor", keywords: ["luxor", "الأقصر", "الاقصر"], latRange: [25.6, 25.9], lngRange: [32.5, 32.8] },
+  { name: "Aswan", keywords: ["aswan", "أسوان", "اسوان"], latRange: [23.9, 24.3], lngRange: [32.7, 33.1] },
+  { name: "Red Sea", keywords: ["red sea", "البحر الأحمر", "البحر الاحمر", "hurghada", "الغردقة"] },
   { name: "New Valley", keywords: ["new valley", "الوادي الجديد", "الوادى الجديد"] },
   { name: "Matrouh", keywords: ["matrouh", "مطروح"] },
   { name: "North Sinai", keywords: ["north sinai", "شمال سيناء"] },
-  { name: "South Sinai", keywords: ["south sinai", "جنوب سيناء"] },
+  { name: "South Sinai", keywords: ["south sinai", "جنوب سيناء", "sharm", "شرم الشيخ"] },
 ];
 
 function getRegionData(row: any): string {
-  // 1. Check assigned region from user profile
+  // 1. Profile assigned region
   if (row.region && row.region.trim() && row.region.trim() !== "-") {
     return row.region.trim();
   }
@@ -42,7 +42,7 @@ function getRegionData(row: any): string {
     return row.auto_region.trim();
   }
 
-  // 2. Check address (Arabic & English matching)
+  // 2. Keyword matching in address string
   const address = (row.address ?? "").toLowerCase();
   if (address) {
     for (const gov of EGYPT_GOVERNORATES) {
@@ -54,14 +54,22 @@ function getRegionData(row: any): string {
     }
   }
 
-  // 3. Fallback coordinate check (Egypt latitude range check if available)
+  // 3. Precise coordinate range check
   const lat = parseFloat(row.latitude);
   const lng = parseFloat(row.longitude);
   if (!isNaN(lat) && !isNaN(lng)) {
-    if (lat >= 31.0 && lat <= 31.6 && lng >= 30.2 && lng <= 31.2) return "Kafr El Sheikh";
-    if (lat >= 29.8 && lat <= 30.3 && lng >= 31.0 && lng <= 31.5) return "Cairo";
-    if (lat >= 29.7 && lat <= 30.1 && lng >= 30.8 && lng <= 31.4) return "Giza";
-    if (lat >= 31.0 && lat <= 31.4 && lng >= 29.7 && lng <= 30.2) return "Alexandria";
+    for (const gov of EGYPT_GOVERNORATES) {
+      if (gov.latRange && gov.lngRange) {
+        if (
+          lat >= gov.latRange[0] &&
+          lat <= gov.latRange[1] &&
+          lng >= gov.lngRange[0] &&
+          lng <= gov.lngRange[1]
+        ) {
+          return gov.name;
+        }
+      }
+    }
   }
 
   return "-";
