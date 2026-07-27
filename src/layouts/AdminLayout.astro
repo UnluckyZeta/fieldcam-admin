@@ -1,5 +1,6 @@
 ---
 import Sidebar from "../components/Sidebar.astro";
+import { ClientRouter } from "astro:transitions";
 
 const {
   title = "FieldCam Admin",
@@ -29,9 +30,11 @@ if (!isLoginPage && !adminId) {
     />
 
     <title>{title}</title>
+    <ClientRouter />
   </head>
 
   <body>
+    <div id="nav-progress-bar" class="nav-progress-bar"></div>
     {
       isLoginPage ? (
         <main class="login-main">
@@ -50,6 +53,34 @@ if (!isLoginPage && !adminId) {
   </body>
 </html>
 
+<script>
+  document.addEventListener("astro:before-preparation", () => {
+    const bar = document.getElementById("nav-progress-bar");
+    if (bar) {
+      bar.style.width = "40%";
+      bar.style.opacity = "1";
+    }
+  });
+
+  document.addEventListener("astro:after-preparation", () => {
+    const bar = document.getElementById("nav-progress-bar");
+    if (bar) {
+      bar.style.width = "80%";
+    }
+  });
+
+  document.addEventListener("astro:page-load", () => {
+    const bar = document.getElementById("nav-progress-bar");
+    if (bar) {
+      bar.style.width = "100%";
+      setTimeout(() => {
+        bar.style.opacity = "0";
+        bar.style.width = "0%";
+      }, 200);
+    }
+  });
+</script>
+
 <style>
   body {
     margin: 0;
@@ -57,6 +88,19 @@ if (!isLoginPage && !adminId) {
       Arial,
       sans-serif;
     background: #f5f5f5;
+  }
+
+  .nav-progress-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 3px;
+    background: #2563eb;
+    width: 0%;
+    opacity: 0;
+    transition: width 0.2s ease, opacity 0.2s ease;
+    z-index: 9999;
+    pointer-events: none;
   }
 
   .app {
