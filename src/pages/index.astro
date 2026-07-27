@@ -47,15 +47,15 @@ const [data, engineersData] = await Promise.all([
 ]);
 
 const profilesMap = new Map(
-  (engineersData.engineers ?? []).map((e: any) => [e.id, e])
+  (engineersData.engineers ?? []).map((e: any) => [e.id || e.engineer_id, e])
 );
 
 // Compute offline engineers: those with NO activity in the selected date range
 const activeIds = new Set(
-  (data.engineers_today ?? []).map((e: any) => e.id)
+  (data.engineers_today ?? []).map((e: any) => e.id || e.engineer_id)
 );
 const offlineEngineers = (engineersData.engineers ?? []).filter(
-  (e: any) => !activeIds.has(e.id)
+  (e: any) => !activeIds.has(e.id || e.engineer_id)
 );
 
 // Compute photos count in the selected date range
@@ -252,7 +252,8 @@ const isDefaultToday = from === today && to === today;
       {
         data.engineers_today?.map(
           (engineer: any) => {
-            const p = profilesMap.get(engineer.id);
+            const engineerId = engineer.id || engineer.engineer_id;
+            const p = profilesMap.get(engineerId);
             const region = engineer.region || p?.region || "-";
             const subregion = engineer.subregion || p?.subregion || "-";
             return (
@@ -284,7 +285,7 @@ const isDefaultToday = from === today && to === today;
                 <td>
                   <a
                     class="btn"
-                    href={`/engineers/${engineer.id}`}
+                    href={`/engineers/${engineerId}`}
                   >
                     View
                   </a>

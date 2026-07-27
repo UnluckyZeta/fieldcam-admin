@@ -31,11 +31,11 @@ const [data, engineersData] = await Promise.all([
 ]);
 
 // Active engineers in date range
-const activeIds = new Set((data.engineers_today ?? []).map((e: any) => e.id));
+const activeIds = new Set((data.engineers_today ?? []).map((e: any) => e.id || e.engineer_id));
 
 // Offline engineers = all engineers minus active ones
 const offlineEngineers = (engineersData.engineers ?? []).filter(
-  (e: any) => !activeIds.has(e.id)
+  (e: any) => !activeIds.has(e.id || e.engineer_id)
 );
 ---
 
