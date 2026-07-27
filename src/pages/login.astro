@@ -159,84 +159,81 @@ if (session) {
 }
 
 document
-  .getElementById(
-    "login-form",
-  )
-  ?.addEventListener(
-    "submit",
-    async (e) => {
-      e.preventDefault();
+  .getElementById("login-form")
+  ?.addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-      const email =
-        document.getElementById(
-          "email",
-        )?.value ?? "";
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Logging in...";
+    }
 
-      const password =
-        document.getElementById(
-          "password",
-        )?.value ?? "";
+    const email = (document.getElementById("email") as HTMLInputElement)?.value ?? "";
+    const password = (document.getElementById("password") as HTMLInputElement)?.value ?? "";
 
-      const {
-        error,
-      } =
-        await supabase.auth.signInWithPassword(
-          {
-            email,
-            password,
-          },
-        );
+    try {
+      const { data: authData, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
       if (error) {
-        alert(
-          error.message,
-        );
+        alert(error.message);
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = "Login";
+        }
         return;
       }
-      const {
-  data: { user },
-} =
-  await supabase.auth.getUser();
 
-const { data: admin } =
-  await supabase
-    .from("admin_users")
-  .select(`
-      id,
-      role
-    `).eq("id", user.id)
-    .maybeSingle();
+      const user = authData.user;
+      if (!user) {
+        alert("Authentication failed");
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = "Login";
+        }
+        return;
+      }
 
-if (!admin) {
-  await supabase.auth.signOut();
+      const { data: admin } = await supabase
+        .from("admin_users")
+        .select("id, role")
+        .eq("id", user.id)
+        .maybeSingle();
 
-  alert(
-    "You are not an admin",
-  );
+      if (!admin) {
+        await supabase.auth.signOut();
+        alert("You are not an admin");
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = "Login";
+        }
+        return;
+      }
 
-  return;
-}
-document.cookie =
-  `admin_id=${user.id}; path=/`;
-  document.cookie =
-  `admin_role=${admin.role}; path=/`;
+      document.cookie = `admin_id=${user.id}; path=/`;
+      document.cookie = `admin_role=${admin.role}; path=/`;
 
-await fetch(
-  `${import.meta.env.PUBLIC_SUPABASE_FUNCTION_URL}/sync-regions`,
-  {
-    method: "POST",
-    headers: {
-      "Content-Type":
-        "application/json",
+      // Non-blocking background sync
+      fetch(`${import.meta.env.PUBLIC_SUPABASE_FUNCTION_URL}/sync-regions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-password": import.meta.env.PUBLIC_ADMIN_PASSWORD,
+        },
+        body: JSON.stringify({}),
+      }).catch((err) => console.warn("Background sync error:", err));
 
-      "x-admin-password":
-        import.meta.env.PUBLIC_ADMIN_PASSWORD
-    },
-    body: JSON.stringify({}),
-  },
-);
       location.href = "/";
-    },
-  );
+    } catch (err) {
+      alert("Login error: " + err);
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Login";
+      }
+    }
+  });
   
 </script>

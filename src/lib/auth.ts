@@ -1,19 +1,15 @@
-import { supabase }
-  from "./supabase";
+import { supabase } from "./supabase";
 
-export async function
-requireAdmin() {
+export async function requireAdmin() {
   const {
-    data: { user },
-  } =
-    await supabase.auth.getUser();
+    data: { session },
+  } = await supabase.auth.getSession();
 
-  if (!user) {
-    window.location.href =
-      "/login";
+  if (!session) {
+    window.location.href = "/login";
 
     return null;
   }
 
-  return user;
+  return session.user;
 }
