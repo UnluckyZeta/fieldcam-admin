@@ -136,9 +136,9 @@ const isDefaultToday = from === today && to === today;
     </div>
 
     <div class="stat-card">
-      <h3>{isDefaultToday ? "Total Photos (All Time)" : "Active Engineers"}</h3>
+      <h3>Active Engineers</h3>
       <p>
-        {isDefaultToday ? data.total_photos : (data.engineers_today ?? []).length}
+        {(data.engineers_today ?? []).length}
       </p>
     </div>
 
