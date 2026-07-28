@@ -151,10 +151,10 @@ import { supabase }
 
 const {
   data: { session },
-} =
-  await supabase.auth.getSession();
+} = await supabase.auth.getSession();
 
 if (session) {
+  document.cookie = `admin_id=${session.user.id}; path=/; max-age=2592000; SameSite=Lax`;
   location.href = "/";
 }
 
@@ -213,8 +213,8 @@ document
         return;
       }
 
-      document.cookie = `admin_id=${user.id}; path=/`;
-      document.cookie = `admin_role=${admin.role}; path=/`;
+      document.cookie = `admin_id=${user.id}; path=/; max-age=2592000; SameSite=Lax`;
+      document.cookie = `admin_role=${admin.role}; path=/; max-age=2592000; SameSite=Lax`;
 
       // Non-blocking background sync
       fetch(`${import.meta.env.PUBLIC_SUPABASE_FUNCTION_URL}/sync-regions`, {
