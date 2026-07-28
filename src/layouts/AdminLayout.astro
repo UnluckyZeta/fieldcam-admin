@@ -9,15 +9,6 @@ const {
 const isLoginPage =
   Astro.url.pathname ===
   "/login";
-
-const adminId =
-  Astro.cookies
-    .get("admin_id")
-    ?.value;
-
-if (!isLoginPage && !adminId) {
-  return Astro.redirect("/login");
-}
 ---
 
 <html lang="en">
