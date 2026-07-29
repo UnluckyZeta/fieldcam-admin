@@ -421,10 +421,16 @@ const isLoginPage =
       box-sizing: border-box;
     }
 
+    /* Lessen inner padding of sections and cards on phones */
+    .section, .card {
+      padding: 12px !important;
+    }
+
     /* Transform standard tables to structured list cards on mobile */
     table {
       border: none !important;
       background: transparent !important;
+      min-width: 0 !important; /* Prevents horizontal scroll by allowing the table to shrink */
     }
 
     table thead {
@@ -488,6 +494,12 @@ const isLoginPage =
 
     .dark-theme table td::before {
       color: var(--text-secondary) !important;
+    }
+
+    /* Hide the label for the action buttons */
+    table td:last-child::before,
+    table td.actions::before {
+      display: none !important;
     }
 
     /* Actions buttons cell styling */
