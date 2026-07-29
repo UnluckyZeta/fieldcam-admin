@@ -31,6 +31,13 @@ import AdminLayout from "../layouts/AdminLayout.astro";
         <div class="stat-label">Clock / Time Risks</div>
       </div>
     </div>
+    <div class="stat-card stat-blue">
+      <div class="stat-icon-wrap blue-bg">👁️</div>
+      <div class="stat-body">
+        <div class="stat-value" id="stat-tracked">—</div>
+        <div class="stat-label">Tracked / Watchlist</div>
+      </div>
+    </div>
   </div>
 
   <!-- Toolbar -->
@@ -45,6 +52,7 @@ import AdminLayout from "../layouts/AdminLayout.astro";
         <option value="">All Risk Types</option>
         <option value="gps">📍 GPS / Location Only</option>
         <option value="time">🕒 Clock / Time Only</option>
+        <option value="tracked">👁️ Tracked Only</option>
       </select>
     </form>
   </div>
@@ -88,6 +96,7 @@ import AdminLayout from "../layouts/AdminLayout.astro";
   .danger-bg { background: #fee2e2; }
   .warn-bg   { background: #fef3c7; }
   .purple-bg { background: #f3e8ff; }
+  .blue-bg   { background: #dbeafe; }
   .stat-value { font-size: 22px; font-weight: 700; line-height: 1.2; }
   .stat-label { font-size: 12px; color: #64748b; }
 
@@ -112,13 +121,19 @@ import AdminLayout from "../layouts/AdminLayout.astro";
   .filters button { background: #2563eb; color: white; border: 1px solid transparent; }
   .btn-reset { background: #6b7280; color: white; }
 
-  /* ── Risk Engineer Cards (rendered by JS) ── */
+  /* ── Risk Engineer Cards ── */
   :global(.risk-card) {
     background: white;
     border-radius: 10px;
     box-shadow: 0 1px 4px rgba(0,0,0,0.06);
     margin-bottom: 14px;
     overflow: hidden;
+    border: 2px solid transparent;
+    transition: border-color 0.2s;
+  }
+  :global(.risk-card-tracked) {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 1px rgba(59,130,246,0.15), 0 2px 8px rgba(59,130,246,0.1);
   }
   :global(.risk-card-header) {
     display: flex;
@@ -147,6 +162,11 @@ import AdminLayout from "../layouts/AdminLayout.astro";
   :global(.rc-name) { font-weight: 600; font-size: 14px; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   :global(.rc-meta) { font-size: 12px; color: #64748b; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
   :global(.rc-meta span) { white-space: nowrap; }
+  :global(.rc-tracked-reason) {
+    font-size: 11px; color: #3b82f6; margin-top: 2px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    max-width: 240px;
+  }
   :global(.rc-badges) { display: flex; gap: 6px; flex-wrap: wrap; }
   :global(.rc-badge) {
     padding: 3px 8px; border-radius: 9999px;
@@ -154,19 +174,37 @@ import AdminLayout from "../layouts/AdminLayout.astro";
   }
   :global(.rc-badge-gps)  { background: #fef3c7; color: #92400e; }
   :global(.rc-badge-time) { background: #f3e8ff; color: #6b21a8; }
+  :global(.rc-badge-tracked) { background: #dbeafe; color: #1d4ed8; }
   :global(.rc-right) {
-    display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+    display: flex; align-items: center; gap: 8px; flex-shrink: 0;
   }
   :global(.rc-date) { font-size: 12px; color: #64748b; white-space: nowrap; }
   :global(.rc-toggle) { font-size: 10px; color: #94a3b8; transition: transform 0.2s; }
   :global(.rc-toggle.open) { transform: rotate(180deg); }
   :global(.rc-btn) {
-    padding: 6px 12px; background: #2563eb; color: white !important;
-    text-decoration: none; border-radius: 6px; font-size: 12px; font-weight: 500;
-    white-space: nowrap;
+    padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 500;
+    white-space: nowrap; cursor: pointer; border: none;
+    text-decoration: none; display: inline-flex; align-items: center;
+  }
+  :global(.rc-btn-logs) {
+    background: #2563eb; color: white !important;
+  }
+  :global(.rc-btn-track) {
+    background: #dbeafe; color: #1d4ed8;
+    border: 1px solid #93c5fd;
+  }
+  :global(.rc-btn-track:hover) {
+    background: #bfdbfe;
+  }
+  :global(.rc-btn-untrack) {
+    background: #fee2e2; color: #991b1b;
+    border: 1px solid #fca5a5;
+  }
+  :global(.rc-btn-untrack:hover) {
+    background: #fecaca;
   }
 
-  /* ── Evidence Expandable Panel ── */
+  /* ── Evidence Panel ── */
   :global(.rc-evidence-panel) {
     max-height: 0; overflow: hidden;
     transition: max-height 0.3s ease;
@@ -183,22 +221,106 @@ import AdminLayout from "../layouts/AdminLayout.astro";
     padding: 14px 18px;
   }
   :global(.ev-card) {
-    padding: 10px 12px;
+    padding: 12px 14px;
     border-radius: 8px;
-    border-left: 3px solid #ef4444;
     font-size: 13px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 6px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
   }
   :global(.ev-card-gps) {
-    background: #fef2f2; color: #991b1b; border-left-color: #ef4444;
+    background: #fff5f5; color: #991b1b; border-left: 4px solid #f87171; border-color: #fca5a5;
   }
   :global(.ev-card-time) {
-    background: #fffbeb; color: #92400e; border-left-color: #f59e0b;
+    background: #fffbeb; color: #92400e; border-left: 4px solid #fbbf24; border-color: #fcd34d;
   }
-  :global(.ev-title) { font-weight: 600; margin-bottom: 3px; }
-  :global(.ev-detail) { font-size: 12px; line-height: 1.5; }
+  :global(.ev-card-top) {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 2px;
+  }
+  :global(.ev-title) { font-weight: 700; font-size: 13px; display: flex; align-items: center; }
+  :global(.ev-actions) {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+  :global(.ev-action-btn) {
+    padding: 3px 8px;
+    font-size: 11px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    border: none;
+    line-height: 1.1;
+    display: inline-flex;
+    align-items: center;
+    transition: background 0.15s, transform 0.1s;
+  }
+  :global(.ev-action-btn:active) {
+    transform: scale(0.95);
+  }
+  :global(.ev-btn-clear) {
+    background: #10b981;
+    color: white !important;
+  }
+  :global(.ev-btn-clear:hover) {
+    background: #059669;
+  }
+  :global(.ev-btn-flag) {
+    background: #ef4444;
+    color: white !important;
+  }
+  :global(.ev-btn-flag:hover) {
+    background: #dc2626;
+  }
+  :global(.rc-badge-clear) {
+    background: #10b981;
+    color: white;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: bold;
+    margin-left: 6px;
+  }
+  :global(.rc-badge-manual-flag) {
+    background: #ef4444;
+    color: white;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: bold;
+    margin-left: 6px;
+  }
+  :global(.ev-tag-label) {
+    background: rgba(0, 0, 0, 0.05);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    color: #475569;
+    white-space: nowrap;
+  }
+  :global(.ev-detail) { font-size: 12px; line-height: 1.5; color: #475569; }
   :global(.ev-footer) {
-    display: flex; justify-content: space-between; align-items: center;
-    margin-top: 6px; font-size: 11px; opacity: 0.8;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-top: 4px;
+    font-size: 11px;
+    opacity: 0.85;
+    gap: 8px;
+  }
+  :global(.ev-footer-right) {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
   }
 
   /* ── Loading & Empty ── */
@@ -220,20 +342,35 @@ import AdminLayout from "../layouts/AdminLayout.astro";
     background-color: var(--bg-secondary) !important;
     color: var(--text-primary) !important;
   }
+  :global(.dark-theme .risk-card-tracked) {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 1px rgba(59,130,246,0.25), 0 2px 8px rgba(59,130,246,0.15);
+  }
   :global(.dark-theme) .danger-bg { background: rgba(239,68,68,0.2); }
   :global(.dark-theme) .warn-bg   { background: rgba(245,158,11,0.2); }
   :global(.dark-theme) .purple-bg { background: rgba(139,92,246,0.2); }
+  :global(.dark-theme) .blue-bg   { background: rgba(59,130,246,0.2); }
   :global(.dark-theme .rc-name)   { color: #f1f5f9; }
   :global(.dark-theme .rc-meta),
   :global(.dark-theme .rc-date),
   :global(.dark-theme) .stat-label,
   :global(.dark-theme) .subtitle  { color: #94a3b8; }
-  :global(.dark-theme .rc-card-header:hover) { background: rgba(255,255,255,0.03); }
+  :global(.dark-theme .rc-tracked-reason) { color: #60a5fa; }
+  :global(.dark-theme .risk-card-header:hover) { background: rgba(255,255,255,0.03); }
   :global(.dark-theme .rc-evidence-panel.open) { border-top-color: var(--border-color); }
-  :global(.dark-theme .ev-card-gps)  { background: rgba(239,68,68,0.12); color: #fca5a5; }
-  :global(.dark-theme .ev-card-time) { background: rgba(245,158,11,0.12); color: #fcd34d; }
-  :global(.dark-theme .rc-badge-gps)  { background: rgba(245,158,11,0.2); color: #fcd34d; }
-  :global(.dark-theme .rc-badge-time) { background: rgba(139,92,246,0.2); color: #c4b5fd; }
+  :global(.dark-theme .ev-card) { border-color: var(--border-color) !important; }
+  :global(.dark-theme .ev-card-gps)  { background: rgba(239, 68, 68, 0.1) !important; color: #fca5a5 !important; border-left: 4px solid #ef4444 !important; }
+  :global(.dark-theme .ev-card-time) { background: rgba(245, 158, 11, 0.1) !important; color: #fcd34d !important; border-left: 4px solid #f59e0b !important; }
+  :global(.dark-theme .ev-detail) { color: #cbd5e1 !important; }
+  :global(.dark-theme .rc-badge-gps)  { background: rgba(245, 158, 11, 0.2); color: #fcd34d; }
+  :global(.dark-theme .rc-badge-time) { background: rgba(139, 92, 246, 0.2); color: #c4b5fd; }
+  :global(.dark-theme .rc-badge-tracked) { background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
+  :global(.dark-theme .rc-btn-track) {
+    background: rgba(59, 130, 246, 0.15); color: #93c5fd; border-color: rgba(59, 130, 246, 0.3);
+  }
+  :global(.dark-theme .rc-btn-untrack) {
+    background: rgba(239, 68, 68, 0.15); color: #fca5a5; border-color: rgba(239, 68, 68, 0.3);
+  }
   :global(.dark-theme) .filters input[type="date"],
   :global(.dark-theme) .filter-select,
   :global(.dark-theme) .search-input {

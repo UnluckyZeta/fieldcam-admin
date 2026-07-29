@@ -1,9 +1,12 @@
 export interface RiskEvidenceItem {
-  type: "speed" | "jump" | "future" | "drift" | "tz";
+  id?: string;
+  type: "speed" | "jump" | "future" | "drift" | "tz" | "manual" | "sequential";
   title: string;
   detail: string;
   timestamp: string;
   location?: string;
+  photo_tag?: string;
+  review_status?: "verified" | "flagged" | null;
 }
 
 export interface RiskEngineer {
@@ -15,10 +18,20 @@ export interface RiskEngineer {
   time_risk_count: number;
   evidence_items: RiskEvidenceItem[];
   last_activity: string;
+  is_tracked: boolean;
+  tracked_reason?: string;
+  tracked_at?: string;
 }
 
-let cachedRiskEngineers: RiskEngineer[] = [];
+const SUPABASE_URL = "https://vwdwpswpvqdfpsrkmgzy.supabase.co";
+const TOKEN = "sb_publishable_yI6-VfmXaCmbr7E8GCq6zg_zTUe-rMB";
+const headers = { apikey: TOKEN, Authorization: `Bearer ${TOKEN}`, "Content-Type": "application/json" };
 
+let cachedRiskEngineers: RiskEngineer[] = [];
+let trackedSet: Set<string> = new Set();
+let trackedMap: Record<string, { reason?: string; tracked_at?: string }> = {};
+
+/* ─── Helpers ─── */
 function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371;
   const dLat = (lat2 - lat1) * (Math.PI / 180);
@@ -46,6 +59,83 @@ function initials(name: string): string {
   return name.substring(0, 2).toUpperCase();
 }
 
+/* ─── Tracking API ─── */
+async function fetchTrackedEngineers(): Promise<void> {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/tracked_engineers?select=engineer_id,reason,tracked_at`, { headers });
+    const data = await res.json();
+    trackedSet = new Set();
+    trackedMap = {};
+    if (Array.isArray(data)) {
+      for (const row of data) {
+        trackedSet.add(row.engineer_id);
+        trackedMap[row.engineer_id] = { reason: row.reason, tracked_at: row.tracked_at };
+      }
+    }
+  } catch (e) {
+    console.error("Failed to fetch tracked engineers", e);
+  }
+}
+
+async function toggleTrack(engineerId: string): Promise<void> {
+  if (trackedSet.has(engineerId)) {
+    await fetch(`${SUPABASE_URL}/rest/v1/tracked_engineers?engineer_id=eq.${engineerId}`, {
+      method: "DELETE", headers,
+    });
+    trackedSet.delete(engineerId);
+    delete trackedMap[engineerId];
+  } else {
+    const reason = prompt("Why are you tracking this engineer? (optional)");
+    await fetch(`${SUPABASE_URL}/rest/v1/tracked_engineers`, {
+      method: "POST", headers: { ...headers, Prefer: "return=representation" },
+      body: JSON.stringify({ engineer_id: engineerId, reason: reason || null }),
+    });
+    trackedSet.add(engineerId);
+    trackedMap[engineerId] = { reason: reason || undefined, tracked_at: new Date().toISOString() };
+  }
+
+  const eng = cachedRiskEngineers.find(e => e.engineer_id === engineerId);
+  if (eng) {
+    eng.is_tracked = trackedSet.has(engineerId);
+    eng.tracked_reason = trackedMap[engineerId]?.reason;
+    eng.tracked_at = trackedMap[engineerId]?.tracked_at;
+  }
+
+  const elTracked = document.getElementById("stat-tracked");
+  if (elTracked) elTracked.textContent = String(trackedSet.size);
+
+  applyRiskFilters();
+}
+
+/* ─── Flag/Review API ─── */
+async function setPhotoReviewStatus(photoId: string, status: "verified" | "flagged" | null) {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/photo_logs?id=eq.${photoId}`, {
+      method: "PATCH",
+      headers,
+      body: JSON.stringify({
+        review_status: status,
+        reviewed_at: status ? new Date().toISOString() : null,
+        reviewed_by: "admin"
+      })
+    });
+    if (res.ok) {
+      await fetchRiskData();
+    } else {
+      const err = await res.json();
+      console.error(err);
+      alert("Error updating review status: " + (err.message || "Unknown error"));
+    }
+  } catch (e: any) {
+    console.error(e);
+    alert("Connection error: " + e.message);
+  }
+}
+
+// Expose APIs to window for inline onclicks
+(window as any).toggleTrack = toggleTrack;
+(window as any).setPhotoReviewStatus = setPhotoReviewStatus;
+
 /* ─── Render ─── */
 function renderCards(engineers: RiskEngineer[]) {
   const container = document.getElementById("risk-cards-container");
@@ -57,28 +147,64 @@ function renderCards(engineers: RiskEngineer[]) {
   }
 
   container.innerHTML = engineers.map((eng, idx) => {
-    const hasBoth = eng.gps_risk_count > 0 && eng.time_risk_count > 0;
     const avatarClass = eng.gps_risk_count > 0 ? "rc-avatar-danger" : "rc-avatar-warn";
+    const tracked = eng.is_tracked;
 
     const badges: string[] = [];
+    if (tracked) badges.push(`<span class="rc-badge rc-badge-tracked">👁️ Tracked</span>`);
     if (eng.gps_risk_count > 0) badges.push(`<span class="rc-badge rc-badge-gps">📍 GPS ×${eng.gps_risk_count}</span>`);
     if (eng.time_risk_count > 0) badges.push(`<span class="rc-badge rc-badge-time">🕒 Time ×${eng.time_risk_count}</span>`);
 
     const evidenceCards = eng.evidence_items.map(item => {
       const isGps = item.type === "speed" || item.type === "jump";
+      
+      const reviewBadge = item.review_status === "verified"
+        ? `<span class="rc-badge-clear">✔️ Cleared</span>`
+        : item.review_status === "flagged"
+        ? `<span class="rc-badge-manual-flag">🚩 Flagged</span>`
+        : "";
+
+      const tagText = item.photo_tag ? `<span class="ev-tag-label" title="Searchable Photo Tag">🏷️ ${item.photo_tag}</span>` : "";
+
+      let actionButtons = "";
+      if (item.id) {
+        if (item.review_status === "verified") {
+          actionButtons = `<button class="ev-action-btn ev-btn-flag" onclick="event.stopPropagation();setPhotoReviewStatus('${item.id}', 'flagged')">🚩 Flag</button>`;
+        } else if (item.review_status === "flagged") {
+          actionButtons = `<button class="ev-action-btn ev-btn-clear" onclick="event.stopPropagation();setPhotoReviewStatus('${item.id}', 'verified')">✔️ Clear</button>`;
+        } else {
+          actionButtons = `
+            <button class="ev-action-btn ev-btn-clear" onclick="event.stopPropagation();setPhotoReviewStatus('${item.id}', 'verified')">✔️ Clear</button>
+            <button class="ev-action-btn ev-btn-flag" onclick="event.stopPropagation();setPhotoReviewStatus('${item.id}', 'flagged')">🚩 Flag</button>
+          `;
+        }
+      }
+
       return `
         <div class="ev-card ${isGps ? "ev-card-gps" : "ev-card-time"}">
-          <div class="ev-title">${item.title}</div>
+          <div class="ev-card-top">
+            <div class="ev-title">${item.title} ${reviewBadge}</div>
+            <div class="ev-actions">${actionButtons}</div>
+          </div>
           <div class="ev-detail">${item.detail}</div>
           <div class="ev-footer">
             <span>${item.location ? "📍 " + item.location : ""}</span>
-            <span>${fmtDate(item.timestamp)}</span>
+            <div class="ev-footer-right">
+              ${tagText}
+              <span>${fmtDate(item.timestamp)}</span>
+            </div>
           </div>
         </div>`;
     }).join("");
 
+    const trackBtnLabel = tracked ? "Untrack" : "Track";
+    const trackBtnClass = tracked ? "rc-btn-untrack" : "rc-btn-track";
+
+    const trackedInfo = tracked && eng.tracked_reason
+      ? `<div class="rc-tracked-reason">📝 ${eng.tracked_reason}</div>` : "";
+
     return `
-      <div class="risk-card" data-idx="${idx}">
+      <div class="risk-card ${tracked ? "risk-card-tracked" : ""}" data-idx="${idx}">
         <div class="risk-card-header" onclick="this.parentElement.querySelector('.rc-evidence-panel').classList.toggle('open');this.querySelector('.rc-toggle').classList.toggle('open')">
           <div class="rc-left">
             <div class="rc-avatar ${avatarClass}">${initials(eng.full_name)}</div>
@@ -89,12 +215,14 @@ function renderCards(engineers: RiskEngineer[]) {
                 <span>•</span>
                 <span>${eng.region}</span>
               </div>
+              ${trackedInfo}
             </div>
           </div>
           <div class="rc-badges">${badges.join("")}</div>
           <div class="rc-right">
             <span class="rc-date">${fmtDate(eng.last_activity)}</span>
-            <a class="rc-btn" href="/engineers/${eng.engineer_id}" onclick="event.stopPropagation()">View Logs</a>
+            <button class="rc-btn ${trackBtnClass}" onclick="event.stopPropagation();toggleTrack('${eng.engineer_id}')">${trackBtnLabel}</button>
+            <a class="rc-btn rc-btn-logs" href="/engineers/${eng.engineer_id}" onclick="event.stopPropagation()">View Logs</a>
             <span class="rc-toggle">▼</span>
           </div>
         </div>
@@ -117,6 +245,7 @@ export function applyRiskFilters() {
     if (q && !text.includes(q)) return false;
     if (rt === "gps" && eng.gps_risk_count === 0) return false;
     if (rt === "time" && eng.time_risk_count === 0) return false;
+    if (rt === "tracked" && !eng.is_tracked) return false;
     return true;
   });
 
@@ -131,16 +260,16 @@ export async function fetchRiskData() {
   const fromVal = inputFrom?.value || todayStr;
   const toVal = inputTo?.value || todayStr;
 
-  const supabaseUrl = "https://vwdwpswpvqdfpsrkmgzy.supabase.co";
-  const token = "sb_publishable_yI6-VfmXaCmbr7E8GCq6zg_zTUe-rMB";
-
   try {
-    const res = await fetch(
-      `${supabaseUrl}/rest/v1/photo_logs_with_engineer?select=id,engineer_id,engineer_code,full_name,speed,accuracy,latitude,longitude,device_timezone,captured_online,taken_at,synced_at,address&taken_at=gte.${fromVal}T00:00:00%2B03:00&taken_at=lte.${toVal}T23:59:59%2B03:00&order=taken_at.desc&limit=1000`,
-      { headers: { apikey: token, Authorization: `Bearer ${token}` } }
-    );
+    const [logsRes] = await Promise.all([
+      fetch(
+        `${SUPABASE_URL}/rest/v1/photo_logs_with_engineer?select=id,engineer_id,engineer_code,full_name,speed,accuracy,latitude,longitude,device_timezone,captured_online,taken_at,synced_at,address,photo_tag,review_status,reviewed_at,reviewed_by&taken_at=gte.${fromVal}T00:00:00%2B03:00&taken_at=lte.${toVal}T23:59:59%2B03:00&order=taken_at.desc&limit=1000`,
+        { headers }
+      ),
+      fetchTrackedEngineers(),
+    ]);
 
-    const logs = await res.json();
+    const logs = await logsRes.json();
     if (!Array.isArray(logs)) { cachedRiskEngineers = []; applyRiskFilters(); return; }
 
     const nowTime = Date.now();
@@ -161,6 +290,9 @@ export async function fetchRiskData() {
           time_risk_count: 0,
           evidence_items: [],
           last_activity: log.taken_at,
+          is_tracked: trackedSet.has(eid),
+          tracked_reason: trackedMap[eid]?.reason,
+          tracked_at: trackedMap[eid]?.tracked_at,
         };
       }
       if (!engLogsMap[eid]) engLogsMap[eid] = [];
@@ -170,14 +302,51 @@ export async function fetchRiskData() {
       const takenMs = new Date(log.taken_at).getTime();
       const syncedMs = log.synced_at ? new Date(log.synced_at).getTime() : null;
 
-      // Rule 1 · High Speed
+      // Handle Manual Admin Flag status (overrides auto check)
+      if (log.review_status === "flagged") {
+        eng.time_risk_count++;
+        eng.evidence_items.push({
+          id: log.id,
+          type: "manual",
+          title: "🚩 Manually Flagged by Admin",
+          detail: "This picture was manually flagged as non-compliant or suspicious.",
+          timestamp: log.taken_at,
+          location: log.address || undefined,
+          photo_tag: log.photo_tag || undefined,
+          review_status: log.review_status,
+        });
+        continue;
+      }
+
+      // If user marked this specific photo as verified/approved, completely exclude it from auto detection!
+      if (log.review_status === "verified") {
+        // Render it as a cleared/approved evidence log for transparency, but do not increment risk counts!
+        eng.evidence_items.push({
+          id: log.id,
+          type: "manual",
+          title: "✔️ Flag Cleared / Approved",
+          detail: "Automated compliance warning was manually reviewed and dismissed by admin.",
+          timestamp: log.taken_at,
+          location: log.address || undefined,
+          photo_tag: log.photo_tag || undefined,
+          review_status: log.review_status,
+        });
+        continue;
+      }
+
+      // Rule 1 · High Speed (>90 km/h)
       if (log.speed && log.speed > 25) {
         eng.gps_risk_count++;
         const kmh = Math.round(log.speed * 3.6);
         eng.evidence_items.push({
-          type: "speed", title: `🏎️ High Speed: ${kmh} km/h`,
+          id: log.id,
+          type: "speed",
+          title: `🏎️ High Speed: ${kmh} km/h`,
           detail: `Device GPS recorded ${kmh} km/h (threshold >90 km/h).`,
-          timestamp: log.taken_at, location: log.address || undefined,
+          timestamp: log.taken_at,
+          location: log.address || undefined,
+          photo_tag: log.photo_tag || undefined,
+          review_status: log.review_status,
         });
       }
 
@@ -185,9 +354,14 @@ export async function fetchRiskData() {
       if (takenMs > nowTime + 10 * 60 * 1000) {
         eng.time_risk_count++;
         eng.evidence_items.push({
-          type: "future", title: "📅 Future Timestamp",
+          id: log.id,
+          type: "future",
+          title: "📅 Future Timestamp",
           detail: `Photo timestamp is set to ${fmtDate(log.taken_at)} — in the future.`,
-          timestamp: log.taken_at, location: log.address || undefined,
+          timestamp: log.taken_at,
+          location: log.address || undefined,
+          photo_tag: log.photo_tag || undefined,
+          review_status: log.review_status,
         });
       }
 
@@ -196,9 +370,14 @@ export async function fetchRiskData() {
         eng.time_risk_count++;
         const mins = Math.round((takenMs - syncedMs) / 60000);
         eng.evidence_items.push({
-          type: "drift", title: `⏳ Clock Drift: ${mins} min ahead`,
+          id: log.id,
+          type: "drift",
+          title: `⏳ Clock Drift: ${mins} min ahead`,
           detail: `Photo was timestamped ${mins} minutes ahead of when the server received it.`,
-          timestamp: log.taken_at, location: log.address || undefined,
+          timestamp: log.taken_at,
+          location: log.address || undefined,
+          photo_tag: log.photo_tag || undefined,
+          review_status: log.review_status,
         });
       }
 
@@ -206,17 +385,22 @@ export async function fetchRiskData() {
       if (log.device_timezone && log.device_timezone !== "Africa/Cairo") {
         eng.time_risk_count++;
         eng.evidence_items.push({
-          type: "tz", title: "🌐 Timezone Mismatch",
+          id: log.id,
+          type: "tz",
+          title: "🌐 Timezone Mismatch",
           detail: `Device timezone: ${log.device_timezone} (expected Africa/Cairo).`,
-          timestamp: log.taken_at, location: log.address || undefined,
+          timestamp: log.taken_at,
+          location: log.address || undefined,
+          photo_tag: log.photo_tag || undefined,
+          review_status: log.review_status,
         });
       }
     }
 
-    // Rule 5 · Impossible location jump
+    // Rule 5 · Impossible location jump (speed > 150 km/h between locations)
     for (const [eid, eLogs] of Object.entries(engLogsMap)) {
       const eng = map[eid];
-      const sorted = eLogs.filter(l => l.latitude && l.longitude)
+      const sorted = eLogs.filter(l => l.latitude && l.longitude && l.review_status !== "verified")
         .sort((a, b) => new Date(a.taken_at).getTime() - new Date(b.taken_at).getTime());
 
       for (let i = 0; i < sorted.length - 1; i++) {
@@ -228,27 +412,88 @@ export async function fetchRiskData() {
           if (speed > 150 && dist > 10) {
             eng.gps_risk_count++;
             eng.evidence_items.push({
+              id: b.id,
               type: "jump",
               title: `🚀 Location Jump: ${dist.toFixed(0)} km in ${diffMin.toFixed(0)} min`,
               detail: `Implied speed of ${Math.round(speed)} km/h — physically impossible.`,
               timestamp: b.taken_at,
               location: `${a.address || "Point A"} → ${b.address || "Point B"}`,
+              photo_tag: b.photo_tag || undefined,
+              review_status: b.review_status,
             });
           }
         }
       }
     }
 
-    cachedRiskEngineers = Object.values(map).filter(e => e.gps_risk_count > 0 || e.time_risk_count > 0);
+    // Rule 6 · Out-of-Order Upload / Sync Timeline Manipulation
+    // Sort engineer's uploads by synced_at ascending (order in which photos were synced to db)
+    for (const [eid, eLogs] of Object.entries(engLogsMap)) {
+      const eng = map[eid];
+      const sortedBySync = eLogs.filter(l => l.synced_at && l.review_status !== "verified")
+        .sort((a, b) => new Date(a.synced_at).getTime() - new Date(b.synced_at).getTime());
+
+      for (let i = 0; i < sortedBySync.length - 1; i++) {
+        const a = sortedBySync[i], b = sortedBySync[i + 1];
+        const tA = new Date(a.taken_at).getTime();
+        const tB = new Date(b.taken_at).getTime();
+        const sA = new Date(a.synced_at).getTime();
+        const sB = new Date(b.synced_at).getTime();
+
+        const dT = tB - tA; // Device reported taken-time diff
+        const dS = sB - sA; // Actual sync-time diff
+
+        // A photo uploaded later (b) has a reported taken_at earlier than the previously uploaded photo (a)
+        if (dT < -15 * 60 * 1000) {
+          const minsDiff = Math.round(Math.abs(dT) / 60000);
+          eng.time_risk_count++;
+          eng.evidence_items.push({
+            id: b.id,
+            type: "sequential",
+            title: "⏳ Out-of-Order Sync Timeline",
+            detail: `Chronology error: Synced later but claims to be taken ${minsDiff} mins earlier than previous photo.`,
+            timestamp: b.taken_at,
+            location: b.address || undefined,
+            photo_tag: b.photo_tag || undefined,
+            review_status: b.review_status,
+          });
+        }
+        // Device clock jumped forward extremely fast relative to real sync elapsed time
+        else if (dT > dS + 15 * 60 * 1000) {
+          const jumpMins = Math.round((dT - dS) / 60000);
+          eng.time_risk_count++;
+          eng.evidence_items.push({
+            id: b.id,
+            type: "sequential",
+            title: "⏳ Clock Speed-up Spoof",
+            detail: `Chronology error: Clock jumped forward by ${jumpMins} mins between sequential photo syncs.`,
+            timestamp: b.taken_at,
+            location: b.address || undefined,
+            photo_tag: b.photo_tag || undefined,
+            review_status: b.review_status,
+          });
+        }
+      }
+    }
+
+    // Keep engineers with active risks OR manual flags
+    cachedRiskEngineers = Object.values(map).filter(
+      e => e.gps_risk_count > 0 || e.time_risk_count > 0 || e.evidence_items.some(item => item.review_status === "flagged")
+    );
+
+    // Sort: tracked engineers first
+    cachedRiskEngineers.sort((a, b) => {
+      if (a.is_tracked && !b.is_tracked) return -1;
+      if (!a.is_tracked && b.is_tracked) return 1;
+      return (b.gps_risk_count + b.time_risk_count) - (a.gps_risk_count + a.time_risk_count);
+    });
 
     // Update stats
     const el = (id: string) => document.getElementById(id);
-    const total = cachedRiskEngineers.length;
-    const gps = cachedRiskEngineers.filter(e => e.gps_risk_count > 0).length;
-    const time = cachedRiskEngineers.filter(e => e.time_risk_count > 0).length;
-    if (el("stat-total-risk")) el("stat-total-risk")!.textContent = String(total);
-    if (el("stat-gps-risk")) el("stat-gps-risk")!.textContent = String(gps);
-    if (el("stat-time-risk")) el("stat-time-risk")!.textContent = String(time);
+    if (el("stat-total-risk")) el("stat-total-risk")!.textContent = String(cachedRiskEngineers.length);
+    if (el("stat-gps-risk")) el("stat-gps-risk")!.textContent = String(cachedRiskEngineers.filter(e => e.gps_risk_count > 0).length);
+    if (el("stat-time-risk")) el("stat-time-risk")!.textContent = String(cachedRiskEngineers.filter(e => e.time_risk_count > 0).length);
+    if (el("stat-tracked")) el("stat-tracked")!.textContent = String(trackedSet.size);
 
     applyRiskFilters();
   } catch (err) {
