@@ -21,12 +21,24 @@ const adminRole =
     </a>
   )
 }
+  <!-- Theme Toggle Button -->
   <button
-  onclick="logout()"
-  class="logout-btn"
->
-  Logout
-</button>
+    id="theme-toggle-btn-sidebar"
+    class="theme-toggle-btn"
+    type="button"
+  >
+    <svg id="theme-icon-sidebar" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+    </svg>
+    <span>Toggle Theme</span>
+  </button>
+
+  <button
+    onclick="logout()"
+    class="logout-btn"
+  >
+    Logout
+  </button>
 </nav>
 
 <style>
@@ -56,9 +68,28 @@ const adminRole =
     background: #f3f4f6;
   }
 
-  .logout-btn {
+  .theme-toggle-btn {
     width: 100%;
     margin-top: auto;
+    margin-bottom: 8px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: #f3f4f6;
+    color: #374151;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background 0.2s, color 0.2s;
+  }
+
+  .logout-btn {
+    width: 100%;
+    margin-top: 0;
     padding: 10px;
     border: none;
     border-radius: 6px;

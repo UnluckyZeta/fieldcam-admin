@@ -22,6 +22,13 @@ const isLoginPage =
 
     <title>{title}</title>
     <ClientRouter />
+    <script is:inline>
+      const theme = localStorage.getItem("theme") || 
+        (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      if (theme === "dark") {
+        document.documentElement.classList.add("dark-theme");
+      }
+    </script>
   </head>
 
   <body>
@@ -43,6 +50,11 @@ const isLoginPage =
               </svg>
             </button>
             <span class="mobile-logo">FieldCam Admin</span>
+            <button id="theme-toggle-btn-header" class="theme-toggle-btn-header" aria-label="Toggle Theme">
+              <svg id="theme-icon-header" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+              </svg>
+            </button>
           </header>
 
           <Sidebar />
@@ -113,16 +125,75 @@ const isLoginPage =
         if (appEl) appEl.classList.remove("menu-open");
       });
     });
+
+    // 3. Theme toggle logic
+    const themeBtnHeader = document.getElementById("theme-toggle-btn-header");
+    const themeBtnSidebar = document.getElementById("theme-toggle-btn-sidebar");
+
+    const updateIcons = (isDark) => {
+      const headerIcon = document.getElementById("theme-icon-header");
+      const sidebarIcon = document.getElementById("theme-icon-sidebar");
+      
+      const sunPath = `<circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>`;
+      const moonPath = `<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>`;
+      
+      if (headerIcon) headerIcon.innerHTML = isDark ? sunPath : moonPath;
+      if (sidebarIcon) sidebarIcon.innerHTML = isDark ? sunPath : moonPath;
+    };
+
+    const isCurrentlyDark = () => document.documentElement.classList.contains("dark-theme");
+    updateIcons(isCurrentlyDark());
+
+    const toggleTheme = () => {
+      const isDark = document.documentElement.classList.toggle("dark-theme");
+      localStorage.setItem("theme", isDark ? "dark" : "light");
+      updateIcons(isDark);
+    };
+
+    if (themeBtnHeader) {
+      themeBtnHeader.addEventListener("click", toggleTheme);
+    }
+    if (themeBtnSidebar) {
+      themeBtnSidebar.addEventListener("click", toggleTheme);
+    }
   });
 </script>
 
 <style>
+  :root {
+    --bg-primary: #f5f5f5;
+    --bg-secondary: #ffffff;
+    --text-primary: #111827;
+    --text-secondary: #4b5563;
+    --border-color: #e5e7eb;
+    --input-bg: #ffffff;
+    --input-border: #d1d5db;
+    --skeleton-start: #f3f4f6;
+    --skeleton-middle: #e5e7eb;
+    --skeleton-end: #f3f4f6;
+  }
+
+  :root.dark-theme {
+    --bg-primary: #0f172a;
+    --bg-secondary: #1e293b;
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --border-color: #334155;
+    --input-bg: #0f172a;
+    --input-border: #475569;
+    --skeleton-start: #1e293b;
+    --skeleton-middle: #334155;
+    --skeleton-end: #1e293b;
+  }
+
   body {
     margin: 0;
     font-family:
       Arial,
       sans-serif;
-    background: #f5f5f5;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    transition: background-color 0.2s, color 0.2s;
   }
 
   .nav-progress-bar {
@@ -154,14 +225,16 @@ const isLoginPage =
     display: flex;
     justify-content: center;
     align-items: center;
+    background: var(--bg-primary);
+    transition: background-color 0.2s;
   }
 
   /* Mobile Responsive Styling */
   .mobile-header {
     display: none;
     height: 56px;
-    background: white;
-    border-bottom: 1px solid #e5e7eb;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
     align-items: center;
     padding: 0 16px;
     position: fixed;
@@ -170,6 +243,7 @@ const isLoginPage =
     right: 0;
     z-index: 999;
     box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    transition: background-color 0.2s, border-color 0.2s;
   }
 
   .menu-toggle-btn {
@@ -177,7 +251,7 @@ const isLoginPage =
     border: none;
     padding: 8px;
     cursor: pointer;
-    color: #374151;
+    color: var(--text-primary);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -193,7 +267,25 @@ const isLoginPage =
     font-size: 16px;
     font-weight: 700;
     margin-left: 12px;
-    color: #111827;
+    color: var(--text-primary);
+  }
+
+  .theme-toggle-btn-header {
+    background: none;
+    border: none;
+    padding: 8px;
+    cursor: pointer;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    margin-left: auto;
+    transition: background 0.2s;
+  }
+
+  .theme-toggle-btn-header:hover {
+    background: #f3f4f6;
   }
 
   .sidebar-backdrop {
@@ -229,6 +321,66 @@ const isLoginPage =
 </style>
 
 <style is:global>
+  /* Global Dark Mode Overrides */
+  .dark-theme .sidebar,
+  .dark-theme .login-card,
+  .dark-theme .card,
+  .dark-theme .section,
+  .dark-theme table,
+  .dark-theme th,
+  .dark-theme td,
+  .dark-theme tr,
+  .dark-theme .stat-card,
+  .dark-theme .toolbar,
+  .dark-theme .table-scroll-wrapper {
+    background-color: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
+  }
+
+  .dark-theme .sidebar a {
+    color: var(--text-primary) !important;
+  }
+  .dark-theme .sidebar a:hover {
+    background-color: var(--bg-primary) !important;
+  }
+
+  .dark-theme .sidebar .theme-toggle-btn {
+    background-color: var(--bg-primary) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
+  }
+
+  .dark-theme input,
+  .dark-theme select,
+  .dark-theme textarea {
+    background-color: var(--input-bg) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--input-border) !important;
+  }
+
+  .dark-theme .skeleton {
+    background: linear-gradient(90deg, var(--skeleton-start) 25%, var(--skeleton-middle) 50%, var(--skeleton-start) 75%) !important;
+  }
+
+  .dark-theme .mobile-header {
+    background-color: var(--bg-secondary) !important;
+    border-color: var(--border-color) !important;
+  }
+
+  .dark-theme .contact-label,
+  .dark-theme th,
+  .dark-theme td::before,
+  .dark-theme .stat-card h3,
+  .dark-theme .empty-state p {
+    color: var(--text-secondary) !important;
+  }
+
+  /* Table Hover override in dark theme */
+  .dark-theme tr:hover {
+    background-color: rgba(51, 65, 85, 0.2) !important;
+  }
+
   @media (max-width: 767px) {
     /* Responsive login container fluid width */
     .login-container {
@@ -269,6 +421,11 @@ const isLoginPage =
       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
     }
 
+    .dark-theme table tr {
+      background: var(--bg-secondary) !important;
+      border-color: var(--border-color) !important;
+    }
+
     table td {
       border: none !important;
       border-bottom: 1px solid #f1f5f9 !important;
@@ -278,6 +435,10 @@ const isLoginPage =
       align-items: center !important;
       text-align: right !important;
       font-size: 14px !important;
+    }
+
+    .dark-theme table td {
+      border-bottom-color: var(--border-color) !important;
     }
 
     table td:last-child {
@@ -296,6 +457,10 @@ const isLoginPage =
       font-size: 12px !important;
       text-transform: uppercase !important;
       letter-spacing: 0.5px !important;
+    }
+
+    .dark-theme table td::before {
+      color: var(--text-secondary) !important;
     }
 
     /* Actions buttons cell styling */
