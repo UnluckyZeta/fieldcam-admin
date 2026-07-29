@@ -118,14 +118,51 @@ Deno.serve(async (req) => {
           .not("address", "is", null)
           .order("taken_at", { ascending: false });
 
-        // Build a map: engineer_id -> first part of address (city/subregion)
+        // Generic/meaningless words to skip
+        const skipWords = ["egypt", "مصر", "قرية", "village", "unnamed road", "طريق", "street"];
+
+        function extractSubregion(address: string): string {
+          // Split by comma and trim each part
+          const parts = address.split(",").map((s: string) => s.trim()).filter(Boolean);
+
+          // Remove country (last part if it's Egypt/مصر)
+          if (parts.length > 1) {
+            const last = parts[parts.length - 1].toLowerCase();
+            if (last === "egypt" || last === "مصر") {
+              parts.pop();
+            }
+          }
+
+          // Remove parts that are just governorate names (e.g. "محافظة الفيوم", "Sohag Governorate")
+          const filtered = parts.filter((p: string) => {
+            const lower = p.toLowerCase();
+            return !lower.includes("governorate") && !p.includes("محافظة");
+          });
+
+          // From the remaining parts, find the first non-generic one
+          for (const part of (filtered.length > 0 ? filtered : parts)) {
+            const lower = part.toLowerCase().trim();
+            // Skip generic words and street-like entries
+            if (lower && !skipWords.some(w => lower === w) && !lower.includes("street") && !lower.includes("شارع")) {
+              // If this part still contains "Governorate", strip it (e.g. "The New Valley Governorate" → "New Valley")
+              let clean = part.replace(/\s*Governorate\s*/i, "").replace(/^The\s+/i, "").trim();
+              // If Arabic, strip محافظة prefix (e.g. "محافظة البحيرة" → "البحيرة")
+              clean = clean.replace(/^محافظة\s*/, "").trim();
+              if (clean) return clean;
+            }
+          }
+
+          // Fallback: return the first part of the original address
+          return parts[0] || "";
+        }
+
+        // Build a map: engineer_id -> extracted subregion
         const subregionMap: Record<string, string> = {};
         if (latestPhotos) {
           for (const photo of latestPhotos) {
             if (!subregionMap[photo.engineer_id] && photo.address) {
-              // Extract city/subregion from address like "Afwah, Beni Suef Governorate, Egypt"
-              const parts = photo.address.split(",").map((s: string) => s.trim());
-              subregionMap[photo.engineer_id] = parts[0] || "";
+              const sub = extractSubregion(photo.address);
+              if (sub) subregionMap[photo.engineer_id] = sub;
             }
           }
         }
