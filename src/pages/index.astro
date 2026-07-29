@@ -485,7 +485,7 @@ import AdminLayout from "../layouts/AdminLayout.astro";
           tbody.innerHTML = engineers.map((engineer) => {
             const engineerId = engineer.id || engineer.engineer_id;
             const region = engineer.region || "-";
-            const subregion = engineer.subregion || "-";
+            const subregion = engineer.subregion || engineer.auto_subregion || "-";
             return `
               <tr>
                 <td data-label="Engineer">${engineer.full_name || ""}</td>
