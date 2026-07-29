@@ -111,7 +111,7 @@ export async function getOfflineStats(
   admin_id = "",
 ) {
   const response = await fetch(
-    `${BASE_URL}/offline-stats`,
+    `${BASE_URL}/dashboard`,
     {
       method: "POST",
       headers: getHeaders(),
@@ -119,6 +119,7 @@ export async function getOfflineStats(
         from,
         to,
         admin_id,
+        type: "offline",
       }),
     },
   );
