@@ -284,6 +284,68 @@ import AdminLayout from "../layouts/AdminLayout.astro";
     color: #374151;
   }
 
+  /* Columns & Text Styling */
+  .col-engineer {
+    min-width: 140px;
+  }
+
+  .engineer-name {
+    font-weight: 600;
+    color: #1e293b;
+    font-size: 14px;
+  }
+
+  .engineer-code {
+    font-size: 12px;
+    color: #64748b;
+  }
+
+  .col-location {
+    min-width: 120px;
+  }
+
+  .region-text {
+    font-weight: 500;
+  }
+
+  .subregion-text {
+    font-size: 12px;
+    color: #64748b;
+  }
+
+  .col-activity {
+    min-width: 150px;
+  }
+
+  .activity-date {
+    font-size: 13px;
+    color: #475569;
+    white-space: nowrap;
+  }
+
+  .col-action {
+    min-width: 100px;
+  }
+
+  .btn-view-logs {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 14px;
+    background: #2563eb;
+    color: white !important;
+    text-decoration: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    transition: background 0.2s;
+  }
+
+  .btn-view-logs:hover {
+    background: #1d4ed8;
+  }
+
   /* Badge Styles */
   .badge {
     display: inline-block;
@@ -312,25 +374,67 @@ import AdminLayout from "../layouts/AdminLayout.astro";
     border: 1px solid #fca5a5;
   }
 
-  .evidence-list {
-    margin: 0;
-    padding-left: 18px;
-    font-size: 13px;
-    color: #dc2626;
+  /* Evidence Cards Container */
+  .evidence-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 4px 0;
   }
 
-  .btn {
-    display: inline-block;
-    padding: 6px 12px;
-    background: #2563eb;
-    color: white;
-    text-decoration: none;
+  .evidence-card {
+    padding: 8px 12px;
     border-radius: 6px;
     font-size: 13px;
-    font-weight: 500;
+    border-left: 3px solid #ef4444;
+    background: #fef2f2;
+    color: #991b1b;
   }
 
-  /* Dark Theme Card Overrides */
+  .evidence-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+    gap: 12px;
+  }
+
+  .evidence-title {
+    font-weight: 600;
+  }
+
+  .evidence-time {
+    font-size: 11px;
+    opacity: 0.8;
+  }
+
+  .evidence-detail {
+    font-size: 12px;
+  }
+
+  .evidence-loc {
+    font-size: 11px;
+    margin-top: 4px;
+    opacity: 0.85;
+  }
+
+  .evidence-speed,
+  .evidence-jump {
+    border-left-color: #ef4444;
+    background: #fef2f2;
+    color: #991b1b;
+  }
+
+  .evidence-future,
+  .evidence-drift,
+  .evidence-clock,
+  .evidence-tz {
+    border-left-color: #f59e0b;
+    background: #fffbeb;
+    color: #92400e;
+  }
+
+  /* Dark Theme Overrides */
   :global(.dark-theme) .stat-card,
   :global(.dark-theme) .table-scroll-wrapper {
     background-color: var(--bg-secondary) !important;
@@ -347,8 +451,38 @@ import AdminLayout from "../layouts/AdminLayout.astro";
     border-color: var(--border-color) !important;
   }
 
+  :global(.dark-theme) .engineer-name {
+    color: #f1f5f9;
+  }
+
+  :global(.dark-theme) .engineer-code,
+  :global(.dark-theme) .subregion-text {
+    color: #94a3b8;
+  }
+
+  :global(.dark-theme) .region-text,
+  :global(.dark-theme) .activity-date {
+    color: #cbd5e1;
+  }
+
   :global(.dark-theme) .subtitle {
     color: #94a3b8;
+  }
+
+  :global(.dark-theme) .evidence-speed,
+  :global(.dark-theme) .evidence-jump {
+    background: rgba(239, 68, 68, 0.15);
+    color: #fca5a5;
+    border-left-color: #ef4444;
+  }
+
+  :global(.dark-theme) .evidence-future,
+  :global(.dark-theme) .evidence-drift,
+  :global(.dark-theme) .evidence-clock,
+  :global(.dark-theme) .evidence-tz {
+    background: rgba(245, 158, 11, 0.15);
+    color: #fcd34d;
+    border-left-color: #f59e0b;
   }
 
   /* Mobile Card Layout for Viewports < 768px */

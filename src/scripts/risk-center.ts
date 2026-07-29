@@ -1,5 +1,15 @@
 import { makeTableSortable } from "./table-sort";
 
+export interface RiskEvidenceItem {
+  id?: string;
+  type: "speed" | "jump" | "future" | "drift" | "clock" | "tz";
+  title: string;
+  detail: string;
+  timestamp: string;
+  location?: string;
+  photo_tag?: string;
+}
+
 export interface RiskEngineer {
   engineer_id: string;
   engineer_code: string;
@@ -9,7 +19,7 @@ export interface RiskEngineer {
   gps_risk_count: number;
   time_risk_count: number;
   primary_risk_type: "gps" | "time" | "both";
-  evidence: string[];
+  evidence_items: RiskEvidenceItem[];
   last_activity: string;
 }
 
@@ -112,27 +122,38 @@ function renderRiskTable(engineers: RiskEngineer[]) {
       riskBadge = `<span class="badge badge-time">🕒 Clock / Time Risk</span>`;
     }
 
-    const evidenceList = eng.evidence.map(e => `<li>${e}</li>`).join("");
+    const evidenceCards = eng.evidence_items.map((item) => `
+      <div class="evidence-card evidence-${item.type}">
+        <div class="evidence-header">
+          <span class="evidence-title">${item.title}</span>
+          <span class="evidence-time">${formatEgyptDate(item.timestamp)}</span>
+        </div>
+        <div class="evidence-detail">${item.detail}</div>
+        ${item.location ? `<div class="evidence-loc">📍 ${item.location}</div>` : ""}
+      </div>
+    `).join("");
 
     return `
       <tr>
-        <td data-label="Engineer">
-          <strong>${eng.full_name || "Unknown"}</strong>
-          <div style="font-size: 12px; color: #64748b;">${eng.engineer_code || ""}</div>
+        <td data-label="Engineer" class="col-engineer">
+          <div class="engineer-name">${eng.full_name || "Unknown"}</div>
+          <div class="engineer-code">${eng.engineer_code || ""}</div>
         </td>
-        <td data-label="Location">
-          <div>${eng.region || "-"}</div>
-          <div style="font-size: 12px; color: #64748b;">${eng.subregion || "-"}</div>
+        <td data-label="Location" class="col-location">
+          <div class="region-text">${eng.region || "-"}</div>
+          <div class="subregion-text">${eng.subregion || "-"}</div>
         </td>
-        <td data-label="Risk Type">${riskBadge}</td>
-        <td data-label="Detected Evidence">
-          <ul class="evidence-list">
-            ${evidenceList}
-          </ul>
+        <td data-label="Risk Tag" class="col-risk-tag">${riskBadge}</td>
+        <td data-label="Detected Evidence" class="col-evidence">
+          <div class="evidence-container">
+            ${evidenceCards}
+          </div>
         </td>
-        <td data-label="Last Activity">${formatEgyptDate(eng.last_activity)}</td>
-        <td data-label="Actions">
-          <a class="btn" href="/engineers/${eng.engineer_id}">View Logs</a>
+        <td data-label="Last Activity" class="col-activity">
+          <div class="activity-date">${formatEgyptDate(eng.last_activity)}</div>
+        </td>
+        <td data-label="Actions" class="col-action">
+          <a class="btn-view-logs" href="/engineers/${eng.engineer_id}">View Logs</a>
         </td>
       </tr>
     `;
@@ -151,7 +172,6 @@ export async function fetchRiskData() {
   const token = "sb_publishable_yI6-VfmXaCmbr7E8GCq6zg_zTUe-rMB";
 
   try {
-    // Query photo logs with engineer details within selected date range
     const res = await fetch(
       `${supabaseUrl}/rest/v1/photo_logs_with_engineer?select=id,engineer_id,engineer_code,full_name,speed,accuracy,latitude,longitude,device_timezone,captured_online,taken_at,synced_at,address&taken_at=gte.${fromVal}T00:00:00%2B03:00&taken_at=lte.${toVal}T23:59:59%2B03:00&order=taken_at.desc&limit=1000`,
       {
@@ -172,8 +192,6 @@ export async function fetchRiskData() {
     }
 
     const nowTime = Date.now();
-
-    // Group logs by engineer
     const map: Record<string, RiskEngineer> = {};
     const engLogsMap: Record<string, any[]> = {};
 
@@ -191,7 +209,7 @@ export async function fetchRiskData() {
           gps_risk_count: 0,
           time_risk_count: 0,
           primary_risk_type: "gps",
-          evidence: [],
+          evidence_items: [],
           last_activity: log.taken_at,
         };
       }
@@ -205,44 +223,62 @@ export async function fetchRiskData() {
       const takenTime = new Date(log.taken_at).getTime();
       const syncedTime = log.synced_at ? new Date(log.synced_at).getTime() : null;
 
-      // 1. High Speed Movement (>90 km/h)
+      // 1. High Speed (>90 km/h)
       if (log.speed && log.speed > 25) {
         eng.gps_risk_count++;
         const kmh = Math.round(log.speed * 3.6);
-        const reason = `High speed recorded: ${kmh} km/h (Limit >90 km/h)`;
-        if (!eng.evidence.includes(reason)) eng.evidence.push(reason);
+        eng.evidence_items.push({
+          id: log.id,
+          type: "speed",
+          title: "🏎️ High Speed Recorded",
+          detail: `Speed of ${kmh} km/h recorded (Speed limit >90 km/h)`,
+          timestamp: log.taken_at,
+          location: log.address || undefined,
+        });
       }
 
-      // 2. Future Timestamp ("picture taken tmrw / future")
+      // 2. Future Timestamp
       if (takenTime > nowTime + 10 * 60 * 1000) {
         eng.time_risk_count++;
-        const reason = `Future timestamp: Taken in future (${formatEgyptDate(log.taken_at)})`;
-        if (!eng.evidence.includes(reason)) eng.evidence.push(reason);
+        eng.evidence_items.push({
+          id: log.id,
+          type: "future",
+          title: "📅 Future Photo Timestamp",
+          detail: `Photo taken in the future (${formatEgyptDate(log.taken_at)})`,
+          timestamp: log.taken_at,
+          location: log.address || undefined,
+        });
       }
 
-      // 3. Fast Clock / Time Drift ("picture taken in an hour but synced now")
+      // 3. Fast Clock / Time Shift
       if (syncedTime && takenTime > syncedTime + 15 * 60 * 1000) {
         eng.time_risk_count++;
         const minsAhead = Math.round((takenTime - syncedTime) / (1000 * 60));
-        const reason = `Clock Fast / Time Offset: Taken ${minsAhead} mins ahead of server sync`;
-        if (!eng.evidence.includes(reason)) eng.evidence.push(reason);
+        eng.evidence_items.push({
+          id: log.id,
+          type: "drift",
+          title: "⏳ Clock Fast / Time Drift",
+          detail: `Photo timestamp is ${minsAhead} mins ahead of server upload time`,
+          timestamp: log.taken_at,
+          location: log.address || undefined,
+        });
       }
 
       // 4. Untrusted Clock / Timezone Mismatch
-      if (log.time_confidence === "untrusted") {
-        eng.time_risk_count++;
-        const reason = `Untrusted hardware clock (Time spoof risk)`;
-        if (!eng.evidence.includes(reason)) eng.evidence.push(reason);
-      }
-
       if (log.device_timezone && log.device_timezone !== "Africa/Cairo") {
         eng.time_risk_count++;
-        const reason = `Timezone discrepancy: ${log.device_timezone}`;
-        if (!eng.evidence.includes(reason)) eng.evidence.push(reason);
+        eng.evidence_items.push({
+          id: log.id,
+          type: "tz",
+          title: "🌐 Timezone Mismatch",
+          detail: `Device timezone set to ${log.device_timezone} (Expected Africa/Cairo)`,
+          timestamp: log.taken_at,
+          location: log.address || undefined,
+        });
       }
     }
 
-    // 5. Impossible Location Jump (Haversine Distance > 10km within 30 mins)
+    // 5. Teleportation Jumps
     for (const [eid, eLogs] of Object.entries(engLogsMap)) {
       const eng = map[eid];
       const validGpsLogs = eLogs.filter(l => l.latitude && l.longitude)
@@ -260,19 +296,23 @@ export async function fetchRiskData() {
           const speedKmh = distKm / (diffMins / 60);
           if (speedKmh > 150 && distKm > 10) {
             eng.gps_risk_count++;
-            const reason = `Teleportation Jump: Moved ${distKm.toFixed(1)} km in ${diffMins.toFixed(1)} mins (${Math.round(speedKmh)} km/h implied speed)`;
-            if (!eng.evidence.includes(reason)) eng.evidence.push(reason);
+            eng.evidence_items.push({
+              id: p2.id,
+              type: "jump",
+              title: "🚀 Teleportation / GPS Jump",
+              detail: `Moved ${distKm.toFixed(1)} km in ${diffMins.toFixed(1)} mins (${Math.round(speedKmh)} km/h implied speed)`,
+              timestamp: p2.taken_at,
+              location: `${p1.address || "Point A"} ➔ ${p2.address || "Point B"}`,
+            });
           }
         }
       }
     }
 
-    // Only keep engineers who triggered at least one risk indicator
     cachedRiskEngineers = Object.values(map).filter(
       (e) => e.gps_risk_count > 0 || e.time_risk_count > 0
     );
 
-    // Update summary stat cards
     const totalCount = cachedRiskEngineers.length;
     const gpsCount = cachedRiskEngineers.filter(e => e.gps_risk_count > 0).length;
     const timeCount = cachedRiskEngineers.filter(e => e.time_risk_count > 0).length;
@@ -291,7 +331,6 @@ export async function fetchRiskData() {
   }
 }
 
-// Bind page lifecycle listener
 document.addEventListener("astro:page-load", () => {
   if (document.getElementById("risk-table")) {
     const inputFrom = document.getElementById("input-from") as HTMLInputElement | null;
