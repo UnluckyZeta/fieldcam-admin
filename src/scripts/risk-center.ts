@@ -443,35 +443,39 @@ export async function fetchRiskData() {
         const dT = tB - tA; // Device reported taken-time diff
         const dS = sB - sA; // Actual sync-time diff
 
-        // A photo uploaded later (b) has a reported taken_at earlier than the previously uploaded photo (a)
-        if (dT < -15 * 60 * 1000) {
-          const minsDiff = Math.round(Math.abs(dT) / 60000);
-          eng.time_risk_count++;
-          eng.evidence_items.push({
-            id: b.id,
-            type: "sequential",
-            title: "⏳ Out-of-Order Sync Timeline",
-            detail: `Chronology error: Synced later but claims to be taken ${minsDiff} mins earlier than previous photo.`,
-            timestamp: b.taken_at,
-            location: b.address || undefined,
-            photo_tag: b.photo_tag || undefined,
-            review_status: b.review_status,
-          });
-        }
-        // Device clock jumped forward extremely fast relative to real sync elapsed time
-        else if (dT > dS + 15 * 60 * 1000) {
-          const jumpMins = Math.round((dT - dS) / 60000);
-          eng.time_risk_count++;
-          eng.evidence_items.push({
-            id: b.id,
-            type: "sequential",
-            title: "⏳ Clock Speed-up Spoof",
-            detail: `Chronology error: Clock jumped forward by ${jumpMins} mins between sequential photo syncs.`,
-            timestamp: b.taken_at,
-            location: b.address || undefined,
-            photo_tag: b.photo_tag || undefined,
-            review_status: b.review_status,
-          });
+        // Only evaluate chronology if the uploads were synced at least 2 minutes apart.
+        // This prevents false positives from batch uploads where offline photos are synced in the same minute.
+        if (dS >= 2 * 60 * 1000) {
+          // A photo uploaded later (b) has a reported taken_at earlier than the previously uploaded photo (a)
+          if (dT < -15 * 60 * 1000) {
+            const minsDiff = Math.round(Math.abs(dT) / 60000);
+            eng.time_risk_count++;
+            eng.evidence_items.push({
+              id: b.id,
+              type: "sequential",
+              title: "⏳ Out-of-Order Sync Timeline",
+              detail: `Chronology error: Synced later but claims to be taken ${minsDiff} mins earlier than previous photo.`,
+              timestamp: b.taken_at,
+              location: b.address || undefined,
+              photo_tag: b.photo_tag || undefined,
+              review_status: b.review_status,
+            });
+          }
+          // Device clock jumped forward extremely fast relative to real sync elapsed time
+          else if (dT > dS + 15 * 60 * 1000) {
+            const jumpMins = Math.round((dT - dS) / 60000);
+            eng.time_risk_count++;
+            eng.evidence_items.push({
+              id: b.id,
+              type: "sequential",
+              title: "⏳ Clock Speed-up Spoof",
+              detail: `Chronology error: Clock jumped forward by ${jumpMins} mins between sequential photo syncs.`,
+              timestamp: b.taken_at,
+              location: b.address || undefined,
+              photo_tag: b.photo_tag || undefined,
+              review_status: b.review_status,
+            });
+          }
         }
       }
     }
