@@ -9,9 +9,12 @@ const {
 const isLoginPage =
   Astro.url.pathname ===
   "/login";
+
+const themeCookie = Astro.cookies.get("theme")?.value || "light";
+const isDark = themeCookie === "dark";
 ---
 
-<html lang="en">
+<html lang="en" class={isDark ? "dark-theme" : ""}>
   <head>
     <meta charset="UTF-8" />
 
@@ -23,10 +26,13 @@ const isLoginPage =
     <title>{title}</title>
     <ClientRouter />
     <script is:inline>
-      const theme = localStorage.getItem("theme") || 
-        (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      const theme = document.cookie.split("; ").find(row => row.startsWith("theme="))?.split("=")[1] || 
+                    localStorage.getItem("theme") || 
+                    (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
       if (theme === "dark") {
         document.documentElement.classList.add("dark-theme");
+      } else {
+        document.documentElement.classList.remove("dark-theme");
       }
     </script>
   </head>
@@ -167,7 +173,9 @@ const isLoginPage =
 
     const toggleTheme = () => {
       const isDark = document.documentElement.classList.toggle("dark-theme");
-      localStorage.setItem("theme", isDark ? "dark" : "light");
+      const newTheme = isDark ? "dark" : "light";
+      localStorage.setItem("theme", newTheme);
+      document.cookie = `theme=${newTheme}; path=/; max-age=31536000; SameSite=Lax`;
       updateIcons(isDark);
     };
 
@@ -380,12 +388,29 @@ const isLoginPage =
     border-left: 4px solid #f59e0b !important;
   }
 
-  /* Nuclear shadow & outline reset for all buttons, inputs, selects, and textareas */
-  button, input, select, textarea, .btn, .btn-reset, .btn-export, .btn-export-all {
+  /* Nuclear shadow, border, and outline reset for all buttons globally (light & dark mode) */
+  button,
+  .btn,
+  .btn-reset,
+  .btn-export,
+  .btn-export-all,
+  .filters button,
+  .filters a,
+  .logout-btn,
+  .theme-toggle-btn {
     box-shadow: none !important;
+    border: none !important;
+    border-style: none !important;
     outline: none !important;
-    -webkit-appearance: none;
-    appearance: none;
+    text-shadow: none !important;
+    -webkit-appearance: none !important;
+    appearance: none !important;
+  }
+
+  /* Outline reset for inputs, selects, and textareas */
+  input, select, textarea {
+    outline: none !important;
+    box-shadow: none !important;
   }
 
   /* Suppress all shadows on inputs, selects, buttons, cards, list rows, and sections in dark theme */
