@@ -293,12 +293,19 @@ import AdminLayout from "../layouts/AdminLayout.astro";
     overflow: hidden;
     min-width: 0;
   }
-  :global(.ev-card-gps) {
-    background: #fff5f5; color: #991b1b; border-left: 4px solid #f87171; border-color: #fca5a5;
+  :global(.ev-card-strong) {
+    background: #fff5f5; color: #991b1b; border-left: 4px solid #ef4444; border-color: #fca5a5;
   }
-  :global(.ev-card-time) {
-    background: #fffbeb; color: #92400e; border-left: 4px solid #fbbf24; border-color: #fcd34d;
+  :global(.ev-card-sig) {
+    background: #fffbeb; color: #92400e; border-left: 4px solid #f97316; border-color: #fdba74;
   }
+  :global(.ev-card-supp) {
+    background: #fefce8; color: #854d0e; border-left: 4px solid #eab308; border-color: #fef08a;
+  }
+  :global(.rc-badge-sev-strong) { background: #ef4444; color: white; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-left: 4px; }
+  :global(.rc-badge-sev-sig) { background: #f97316; color: white; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-left: 4px; }
+  :global(.rc-badge-sev-supp) { background: #eab308; color: white; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-left: 4px; }
+
   :global(.ev-card-top) {
     display: flex;
     justify-content: space-between;

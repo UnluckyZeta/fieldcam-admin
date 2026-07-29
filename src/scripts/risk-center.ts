@@ -1,6 +1,7 @@
 export interface RiskEvidenceItem {
   id?: string;
   type: "speed" | "jump" | "future" | "drift" | "tz" | "manual" | "sequential" | "mock";
+  severity?: "strong" | "significant" | "supporting" | "human";
   title: string;
   detail: string;
   timestamp: string;
@@ -203,8 +204,16 @@ function renderCards(engineers: RiskEngineer[]) {
     if (eng.time_risk_count > 0) badges.push(`<span class="rc-badge rc-badge-time">🕒 Time ×${eng.time_risk_count}</span>`);
 
     const evidenceCards = eng.evidence_items.length > 0 ? eng.evidence_items.map(item => {
-      const isGps = item.type === "speed" || item.type === "jump";
+      const cardClass = item.severity === "strong" ? "ev-card-strong" : item.severity === "significant" ? "ev-card-sig" : "ev-card-supp";
       
+      const severityBadge = item.severity === "strong"
+        ? `<span class="rc-badge-sev-strong" title="Strong Signal (OS / Proven Violation)">🔴 Strong</span>`
+        : item.severity === "significant"
+        ? `<span class="rc-badge-sev-sig" title="Significant Anomaly">🟠 Significant</span>`
+        : item.severity === "supporting"
+        ? `<span class="rc-badge-sev-supp" title="Supporting Signal Only">🟡 Supporting</span>`
+        : "";
+
       const reviewBadge = item.review_status === "verified"
         ? `<span class="rc-badge-clear">✔️ Cleared</span>`
         : item.review_status === "flagged"
@@ -239,9 +248,9 @@ function renderCards(engineers: RiskEngineer[]) {
       }
 
       return `
-        <div class="ev-card ${isGps ? "ev-card-gps" : "ev-card-time"}">
+        <div class="ev-card ${cardClass}">
           <div class="ev-card-top">
-            <div class="ev-title">${item.title} ${reviewBadge}</div>
+            <div class="ev-title">${item.title} ${severityBadge} ${reviewBadge}</div>
             <div class="ev-actions">${actionButtons}</div>
           </div>
           <div class="ev-detail">${item.detail}</div>
@@ -373,7 +382,7 @@ export async function fetchRiskData() {
       const isUnverified = log.review_status !== "verified";
       let matchedAutoRule = false;
 
-      // Rule 1 · High Speed (>90 km/h)
+      // Rule 1 · High Speed (>90 km/h) — Supporting Signal
       if (log.speed && log.speed > 25) {
         matchedAutoRule = true;
         if (isUnverified) eng.gps_risk_count++;
@@ -381,6 +390,7 @@ export async function fetchRiskData() {
         eng.evidence_items.push({
           id: log.id,
           type: "speed",
+          severity: "supporting",
           title: `🏎️ High Speed: ${kmh} km/h`,
           detail: `Device GPS recorded ${kmh} km/h (threshold >90 km/h).`,
           timestamp: log.taken_at,
@@ -390,13 +400,14 @@ export async function fetchRiskData() {
         });
       }
 
-      // Rule 2 · Future timestamp
+      // Rule 2 · Future timestamp — Significant Anomaly
       if (takenMs > nowTime + 10 * 60 * 1000) {
         matchedAutoRule = true;
         if (isUnverified) eng.time_risk_count++;
         eng.evidence_items.push({
           id: log.id,
           type: "future",
+          severity: "significant",
           title: "📅 Future Timestamp",
           detail: `Photo timestamp is set to ${fmtDate(log.taken_at)} — in the future.`,
           timestamp: log.taken_at,
@@ -406,7 +417,7 @@ export async function fetchRiskData() {
         });
       }
 
-      // Rule 3 · Clock drift (taken ahead of synced)
+      // Rule 3 · Server Clock Drift — Significant Anomaly
       if (syncedMs && takenMs > syncedMs + 15 * 60 * 1000) {
         matchedAutoRule = true;
         if (isUnverified) eng.time_risk_count++;
@@ -414,6 +425,7 @@ export async function fetchRiskData() {
         eng.evidence_items.push({
           id: log.id,
           type: "drift",
+          severity: "significant",
           title: `⏳ Clock Drift: ${mins} min ahead`,
           detail: `Photo was timestamped ${mins} minutes ahead of when the server received it.`,
           timestamp: log.taken_at,
@@ -423,13 +435,14 @@ export async function fetchRiskData() {
         });
       }
 
-      // Rule 4 · Timezone mismatch
+      // Rule 4 · Timezone Mismatch — Supporting Signal
       if (log.device_timezone && log.device_timezone !== "Africa/Cairo") {
         matchedAutoRule = true;
         if (isUnverified) eng.time_risk_count++;
         eng.evidence_items.push({
           id: log.id,
           type: "tz",
+          severity: "supporting",
           title: "🌐 Timezone Mismatch",
           detail: `Device timezone: ${log.device_timezone} (expected Africa/Cairo).`,
           timestamp: log.taken_at,
@@ -439,15 +452,16 @@ export async function fetchRiskData() {
         });
       }
 
-      // Rule 10 · Untrusted Device Clock (Boot time / offline spoof detection)
+      // Rule 10 · Untrusted Device Clock — Significant Anomaly
       if (log.time_confidence === "untrusted") {
         matchedAutoRule = true;
         if (isUnverified) eng.time_risk_count++;
         eng.evidence_items.push({
           id: log.id,
           type: "drift",
+          severity: "significant",
           title: "⏳ Untrusted Device Clock",
-          detail: "Device boot time changed significantly since last sync, indicating a reboot or offline clock manipulation.",
+          detail: "The device's calculated boot-time reference changed by more than 5 minutes since the last trusted synchronization. This can result from a reboot, system clock adjustment, or other clock inconsistency.",
           timestamp: log.taken_at,
           location: log.address || undefined,
           photo_tag: log.photo_tag || undefined,
@@ -455,15 +469,16 @@ export async function fetchRiskData() {
         });
       }
 
-      // Rule 7 · Mock Location (suspiciously perfect GPS accuracy ≤ 1.5m)
+      // Rule 7 · Unusually High Reported Accuracy — Supporting Signal (Weak anomaly only)
       if (log.accuracy !== null && log.accuracy !== undefined && log.accuracy > 0 && log.accuracy <= 1.5) {
         matchedAutoRule = true;
         if (isUnverified) eng.gps_risk_count++;
         eng.evidence_items.push({
           id: log.id,
           type: "mock",
-          title: `📡 Suspected Mock Location (${log.accuracy.toFixed(2)}m)`,
-          detail: `GPS accuracy of ${log.accuracy.toFixed(2)}m is suspiciously perfect. Real GPS is always noisy (typically 3-20m). Mock location apps report ~1.0m.`,
+          severity: "supporting",
+          title: `📡 Unusually High Reported Accuracy (${log.accuracy.toFixed(1)}m)`,
+          detail: `Device reported unusually high location accuracy (≤1.5 m). This is a weak anomaly signal only and does not establish mock-location use.`,
           timestamp: log.taken_at,
           location: log.address || undefined,
           photo_tag: log.photo_tag || undefined,
@@ -471,15 +486,16 @@ export async function fetchRiskData() {
         });
       }
 
-      // Rule 9 · OS-level Mock Location Detected (captured by expo-location on Android)
+      // Rule 9 · OS-Level Mock Location Detected — Strong Signal
       if (log.mocked === true) {
         matchedAutoRule = true;
         if (isUnverified) eng.gps_risk_count++;
         eng.evidence_items.push({
           id: log.id,
           type: "mock",
-          title: "📡 Mock Location (OS Detected)",
-          detail: "Android OS reported this location coordinate as mocked/spoofed (via isFromMockProvider).",
+          severity: "strong",
+          title: "📡 OS-Level Mock Location Detected",
+          detail: "Android reported that this location originated from a mock location provider.",
           timestamp: log.taken_at,
           location: log.address || undefined,
           photo_tag: log.photo_tag || undefined,
@@ -487,14 +503,15 @@ export async function fetchRiskData() {
         });
       }
 
-      // If manually flagged and no auto rules triggered, add manual flag card
+      // Rule 11 · Manual Admin Flag — Human Decision
       if (log.review_status === "flagged" && !matchedAutoRule) {
         if (isUnverified) eng.time_risk_count++;
         eng.evidence_items.push({
           id: log.id,
           type: "manual",
+          severity: "human",
           title: "🚩 Manually Flagged by Admin",
-          detail: "This picture was manually flagged as non-compliant or suspicious.",
+          detail: "This picture was manually flagged as non-compliant or suspicious by a supervisor.",
           timestamp: log.taken_at,
           location: log.address || undefined,
           photo_tag: log.photo_tag || undefined,
@@ -503,7 +520,7 @@ export async function fetchRiskData() {
       }
     }
 
-    // Rule 5 · Impossible location jump (speed > 150 km/h between locations)
+    // Rule 5 · Implausible Location Jump — Significant Anomaly
     for (const [eid, eLogs] of Object.entries(engLogsMap)) {
       const eng = map[eid];
       const sorted = eLogs.filter(l => l.latitude && l.longitude && l.review_status !== "verified")
@@ -520,8 +537,9 @@ export async function fetchRiskData() {
             eng.evidence_items.push({
               id: b.id,
               type: "jump",
-              title: `🚀 Location Jump: ${dist.toFixed(0)} km in ${diffMin.toFixed(0)} min`,
-              detail: `Implied speed of ${Math.round(speed)} km/h — physically impossible.`,
+              severity: "significant",
+              title: `🚀 Implausible Location Jump: ${dist.toFixed(0)} km in ${diffMin.toFixed(0)} min`,
+              detail: `Implied speed of ${Math.round(speed)} km/h is highly implausible for standard ground travel.`,
               timestamp: b.taken_at,
               location: `${a.address || "Point A"} → ${b.address || "Point B"}`,
               photo_tag: b.photo_tag || undefined,
@@ -532,7 +550,7 @@ export async function fetchRiskData() {
       }
     }
 
-    // Rule 6 · Out-of-Order Upload / Sync Timeline Manipulation
+    // Rule 6 · Chronology Anomaly — Supporting Signal
     for (const [eid, eLogs] of Object.entries(engLogsMap)) {
       const eng = map[eid];
       const onlineLogs = eLogs.filter(l => {
@@ -557,8 +575,9 @@ export async function fetchRiskData() {
           eng.evidence_items.push({
             id: b.id,
             type: "sequential",
-            title: "⏳ Out-of-Order Sync Timeline",
-            detail: `Chronology error: Synced later (online) but claims to be taken ${minsDiff} mins earlier than previous photo.`,
+            severity: "supporting",
+            title: "⏳ Chronology Anomaly",
+            detail: `Sequential online photos show a timestamp chronology discrepancy (${minsDiff} min diff).`,
             timestamp: b.taken_at,
             location: b.address || undefined,
             photo_tag: b.photo_tag || undefined,
@@ -571,8 +590,9 @@ export async function fetchRiskData() {
           eng.evidence_items.push({
             id: b.id,
             type: "sequential",
-            title: "⏳ Clock Speed-up Spoof",
-            detail: `Chronology error: Both photos synced online, but clock jumped forward by ${jumpMins} mins.`,
+            severity: "supporting",
+            title: "⏳ Chronology Anomaly",
+            detail: `Sequential online photos show a timestamp jump discrepancy (${jumpMins} min diff).`,
             timestamp: b.taken_at,
             location: b.address || undefined,
             photo_tag: b.photo_tag || undefined,
