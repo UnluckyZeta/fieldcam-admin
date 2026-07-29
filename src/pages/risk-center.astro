@@ -1,0 +1,426 @@
+---
+import AdminLayout from "../layouts/AdminLayout.astro";
+---
+
+<AdminLayout title="Risk Center | FieldCam Admin">
+  <div class="page-header">
+    <h1>🚨 Risk Center & Compliance Monitoring</h1>
+    <p class="subtitle">
+      Real-time intelligence engine flagging engineers for high speed GPS jumps, mock location spoofs, and untrusted system clock discrepancies.
+    </p>
+  </div>
+
+  <!-- Summary Statistics -->
+  <div class="stats-grid">
+    <div class="stat-card stat-card-danger">
+      <div class="stat-header">
+        <span class="stat-title">Flagged Engineers</span>
+        <span class="stat-icon">⚠️</span>
+      </div>
+      <div class="stat-value" id="stat-total-risk">0</div>
+      <div class="stat-sub">High-risk accounts detected</div>
+    </div>
+
+    <div class="stat-card stat-card-warn">
+      <div class="stat-header">
+        <span class="stat-title">GPS & Speed Risks</span>
+        <span class="stat-icon">🏎️</span>
+      </div>
+      <div class="stat-value" id="stat-gps-risk">0</div>
+      <div class="stat-sub">Speeds exceeding >90 km/h</div>
+    </div>
+
+    <div class="stat-card stat-card-purple">
+      <div class="stat-header">
+        <span class="stat-title">Clock / Time Spoof</span>
+        <span class="stat-icon">🕒</span>
+      </div>
+      <div class="stat-value" id="stat-time-risk">0</div>
+      <div class="stat-sub">Untrusted clock or timezones</div>
+    </div>
+  </div>
+
+  <!-- Filter & Search Controls Toolbar -->
+  <div class="toolbar-flat">
+    <form id="risk-filter-form" class="filters">
+      <input
+        type="date"
+        id="input-from"
+        name="from"
+        onfocus="this.showPicker()"
+      />
+
+      <input
+        type="date"
+        id="input-to"
+        name="to"
+        onfocus="this.showPicker()"
+      />
+
+      <button type="submit">Apply Filter</button>
+
+      <a href="/risk-center" class="btn-reset">Reset</a>
+
+      <input
+        id="search"
+        type="text"
+        class="search-input"
+        placeholder="Search by engineer name, code, or region..."
+      />
+
+      <select id="risk-type-filter" class="filter-select">
+        <option value="">All Risk Types</option>
+        <option value="gps">🏎️ Speed / GPS Risk Only</option>
+        <option value="time">🕒 Clock / Time Risk Only</option>
+      </select>
+
+      <select id="region-filter" class="filter-select">
+        <option value="">All Regions</option>
+        <option value="cairo">Cairo</option>
+        <option value="giza">Giza</option>
+        <option value="alexandria">Alexandria</option>
+        <option value="qalyubia">Qalyubia</option>
+        <option value="dakahlia">Dakahlia</option>
+        <option value="sharqia">Sharqia</option>
+        <option value="gharbia">Gharbia</option>
+        <option value="monufia">Monufia</option>
+        <option value="beheira">Beheira</option>
+        <option value="port said">Port Said</option>
+        <option value="ismailia">Ismailia</option>
+        <option value="suez">Suez</option>
+        <option value="kafr el sheikh">Kafr El Sheikh</option>
+        <option value="damietta">Damietta</option>
+        <option value="minya">Minya</option>
+        <option value="beni suef">Beni Suef</option>
+        <option value="faiyum">Faiyum</option>
+        <option value="assiut">Assiut</option>
+        <option value="sohag">Sohag</option>
+        <option value="qena">Qena</option>
+        <option value="luxor">Luxor</option>
+        <option value="aswan">Aswan</option>
+        <option value="red sea">Red Sea</option>
+        <option value="new valley">New Valley</option>
+        <option value="matrouh">Matrouh</option>
+        <option value="north sinai">North Sinai</option>
+        <option value="south sinai">South Sinai</option>
+      </select>
+    </form>
+  </div>
+
+  <!-- Flagged Engineers Table Container -->
+  <div class="table-scroll-wrapper">
+    <table id="risk-table" class="data-table">
+      <thead>
+        <tr>
+          <th class="sortable">Engineer</th>
+          <th class="sortable">Region</th>
+          <th>Risk Tag</th>
+          <th>Detected Evidence</th>
+          <th class="sortable">Last Activity</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td colspan="6" style="text-align: center; color: #94a3b8; padding: 32px;">
+            <div class="skeleton" style="height: 24px; width: 200px; margin: 0 auto;"></div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</AdminLayout>
+
+<style>
+  .page-header {
+    margin-bottom: 24px;
+  }
+
+  .page-header h1 {
+    margin: 0 0 8px 0;
+    font-size: 24px;
+    font-weight: 700;
+  }
+
+  .subtitle {
+    margin: 0;
+    color: #64748b;
+    font-size: 14px;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .stat-card {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    border-left: 4px solid #3b82f6;
+  }
+
+  .stat-card-danger {
+    border-left-color: #ef4444;
+  }
+
+  .stat-card-warn {
+    border-left-color: #f59e0b;
+  }
+
+  .stat-card-purple {
+    border-left-color: #8b5cf6;
+  }
+
+  .stat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .stat-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #64748b;
+  }
+
+  .stat-icon {
+    font-size: 20px;
+  }
+
+  .stat-value {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .stat-sub {
+    font-size: 12px;
+    color: #94a3b8;
+  }
+
+  .toolbar-flat {
+    margin-bottom: 24px;
+  }
+
+  .filters {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .filters input[type="date"],
+  .filter-select,
+  .search-input {
+    height: 40px;
+    padding: 0 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+    background: white;
+  }
+
+  .search-input {
+    flex: 1;
+    min-width: 240px;
+  }
+
+  .filter-select {
+    min-width: 170px;
+  }
+
+  .filters button,
+  .btn-reset {
+    height: 40px;
+    padding: 0 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .filters button {
+    background: #2563eb;
+    color: white;
+  }
+
+  .btn-reset {
+    background: #6b7280;
+    color: white;
+  }
+
+  .table-scroll-wrapper {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    overflow-x: auto;
+  }
+
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 14px;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .data-table th {
+    background: #f9fafb;
+    font-weight: 600;
+    color: #374151;
+  }
+
+  /* Badge Styles */
+  .badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .badge-gps {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fcd34d;
+  }
+
+  .badge-time {
+    background: #f3e8ff;
+    color: #6b21a8;
+    border: 1px solid #d8b4fe;
+  }
+
+  .badge-both {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+  }
+
+  .evidence-list {
+    margin: 0;
+    padding-left: 18px;
+    font-size: 13px;
+    color: #dc2626;
+  }
+
+  .btn {
+    display: inline-block;
+    padding: 6px 12px;
+    background: #2563eb;
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  /* Dark Theme Card Overrides */
+  :global(.dark-theme) .stat-card,
+  :global(.dark-theme) .table-scroll-wrapper {
+    background-color: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
+  }
+
+  :global(.dark-theme) .data-table th {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    color: var(--text-primary) !important;
+  }
+
+  :global(.dark-theme) .data-table td {
+    border-color: var(--border-color) !important;
+  }
+
+  :global(.dark-theme) .subtitle {
+    color: #94a3b8;
+  }
+
+  /* Mobile Card Layout for Viewports < 768px */
+  @media (max-width: 768px) {
+    .filters {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .filters input,
+    .filters select,
+    .filters button,
+    .filters a {
+      width: 100% !important;
+      min-width: 0 !important;
+      box-sizing: border-box;
+    }
+
+    .data-table,
+    .data-table thead,
+    .data-table tbody,
+    .data-table th,
+    .data-table td,
+    .data-table tr {
+      display: block;
+    }
+
+    .data-table thead tr {
+      position: absolute;
+      top: -9999px;
+      left: -9999px;
+    }
+
+    .data-table tr {
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      background: white;
+      padding: 12px;
+    }
+
+    :global(.dark-theme) .data-table tr {
+      background: var(--bg-secondary);
+      border-color: var(--border-color);
+    }
+
+    .data-table td {
+      border: none !important;
+      position: relative;
+      padding-left: 45% !important;
+      text-align: right;
+      min-height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+    }
+
+    .data-table td::before {
+      content: attr(data-label);
+      position: absolute;
+      left: 12px;
+      width: 40%;
+      padding-right: 10px;
+      white-space: nowrap;
+      text-align: left;
+      font-weight: 600;
+      color: #64748b;
+      font-size: 13px;
+    }
+  }
+</style>
+
+<script type="module">
+  import "../scripts/risk-center";
+</script>
