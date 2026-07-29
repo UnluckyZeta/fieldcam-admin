@@ -60,10 +60,19 @@ import AdminLayout from "../layouts/AdminLayout.astro";
   <!-- Track Engineer By Name -->
   <div class="track-search-panel">
     <div class="track-search-row">
-      <input id="track-name-search" type="text" class="search-input" placeholder="🔍 Search any engineer by name or code to add to watchlist..." />
+      <input id="track-name-search" type="text" class="search-input" placeholder="🔍 Search any engineer by name, code, or email to track..." />
       <button id="track-search-btn" type="button">Search</button>
     </div>
     <div id="track-search-results"></div>
+  </div>
+
+  <!-- Flag Photo By Tag -->
+  <div class="track-search-panel">
+    <div class="track-search-row">
+      <input id="photo-tag-search" type="text" class="search-input" placeholder="🚩 Enter any photo tag (e.g. FC-XXXXXXXX) to inspect and flag/clear..." />
+      <button id="photo-search-btn" type="button" style="background:#ef4444;">Search Photo</button>
+    </div>
+    <div id="photo-search-results"></div>
   </div>
 
   <!-- Risk Cards Container (rendered by JS) -->
@@ -281,6 +290,8 @@ import AdminLayout from "../layouts/AdminLayout.astro";
     gap: 6px;
     border: 1px solid #e2e8f0;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+    overflow: hidden;
+    min-width: 0;
   }
   :global(.ev-card-gps) {
     background: #fff5f5; color: #991b1b; border-left: 4px solid #f87171; border-color: #fca5a5;
@@ -295,7 +306,7 @@ import AdminLayout from "../layouts/AdminLayout.astro";
     gap: 8px;
     margin-bottom: 2px;
   }
-  :global(.ev-title) { font-weight: 700; font-size: 13px; display: flex; align-items: center; }
+  :global(.ev-title) { font-weight: 700; font-size: 13px; display: flex; align-items: center; flex-wrap: wrap; min-width: 0; }
   :global(.ev-actions) {
     display: flex;
     gap: 4px;
@@ -348,6 +359,29 @@ import AdminLayout from "../layouts/AdminLayout.astro";
     font-weight: bold;
     margin-left: 6px;
   }
+  :global(.rc-badge-pending-clear) {
+    background: #f59e0b;
+    color: white;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: bold;
+    margin-left: 6px;
+  }
+  :global(.ev-btn-approve) {
+    background: #3b82f6;
+    color: white !important;
+  }
+  :global(.ev-btn-approve:hover) {
+    background: #2563eb;
+  }
+  :global(.ev-btn-reject) {
+    background: #6b7280;
+    color: white !important;
+  }
+  :global(.ev-btn-reject:hover) {
+    background: #4b5563;
+  }
   :global(.ev-tag-link) {
     background: rgba(0, 0, 0, 0.05);
     padding: 2px 6px;
@@ -363,7 +397,7 @@ import AdminLayout from "../layouts/AdminLayout.astro";
   :global(.ev-tag-link:hover) {
     color: #1d4ed8 !important;
   }
-  :global(.ev-detail) { font-size: 12px; line-height: 1.5; color: #475569; }
+  :global(.ev-detail) { font-size: 12px; line-height: 1.5; color: #475569; word-break: break-word; overflow-wrap: break-word; }
   :global(.ev-footer) {
     display: flex;
     justify-content: space-between;
@@ -377,7 +411,10 @@ import AdminLayout from "../layouts/AdminLayout.astro";
     display: flex;
     align-items: center;
     gap: 6px;
-    flex-shrink: 0;
+    flex-shrink: 1;
+    min-width: 0;
+    overflow: hidden;
+    flex-wrap: wrap;
   }
 
   /* ── Loading & Empty ── */

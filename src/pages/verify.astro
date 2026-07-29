@@ -125,6 +125,29 @@ if (tag) {
     </div>
   )
 }
+      <hr />
+
+      <h2>Compliance & Flagging Status</h2>
+      <div class="verify-review-box">
+        <div>
+          <strong>Status: </strong>
+          <span class={
+            result.photo.review_status === "verified" ? "badge-status badge-verified" :
+            result.photo.review_status === "flagged" ? "badge-status badge-flagged" :
+            result.photo.review_status === "pending_clear" ? "badge-status badge-pending" :
+            "badge-status badge-none"
+          }>
+            {result.photo.review_status === "verified" ? "✔️ Cleared" :
+             result.photo.review_status === "flagged" ? "🚩 Flagged" :
+             result.photo.review_status === "pending_clear" ? "⏳ Pending Clear" :
+             "Unreviewed"}
+          </span>
+          {result.photo.reviewed_by && <span class="reviewer-tag">({result.photo.reviewed_by})</span>}
+        </div>
+        <div class="review-btn-group">
+          <button type="button" class="btn-review btn-flag-act" onclick={`updateReviewStatusUi('${result.photo.id}', 'flagged')`}>🚩 Flag Photo</button>
+        </div>
+      </div>
     </div>
   )
 }
@@ -333,6 +356,56 @@ hr {
 }
 
 /* ===================== */
+
+.verify-review-box {
+  background: #f8fafc;
+  padding: 18px;
+  border-radius: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.badge-status {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  display: inline-block;
+}
+.badge-verified { background: #10b981; color: white; }
+.badge-flagged { background: #ef4444; color: white; }
+.badge-pending { background: #f59e0b; color: white; }
+.badge-none { background: #e2e8f0; color: #475569; }
+
+.reviewer-tag {
+  font-size: 12px;
+  color: #64748b;
+  margin-left: 8px;
+}
+
+.review-btn-group {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-review {
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-flag-act { background: #ef4444; color: white; }
+.btn-flag-act:hover { background: #dc2626; }
+.btn-clear-act { background: #10b981; color: white; }
+.btn-clear-act:hover { background: #059669; }
 
 @media (max-width:768px) {
 

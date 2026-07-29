@@ -233,7 +233,8 @@ const engineer =
       <th>Date</th>
       <th>Address</th>
       <th>Risk</th>
-      <th>Verify</th>
+      <th>Status</th>
+      <th>Actions</th>
     </tr>
   </thead>
 
@@ -272,12 +273,29 @@ const engineer =
 </td>
 
 <td>
-  <a
-    class="btn"
-    href={`/verify?tag=${photo.photo_tag}`}
-  >
-    Verify
-  </a>
+  <span class={
+    photo.review_status === "verified" ? "badge-status badge-verified" :
+    photo.review_status === "flagged" ? "badge-status badge-flagged" :
+    photo.review_status === "pending_clear" ? "badge-status badge-pending" :
+    "badge-status badge-none"
+  }>
+    {photo.review_status === "verified" ? "✔️ Cleared" :
+     photo.review_status === "flagged" ? "🚩 Flagged" :
+     photo.review_status === "pending_clear" ? "⏳ Pending Clear" :
+     "-"}
+  </span>
+</td>
+
+<td>
+  <div style="display:flex;gap:4px;align-items:center;">
+    <a
+      class="btn"
+      href={`/verify?tag=${photo.photo_tag}`}
+    >
+      Verify
+    </a>
+    <button type="button" class="btn-sm btn-flag-sm" onclick={`updateReviewStatusUi('${photo.id}', 'flagged')`}>🚩 Flag</button>
+  </div>
 </td>
         </tr>
       ),
@@ -611,8 +629,40 @@ const engineer =
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+.btn-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-sm {
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-flag-sm { background: #ef4444; color: white !important; }
+.btn-flag-sm:hover { background: #dc2626; }
+.btn-clear-sm { background: #10b981; color: white !important; }
+.btn-clear-sm:hover { background: #059669; }
+
+.badge-status {
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  display: inline-block;
+}
+.badge-verified { background: #10b981; color: white; }
+.badge-flagged { background: #ef4444; color: white; }
+.badge-pending { background: #f59e0b; color: white; }
+.badge-none { background: #e2e8f0; color: #475569; }
 </style>
 <script type="module">
+  import "../../scripts/verify";
   import "../../scripts/engineers";
 
   function setupTablePagination(tableId, pageSize = 50) {
