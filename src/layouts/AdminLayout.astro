@@ -399,8 +399,7 @@ const isDark = themeCookie === "dark";
   .logout-btn,
   .theme-toggle-btn {
     box-shadow: none !important;
-    border: none !important;
-    border-style: none !important;
+    border: 1px solid transparent !important; /* Force transparent border to strip native 3D button bevels */
     outline: none !important;
     text-shadow: none !important;
     -webkit-appearance: none !important;
