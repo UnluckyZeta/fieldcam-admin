@@ -153,7 +153,7 @@ export async function fetchRiskData() {
   try {
     // Query photo logs with engineer details within selected date range
     const res = await fetch(
-      `${supabaseUrl}/rest/v1/photo_logs_with_engineer?select=id,engineer_id,engineer_code,full_name,region,speed,accuracy,latitude,longitude,time_confidence,device_timezone,captured_online,taken_at,synced_at,address&taken_at=gte.${fromVal}T00:00:00%2B03:00&taken_at=lte.${toVal}T23:59:59%2B03:00&order=taken_at.desc&limit=1000`,
+      `${supabaseUrl}/rest/v1/photo_logs_with_engineer?select=id,engineer_id,engineer_code,full_name,speed,accuracy,latitude,longitude,device_timezone,captured_online,taken_at,synced_at,address&taken_at=gte.${fromVal}T00:00:00%2B03:00&taken_at=lte.${toVal}T23:59:59%2B03:00&order=taken_at.desc&limit=1000`,
       {
         headers: {
           apikey: token,
