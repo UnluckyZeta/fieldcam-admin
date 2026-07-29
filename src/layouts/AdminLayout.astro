@@ -380,7 +380,15 @@ const isLoginPage =
     border-left: 4px solid #f59e0b !important;
   }
 
-  /* Suppress browser default shadow glows on inputs, selects, buttons, cards, and sections in dark theme */
+  /* Nuclear shadow & outline reset for all buttons, inputs, selects, and textareas */
+  button, input, select, textarea, .btn, .btn-reset, .btn-export, .btn-export-all {
+    box-shadow: none !important;
+    outline: none !important;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  /* Suppress all shadows on inputs, selects, buttons, cards, list rows, and sections in dark theme */
   .dark-theme input,
   .dark-theme select,
   .dark-theme textarea,
@@ -396,7 +404,8 @@ const isLoginPage =
   .dark-theme .stat-card-link:hover,
   .dark-theme .card,
   .dark-theme .section,
-  .dark-theme .login-card {
+  .dark-theme .login-card,
+  .dark-theme table tr {
     box-shadow: none !important;
   }
 
