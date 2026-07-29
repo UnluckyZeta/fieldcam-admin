@@ -164,7 +164,7 @@ function renderCards(engineers: RiskEngineer[]) {
         ? `<span class="rc-badge-manual-flag">🚩 Flagged</span>`
         : "";
 
-      const tagText = item.photo_tag ? `<span class="ev-tag-label" title="Searchable Photo Tag">🏷️ ${item.photo_tag}</span>` : "";
+      const tagText = item.photo_tag ? `<a href="/verify?tag=${item.photo_tag}" target="_blank" class="ev-tag-link" onclick="event.stopPropagation()" title="Click to view full photo metadata & map verification">🏷️ ${item.photo_tag}</a>` : "";
 
       let actionButtons = "";
       if (item.id) {

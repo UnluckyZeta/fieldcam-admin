@@ -297,14 +297,20 @@ import AdminLayout from "../layouts/AdminLayout.astro";
     font-weight: bold;
     margin-left: 6px;
   }
-  :global(.ev-tag-label) {
+  :global(.ev-tag-link) {
     background: rgba(0, 0, 0, 0.05);
     padding: 2px 6px;
     border-radius: 4px;
     font-size: 10px;
     font-weight: 600;
-    color: #475569;
+    color: #2563eb !important;
+    text-decoration: underline !important;
     white-space: nowrap;
+    cursor: pointer;
+    transition: color 0.15s;
+  }
+  :global(.ev-tag-link:hover) {
+    color: #1d4ed8 !important;
   }
   :global(.ev-detail) { font-size: 12px; line-height: 1.5; color: #475569; }
   :global(.ev-footer) {
@@ -362,6 +368,8 @@ import AdminLayout from "../layouts/AdminLayout.astro";
   :global(.dark-theme .ev-card-gps)  { background: rgba(239, 68, 68, 0.1) !important; color: #fca5a5 !important; border-left: 4px solid #ef4444 !important; }
   :global(.dark-theme .ev-card-time) { background: rgba(245, 158, 11, 0.1) !important; color: #fcd34d !important; border-left: 4px solid #f59e0b !important; }
   :global(.dark-theme .ev-detail) { color: #cbd5e1 !important; }
+  :global(.dark-theme .ev-tag-link) { background: rgba(255, 255, 255, 0.1) !important; color: #60a5fa !important; }
+  :global(.dark-theme .ev-tag-link:hover) { color: #93c5fd !important; }
   :global(.dark-theme .rc-badge-gps)  { background: rgba(245, 158, 11, 0.2); color: #fcd34d; }
   :global(.dark-theme .rc-badge-time) { background: rgba(139, 92, 246, 0.2); color: #c4b5fd; }
   :global(.dark-theme .rc-badge-tracked) { background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
