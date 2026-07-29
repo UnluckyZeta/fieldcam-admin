@@ -4,557 +4,256 @@ import AdminLayout from "../layouts/AdminLayout.astro";
 
 <AdminLayout title="Risk Center | FieldCam Admin">
   <div class="page-header">
-    <h1>🚨 Risk Center & Compliance Monitoring</h1>
-    <p class="subtitle">
-      Real-time intelligence engine flagging engineers for high speed GPS jumps, mock location spoofs, and untrusted system clock discrepancies.
-    </p>
+    <h1>🚨 Risk Center</h1>
+    <p class="subtitle">Real-time anomaly detection for GPS spoofing, impossible location jumps, and clock tampering.</p>
   </div>
 
   <!-- Summary Statistics -->
   <div class="stats-grid">
-    <div class="stat-card stat-card-danger">
-      <div class="stat-header">
-        <span class="stat-title">Flagged Engineers</span>
-        <span class="stat-icon">⚠️</span>
+    <div class="stat-card stat-danger">
+      <div class="stat-icon-wrap danger-bg">⚠️</div>
+      <div class="stat-body">
+        <div class="stat-value" id="stat-total-risk">—</div>
+        <div class="stat-label">Flagged Engineers</div>
       </div>
-      <div class="stat-value" id="stat-total-risk">0</div>
-      <div class="stat-sub">High-risk accounts detected</div>
     </div>
-
-    <div class="stat-card stat-card-warn">
-      <div class="stat-header">
-        <span class="stat-title">GPS & Speed Risks</span>
-        <span class="stat-icon">🏎️</span>
+    <div class="stat-card stat-warn">
+      <div class="stat-icon-wrap warn-bg">📍</div>
+      <div class="stat-body">
+        <div class="stat-value" id="stat-gps-risk">—</div>
+        <div class="stat-label">GPS / Location Risks</div>
       </div>
-      <div class="stat-value" id="stat-gps-risk">0</div>
-      <div class="stat-sub">Speeds exceeding >90 km/h</div>
     </div>
-
-    <div class="stat-card stat-card-purple">
-      <div class="stat-header">
-        <span class="stat-title">Clock / Time Spoof</span>
-        <span class="stat-icon">🕒</span>
+    <div class="stat-card stat-purple">
+      <div class="stat-icon-wrap purple-bg">🕒</div>
+      <div class="stat-body">
+        <div class="stat-value" id="stat-time-risk">—</div>
+        <div class="stat-label">Clock / Time Risks</div>
       </div>
-      <div class="stat-value" id="stat-time-risk">0</div>
-      <div class="stat-sub">Untrusted clock or timezones</div>
     </div>
   </div>
 
-  <!-- Filter & Search Controls Toolbar -->
+  <!-- Toolbar -->
   <div class="toolbar-flat">
     <form id="risk-filter-form" class="filters">
-      <input
-        type="date"
-        id="input-from"
-        name="from"
-        onfocus="this.showPicker()"
-      />
-
-      <input
-        type="date"
-        id="input-to"
-        name="to"
-        onfocus="this.showPicker()"
-      />
-
-      <button type="submit">Apply Filter</button>
-
+      <input type="date" id="input-from" name="from" onfocus="this.showPicker()" />
+      <input type="date" id="input-to" name="to" onfocus="this.showPicker()" />
+      <button type="submit">Apply</button>
       <a href="/risk-center" class="btn-reset">Reset</a>
-
-      <input
-        id="search"
-        type="text"
-        class="search-input"
-        placeholder="Search by engineer name, code, or region..."
-      />
-
+      <input id="search" type="text" class="search-input" placeholder="Search engineer name, code..." />
       <select id="risk-type-filter" class="filter-select">
         <option value="">All Risk Types</option>
-        <option value="gps">🏎️ Speed / GPS Risk Only</option>
-        <option value="time">🕒 Clock / Time Risk Only</option>
-      </select>
-
-      <select id="region-filter" class="filter-select">
-        <option value="">All Regions</option>
-        <option value="cairo">Cairo</option>
-        <option value="giza">Giza</option>
-        <option value="alexandria">Alexandria</option>
-        <option value="qalyubia">Qalyubia</option>
-        <option value="dakahlia">Dakahlia</option>
-        <option value="sharqia">Sharqia</option>
-        <option value="gharbia">Gharbia</option>
-        <option value="monufia">Monufia</option>
-        <option value="beheira">Beheira</option>
-        <option value="port said">Port Said</option>
-        <option value="ismailia">Ismailia</option>
-        <option value="suez">Suez</option>
-        <option value="kafr el sheikh">Kafr El Sheikh</option>
-        <option value="damietta">Damietta</option>
-        <option value="minya">Minya</option>
-        <option value="beni suef">Beni Suef</option>
-        <option value="faiyum">Faiyum</option>
-        <option value="assiut">Assiut</option>
-        <option value="sohag">Sohag</option>
-        <option value="qena">Qena</option>
-        <option value="luxor">Luxor</option>
-        <option value="aswan">Aswan</option>
-        <option value="red sea">Red Sea</option>
-        <option value="new valley">New Valley</option>
-        <option value="matrouh">Matrouh</option>
-        <option value="north sinai">North Sinai</option>
-        <option value="south sinai">South Sinai</option>
+        <option value="gps">📍 GPS / Location Only</option>
+        <option value="time">🕒 Clock / Time Only</option>
       </select>
     </form>
   </div>
 
-  <!-- Flagged Engineers Table Container -->
-  <div class="table-scroll-wrapper">
-    <table id="risk-table" class="data-table">
-      <thead>
-        <tr>
-          <th class="sortable">Engineer</th>
-          <th class="sortable">Region</th>
-          <th>Risk Tag</th>
-          <th>Detected Evidence</th>
-          <th class="sortable">Last Activity</th>
-          <th>Action</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td colspan="6" style="text-align: center; color: #94a3b8; padding: 32px;">
-            <div class="skeleton" style="height: 24px; width: 200px; margin: 0 auto;"></div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+  <!-- Risk Cards Container (rendered by JS) -->
+  <div id="risk-cards-container">
+    <div class="loading-placeholder">
+      <div class="skeleton" style="height:80px;border-radius:10px;"></div>
+      <div class="skeleton" style="height:80px;border-radius:10px;"></div>
+    </div>
   </div>
 </AdminLayout>
 
 <style>
-  .page-header {
-    margin-bottom: 24px;
-  }
+  .page-header { margin-bottom: 24px; }
+  .page-header h1 { margin: 0 0 6px 0; font-size: 22px; font-weight: 700; }
+  .subtitle { margin: 0; color: #64748b; font-size: 13px; }
 
-  .page-header h1 {
-    margin: 0 0 8px 0;
-    font-size: 24px;
-    font-weight: 700;
-  }
-
-  .subtitle {
-    margin: 0;
-    color: #64748b;
-    font-size: 14px;
-  }
-
+  /* ── Stat Cards ── */
   .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 16px;
-    margin-bottom: 24px;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
   }
-
   .stat-card {
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    border-left: 4px solid #3b82f6;
-  }
-
-  .stat-card-danger {
-    border-left-color: #ef4444;
-  }
-
-  .stat-card-warn {
-    border-left-color: #f59e0b;
-  }
-
-  .stat-card-purple {
-    border-left-color: #8b5cf6;
-  }
-
-  .stat-header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    margin-bottom: 8px;
+    gap: 14px;
+    padding: 16px 18px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
   }
-
-  .stat-title {
-    font-size: 14px;
-    font-weight: 600;
-    color: #64748b;
+  .stat-icon-wrap {
+    width: 42px; height: 42px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
   }
+  .danger-bg { background: #fee2e2; }
+  .warn-bg   { background: #fef3c7; }
+  .purple-bg { background: #f3e8ff; }
+  .stat-value { font-size: 22px; font-weight: 700; line-height: 1.2; }
+  .stat-label { font-size: 12px; color: #64748b; }
 
-  .stat-icon {
-    font-size: 20px;
-  }
-
-  .stat-value {
-    font-size: 28px;
-    font-weight: 700;
-    margin-bottom: 4px;
-  }
-
-  .stat-sub {
-    font-size: 12px;
-    color: #94a3b8;
-  }
-
-  .toolbar-flat {
-    margin-bottom: 24px;
-  }
-
+  /* ── Toolbar ── */
+  .toolbar-flat { margin-bottom: 20px; }
   .filters {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
   }
+  .filters input[type="date"], .filter-select, .search-input {
+    height: 36px; padding: 0 10px;
+    border: 1px solid #d1d5db; border-radius: 6px;
+    font-size: 13px; background: white;
+  }
+  .search-input { flex: 1; min-width: 200px; }
+  .filter-select { min-width: 160px; }
+  .filters button, .btn-reset {
+    height: 36px; padding: 0 14px; border-radius: 6px;
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    text-decoration: none; display: inline-flex;
+    align-items: center; justify-content: center;
+  }
+  .filters button { background: #2563eb; color: white; border: 1px solid transparent; }
+  .btn-reset { background: #6b7280; color: white; }
 
-  .filters input[type="date"],
-  .filter-select,
-  .search-input {
-    height: 40px;
-    padding: 0 12px;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    font-size: 14px;
+  /* ── Risk Engineer Cards (rendered by JS) ── */
+  :global(.risk-card) {
     background: white;
+    border-radius: 10px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    margin-bottom: 14px;
+    overflow: hidden;
   }
-
-  .search-input {
-    flex: 1;
-    min-width: 240px;
-  }
-
-  .filter-select {
-    min-width: 170px;
-  }
-
-  .filters button,
-  .btn-reset {
-    height: 40px;
-    padding: 0 16px;
-    border-radius: 6px;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .filters button {
-    background: #2563eb;
-    color: white;
-  }
-
-  .btn-reset {
-    background: #6b7280;
-    color: white;
-  }
-
-  .table-scroll-wrapper {
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    overflow-x: auto;
-  }
-
-  .data-table {
-    width: 100%;
-    border-collapse: collapse;
-    text-align: left;
-    font-size: 14px;
-  }
-
-  .data-table th,
-  .data-table td {
-    padding: 12px 16px;
-    border-bottom: 1px solid #e5e7eb;
-  }
-
-  .data-table th {
-    background: #f9fafb;
-    font-weight: 600;
-    color: #374151;
-  }
-
-  /* Columns & Text Styling */
-  .col-engineer {
-    min-width: 140px;
-  }
-
-  .engineer-name {
-    font-weight: 600;
-    color: #1e293b;
-    font-size: 14px;
-  }
-
-  .engineer-code {
-    font-size: 12px;
-    color: #64748b;
-  }
-
-  .col-location {
-    min-width: 120px;
-  }
-
-  .region-text {
-    font-weight: 500;
-  }
-
-  .subregion-text {
-    font-size: 12px;
-    color: #64748b;
-  }
-
-  .col-activity {
-    min-width: 150px;
-  }
-
-  .activity-date {
-    font-size: 13px;
-    color: #475569;
-    white-space: nowrap;
-  }
-
-  .col-action {
-    min-width: 100px;
-  }
-
-  .btn-view-logs {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 8px 14px;
-    background: #2563eb;
-    color: white !important;
-    text-decoration: none;
-    border-radius: 6px;
-    font-size: 13px;
-    font-weight: 500;
-    white-space: nowrap;
-    transition: background 0.2s;
-  }
-
-  .btn-view-logs:hover {
-    background: #1d4ed8;
-  }
-
-  /* Badge Styles */
-  .badge {
-    display: inline-block;
-    padding: 4px 10px;
-    border-radius: 9999px;
-    font-size: 12px;
-    font-weight: 600;
-    white-space: nowrap;
-  }
-
-  .badge-gps {
-    background: #fef3c7;
-    color: #92400e;
-    border: 1px solid #fcd34d;
-  }
-
-  .badge-time {
-    background: #f3e8ff;
-    color: #6b21a8;
-    border: 1px solid #d8b4fe;
-  }
-
-  .badge-both {
-    background: #fee2e2;
-    color: #991b1b;
-    border: 1px solid #fca5a5;
-  }
-
-  /* Evidence Cards Container */
-  .evidence-container {
+  :global(.risk-card-header) {
     display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding: 4px 0;
-  }
-
-  .evidence-card {
-    padding: 8px 12px;
-    border-radius: 6px;
-    font-size: 13px;
-    border-left: 3px solid #ef4444;
-    background: #fef2f2;
-    color: #991b1b;
-  }
-
-  .evidence-header {
-    display: flex;
+    align-items: center;
     justify-content: space-between;
-    align-items: center;
-    margin-bottom: 4px;
+    padding: 14px 18px;
     gap: 12px;
+    cursor: pointer;
+    user-select: none;
+  }
+  :global(.risk-card-header:hover) {
+    background: rgba(0,0,0,0.02);
+  }
+  :global(.rc-left) {
+    display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;
+  }
+  :global(.rc-avatar) {
+    width: 38px; height: 38px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 15px; flex-shrink: 0;
+    color: white;
+  }
+  :global(.rc-avatar-danger) { background: linear-gradient(135deg, #ef4444, #dc2626); }
+  :global(.rc-avatar-warn) { background: linear-gradient(135deg, #f59e0b, #d97706); }
+  :global(.rc-info) { min-width: 0; }
+  :global(.rc-name) { font-weight: 600; font-size: 14px; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  :global(.rc-meta) { font-size: 12px; color: #64748b; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  :global(.rc-meta span) { white-space: nowrap; }
+  :global(.rc-badges) { display: flex; gap: 6px; flex-wrap: wrap; }
+  :global(.rc-badge) {
+    padding: 3px 8px; border-radius: 9999px;
+    font-size: 11px; font-weight: 600; white-space: nowrap;
+  }
+  :global(.rc-badge-gps)  { background: #fef3c7; color: #92400e; }
+  :global(.rc-badge-time) { background: #f3e8ff; color: #6b21a8; }
+  :global(.rc-right) {
+    display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+  }
+  :global(.rc-date) { font-size: 12px; color: #64748b; white-space: nowrap; }
+  :global(.rc-toggle) { font-size: 10px; color: #94a3b8; transition: transform 0.2s; }
+  :global(.rc-toggle.open) { transform: rotate(180deg); }
+  :global(.rc-btn) {
+    padding: 6px 12px; background: #2563eb; color: white !important;
+    text-decoration: none; border-radius: 6px; font-size: 12px; font-weight: 500;
+    white-space: nowrap;
   }
 
-  .evidence-title {
-    font-weight: 600;
+  /* ── Evidence Expandable Panel ── */
+  :global(.rc-evidence-panel) {
+    max-height: 0; overflow: hidden;
+    transition: max-height 0.3s ease;
+    border-top: 1px solid transparent;
+  }
+  :global(.rc-evidence-panel.open) {
+    max-height: 2000px;
+    border-top-color: #f1f5f9;
+  }
+  :global(.rc-evidence-grid) {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 10px;
+    padding: 14px 18px;
+  }
+  :global(.ev-card) {
+    padding: 10px 12px;
+    border-radius: 8px;
+    border-left: 3px solid #ef4444;
+    font-size: 13px;
+  }
+  :global(.ev-card-gps) {
+    background: #fef2f2; color: #991b1b; border-left-color: #ef4444;
+  }
+  :global(.ev-card-time) {
+    background: #fffbeb; color: #92400e; border-left-color: #f59e0b;
+  }
+  :global(.ev-title) { font-weight: 600; margin-bottom: 3px; }
+  :global(.ev-detail) { font-size: 12px; line-height: 1.5; }
+  :global(.ev-footer) {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 6px; font-size: 11px; opacity: 0.8;
   }
 
-  .evidence-time {
-    font-size: 11px;
-    opacity: 0.8;
+  /* ── Loading & Empty ── */
+  .loading-placeholder { display: flex; flex-direction: column; gap: 14px; }
+  .skeleton {
+    background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+  @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+  :global(.empty-state) {
+    text-align: center; padding: 48px 24px; color: #94a3b8; font-size: 15px;
   }
 
-  .evidence-detail {
-    font-size: 12px;
-  }
-
-  .evidence-loc {
-    font-size: 11px;
-    margin-top: 4px;
-    opacity: 0.85;
-  }
-
-  .evidence-speed,
-  .evidence-jump {
-    border-left-color: #ef4444;
-    background: #fef2f2;
-    color: #991b1b;
-  }
-
-  .evidence-future,
-  .evidence-drift,
-  .evidence-clock,
-  .evidence-tz {
-    border-left-color: #f59e0b;
-    background: #fffbeb;
-    color: #92400e;
-  }
-
-  /* Dark Theme Overrides */
+  /* ═══ Dark Theme ═══ */
   :global(.dark-theme) .stat-card,
-  :global(.dark-theme) .table-scroll-wrapper {
+  :global(.dark-theme .risk-card) {
     background-color: var(--bg-secondary) !important;
     color: var(--text-primary) !important;
-    border-color: var(--border-color) !important;
+  }
+  :global(.dark-theme) .danger-bg { background: rgba(239,68,68,0.2); }
+  :global(.dark-theme) .warn-bg   { background: rgba(245,158,11,0.2); }
+  :global(.dark-theme) .purple-bg { background: rgba(139,92,246,0.2); }
+  :global(.dark-theme .rc-name)   { color: #f1f5f9; }
+  :global(.dark-theme .rc-meta),
+  :global(.dark-theme .rc-date),
+  :global(.dark-theme) .stat-label,
+  :global(.dark-theme) .subtitle  { color: #94a3b8; }
+  :global(.dark-theme .rc-card-header:hover) { background: rgba(255,255,255,0.03); }
+  :global(.dark-theme .rc-evidence-panel.open) { border-top-color: var(--border-color); }
+  :global(.dark-theme .ev-card-gps)  { background: rgba(239,68,68,0.12); color: #fca5a5; }
+  :global(.dark-theme .ev-card-time) { background: rgba(245,158,11,0.12); color: #fcd34d; }
+  :global(.dark-theme .rc-badge-gps)  { background: rgba(245,158,11,0.2); color: #fcd34d; }
+  :global(.dark-theme .rc-badge-time) { background: rgba(139,92,246,0.2); color: #c4b5fd; }
+  :global(.dark-theme) .filters input[type="date"],
+  :global(.dark-theme) .filter-select,
+  :global(.dark-theme) .search-input {
+    background: var(--bg-secondary); color: var(--text-primary);
+    border-color: var(--border-color);
   }
 
-  :global(.dark-theme) .data-table th {
-    background-color: rgba(255, 255, 255, 0.05) !important;
-    color: var(--text-primary) !important;
-  }
-
-  :global(.dark-theme) .data-table td {
-    border-color: var(--border-color) !important;
-  }
-
-  :global(.dark-theme) .engineer-name {
-    color: #f1f5f9;
-  }
-
-  :global(.dark-theme) .engineer-code,
-  :global(.dark-theme) .subregion-text {
-    color: #94a3b8;
-  }
-
-  :global(.dark-theme) .region-text,
-  :global(.dark-theme) .activity-date {
-    color: #cbd5e1;
-  }
-
-  :global(.dark-theme) .subtitle {
-    color: #94a3b8;
-  }
-
-  :global(.dark-theme) .evidence-speed,
-  :global(.dark-theme) .evidence-jump {
-    background: rgba(239, 68, 68, 0.15);
-    color: #fca5a5;
-    border-left-color: #ef4444;
-  }
-
-  :global(.dark-theme) .evidence-future,
-  :global(.dark-theme) .evidence-drift,
-  :global(.dark-theme) .evidence-clock,
-  :global(.dark-theme) .evidence-tz {
-    background: rgba(245, 158, 11, 0.15);
-    color: #fcd34d;
-    border-left-color: #f59e0b;
-  }
-
-  /* Mobile Card Layout for Viewports < 768px */
+  /* ── Mobile ── */
   @media (max-width: 768px) {
-    .filters {
-      flex-direction: column;
-      align-items: stretch;
+    .filters { flex-direction: column; align-items: stretch; }
+    .filters input, .filters select, .filters button, .filters a {
+      width: 100% !important; min-width: 0 !important; box-sizing: border-box;
     }
-
-    .filters input,
-    .filters select,
-    .filters button,
-    .filters a {
-      width: 100% !important;
-      min-width: 0 !important;
-      box-sizing: border-box;
-    }
-
-    .data-table,
-    .data-table thead,
-    .data-table tbody,
-    .data-table th,
-    .data-table td,
-    .data-table tr {
-      display: block;
-    }
-
-    .data-table thead tr {
-      position: absolute;
-      top: -9999px;
-      left: -9999px;
-    }
-
-    .data-table tr {
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      margin-bottom: 12px;
-      background: white;
-      padding: 12px;
-    }
-
-    :global(.dark-theme) .data-table tr {
-      background: var(--bg-secondary);
-      border-color: var(--border-color);
-    }
-
-    .data-table td {
-      border: none !important;
-      position: relative;
-      padding-left: 45% !important;
-      text-align: right;
-      min-height: 28px;
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-    }
-
-    .data-table td::before {
-      content: attr(data-label);
-      position: absolute;
-      left: 12px;
-      width: 40%;
-      padding-right: 10px;
-      white-space: nowrap;
-      text-align: left;
-      font-weight: 600;
-      color: #64748b;
-      font-size: 13px;
-    }
+    :global(.risk-card-header) { flex-wrap: wrap; }
+    :global(.rc-right) { width: 100%; justify-content: space-between; margin-top: 8px; }
+    :global(.rc-evidence-grid) { grid-template-columns: 1fr; }
   }
 </style>
 
 <script type="module">
   import "../scripts/risk-center";
 </script>
+</AdminLayout>

@@ -1,13 +1,9 @@
-import { makeTableSortable } from "./table-sort";
-
 export interface RiskEvidenceItem {
-  id?: string;
-  type: "speed" | "jump" | "future" | "drift" | "clock" | "tz";
+  type: "speed" | "jump" | "future" | "drift" | "tz";
   title: string;
   detail: string;
   timestamp: string;
   location?: string;
-  photo_tag?: string;
 }
 
 export interface RiskEngineer {
@@ -15,155 +11,122 @@ export interface RiskEngineer {
   engineer_code: string;
   full_name: string;
   region: string;
-  subregion: string;
   gps_risk_count: number;
   time_risk_count: number;
-  primary_risk_type: "gps" | "time" | "both";
   evidence_items: RiskEvidenceItem[];
   last_activity: string;
 }
 
 let cachedRiskEngineers: RiskEngineer[] = [];
 
-function getDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371;
   const dLat = (lat2 - lat1) * (Math.PI / 180);
   const dLon = (lon2 - lon1) * (Math.PI / 180);
   const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * (Math.PI / 180)) *
-      Math.cos(lat2 * (Math.PI / 180)) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-export function applyRiskFilters() {
-  const searchInput = document.getElementById("search") as HTMLInputElement | null;
-  const riskTypeSelect = document.getElementById("risk-type-filter") as HTMLSelectElement | null;
-  const regionSelect = document.getElementById("region-filter") as HTMLSelectElement | null;
-
-  const searchQuery = searchInput?.value.toLowerCase().trim() ?? "";
-  const selectedRiskType = riskTypeSelect?.value ?? "";
-  const selectedRegion = regionSelect?.value.toLowerCase().trim() ?? "";
-
-  const filtered = cachedRiskEngineers.filter((eng) => {
-    const fullName = (eng.full_name || "").toLowerCase();
-    const code = (eng.engineer_code || "").toLowerCase();
-    const region = (eng.region || "").toLowerCase();
-    const subregion = (eng.subregion || "").toLowerCase();
-
-    const matchesSearch =
-      !searchQuery ||
-      fullName.includes(searchQuery) ||
-      code.includes(searchQuery) ||
-      region.includes(searchQuery) ||
-      subregion.includes(searchQuery);
-
-    const matchesRegion = !selectedRegion || region === selectedRegion;
-
-    let matchesRiskType = true;
-    if (selectedRiskType === "gps") {
-      matchesRiskType = eng.gps_risk_count > 0;
-    } else if (selectedRiskType === "time") {
-      matchesRiskType = eng.time_risk_count > 0;
-    }
-
-    return matchesSearch && matchesRegion && matchesRiskType;
-  });
-
-  renderRiskTable(filtered);
-}
-
-function formatEgyptDate(dateString?: string): string {
-  if (!dateString) return "-";
+function fmtDate(s?: string): string {
+  if (!s) return "—";
   try {
-    const d = new Date(dateString);
-    return d.toLocaleString("en-US", {
+    return new Date(s).toLocaleString("en-US", {
       timeZone: "Africa/Cairo",
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
+      month: "short", day: "numeric", year: "numeric",
+      hour: "numeric", minute: "2-digit", hour12: true,
     });
-  } catch (e) {
-    return dateString;
-  }
+  } catch { return s; }
 }
 
-function renderRiskTable(engineers: RiskEngineer[]) {
-  const tbody = document.querySelector("#risk-table tbody");
-  const countEl = document.getElementById("flagged-count");
-  if (countEl) countEl.textContent = String(engineers.length);
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return name.substring(0, 2).toUpperCase();
+}
 
-  if (!tbody) return;
+/* ─── Render ─── */
+function renderCards(engineers: RiskEngineer[]) {
+  const container = document.getElementById("risk-cards-container");
+  if (!container) return;
 
   if (engineers.length === 0) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="6" style="text-align: center; color: #94a3b8; padding: 32px;">
-          ✅ No high-risk engineers flagged in this filter criteria.
-        </td>
-      </tr>
-    `;
+    container.innerHTML = `<div class="empty-state">✅ No flagged engineers found for this period.</div>`;
     return;
   }
 
-  tbody.innerHTML = engineers.map((eng) => {
-    let riskBadge = "";
-    if (eng.gps_risk_count > 0 && eng.time_risk_count > 0) {
-      riskBadge = `<span class="badge badge-both">⚠️ GPS & Time Risk</span>`;
-    } else if (eng.gps_risk_count > 0) {
-      riskBadge = `<span class="badge badge-gps">🏎️ Speed / GPS Risk</span>`;
-    } else {
-      riskBadge = `<span class="badge badge-time">🕒 Clock / Time Risk</span>`;
-    }
+  container.innerHTML = engineers.map((eng, idx) => {
+    const hasBoth = eng.gps_risk_count > 0 && eng.time_risk_count > 0;
+    const avatarClass = eng.gps_risk_count > 0 ? "rc-avatar-danger" : "rc-avatar-warn";
 
-    const evidenceCards = eng.evidence_items.map((item) => `
-      <div class="evidence-card evidence-${item.type}">
-        <div class="evidence-header">
-          <span class="evidence-title">${item.title}</span>
-          <span class="evidence-time">${formatEgyptDate(item.timestamp)}</span>
-        </div>
-        <div class="evidence-detail">${item.detail}</div>
-        ${item.location ? `<div class="evidence-loc">📍 ${item.location}</div>` : ""}
-      </div>
-    `).join("");
+    const badges: string[] = [];
+    if (eng.gps_risk_count > 0) badges.push(`<span class="rc-badge rc-badge-gps">📍 GPS ×${eng.gps_risk_count}</span>`);
+    if (eng.time_risk_count > 0) badges.push(`<span class="rc-badge rc-badge-time">🕒 Time ×${eng.time_risk_count}</span>`);
+
+    const evidenceCards = eng.evidence_items.map(item => {
+      const isGps = item.type === "speed" || item.type === "jump";
+      return `
+        <div class="ev-card ${isGps ? "ev-card-gps" : "ev-card-time"}">
+          <div class="ev-title">${item.title}</div>
+          <div class="ev-detail">${item.detail}</div>
+          <div class="ev-footer">
+            <span>${item.location ? "📍 " + item.location : ""}</span>
+            <span>${fmtDate(item.timestamp)}</span>
+          </div>
+        </div>`;
+    }).join("");
 
     return `
-      <tr>
-        <td data-label="Engineer" class="col-engineer">
-          <div class="engineer-name">${eng.full_name || "Unknown"}</div>
-          <div class="engineer-code">${eng.engineer_code || ""}</div>
-        </td>
-        <td data-label="Location" class="col-location">
-          <div class="region-text">${eng.region || "-"}</div>
-          <div class="subregion-text">${eng.subregion || "-"}</div>
-        </td>
-        <td data-label="Risk Tag" class="col-risk-tag">${riskBadge}</td>
-        <td data-label="Detected Evidence" class="col-evidence">
-          <div class="evidence-container">
+      <div class="risk-card" data-idx="${idx}">
+        <div class="risk-card-header" onclick="this.parentElement.querySelector('.rc-evidence-panel').classList.toggle('open');this.querySelector('.rc-toggle').classList.toggle('open')">
+          <div class="rc-left">
+            <div class="rc-avatar ${avatarClass}">${initials(eng.full_name)}</div>
+            <div class="rc-info">
+              <div class="rc-name">${eng.full_name}</div>
+              <div class="rc-meta">
+                <span>${eng.engineer_code}</span>
+                <span>•</span>
+                <span>${eng.region}</span>
+              </div>
+            </div>
+          </div>
+          <div class="rc-badges">${badges.join("")}</div>
+          <div class="rc-right">
+            <span class="rc-date">${fmtDate(eng.last_activity)}</span>
+            <a class="rc-btn" href="/engineers/${eng.engineer_id}" onclick="event.stopPropagation()">View Logs</a>
+            <span class="rc-toggle">▼</span>
+          </div>
+        </div>
+        <div class="rc-evidence-panel">
+          <div class="rc-evidence-grid">
             ${evidenceCards}
           </div>
-        </td>
-        <td data-label="Last Activity" class="col-activity">
-          <div class="activity-date">${formatEgyptDate(eng.last_activity)}</div>
-        </td>
-        <td data-label="Actions" class="col-action">
-          <a class="btn-view-logs" href="/engineers/${eng.engineer_id}">View Logs</a>
-        </td>
-      </tr>
-    `;
+        </div>
+      </div>`;
   }).join("");
 }
 
+/* ─── Filters ─── */
+export function applyRiskFilters() {
+  const q = (document.getElementById("search") as HTMLInputElement)?.value.toLowerCase().trim() ?? "";
+  const rt = (document.getElementById("risk-type-filter") as HTMLSelectElement)?.value ?? "";
+
+  const filtered = cachedRiskEngineers.filter(eng => {
+    const text = `${eng.full_name} ${eng.engineer_code} ${eng.region}`.toLowerCase();
+    if (q && !text.includes(q)) return false;
+    if (rt === "gps" && eng.gps_risk_count === 0) return false;
+    if (rt === "time" && eng.time_risk_count === 0) return false;
+    return true;
+  });
+
+  renderCards(filtered);
+}
+
+/* ─── Fetch ─── */
 export async function fetchRiskData() {
   const inputFrom = document.getElementById("input-from") as HTMLInputElement | null;
   const inputTo = document.getElementById("input-to") as HTMLInputElement | null;
-
   const todayStr = new Date().toLocaleDateString("en-CA", { timeZone: "Africa/Cairo" });
   const fromVal = inputFrom?.value || todayStr;
   const toVal = inputTo?.value || todayStr;
@@ -174,22 +137,11 @@ export async function fetchRiskData() {
   try {
     const res = await fetch(
       `${supabaseUrl}/rest/v1/photo_logs_with_engineer?select=id,engineer_id,engineer_code,full_name,speed,accuracy,latitude,longitude,device_timezone,captured_online,taken_at,synced_at,address&taken_at=gte.${fromVal}T00:00:00%2B03:00&taken_at=lte.${toVal}T23:59:59%2B03:00&order=taken_at.desc&limit=1000`,
-      {
-        headers: {
-          apikey: token,
-          Authorization: `Bearer ${token}`,
-        },
-      }
+      { headers: { apikey: token, Authorization: `Bearer ${token}` } }
     );
 
     const logs = await res.json();
-
-    if (!Array.isArray(logs)) {
-      console.error("Failed to fetch risk logs", logs);
-      cachedRiskEngineers = [];
-      applyRiskFilters();
-      return;
-    }
+    if (!Array.isArray(logs)) { cachedRiskEngineers = []; applyRiskFilters(); return; }
 
     const nowTime = Date.now();
     const map: Record<string, RiskEngineer> = {};
@@ -205,125 +157,98 @@ export async function fetchRiskData() {
           engineer_code: log.engineer_code || "",
           full_name: log.full_name || "Engineer",
           region: log.region || "-",
-          subregion: "-",
           gps_risk_count: 0,
           time_risk_count: 0,
-          primary_risk_type: "gps",
           evidence_items: [],
           last_activity: log.taken_at,
         };
       }
-
-      if (!engLogsMap[eid]) {
-        engLogsMap[eid] = [];
-      }
+      if (!engLogsMap[eid]) engLogsMap[eid] = [];
       engLogsMap[eid].push(log);
 
       const eng = map[eid];
-      const takenTime = new Date(log.taken_at).getTime();
-      const syncedTime = log.synced_at ? new Date(log.synced_at).getTime() : null;
+      const takenMs = new Date(log.taken_at).getTime();
+      const syncedMs = log.synced_at ? new Date(log.synced_at).getTime() : null;
 
-      // 1. High Speed (>90 km/h)
+      // Rule 1 · High Speed
       if (log.speed && log.speed > 25) {
         eng.gps_risk_count++;
         const kmh = Math.round(log.speed * 3.6);
         eng.evidence_items.push({
-          id: log.id,
-          type: "speed",
-          title: "🏎️ High Speed Recorded",
-          detail: `Speed of ${kmh} km/h recorded (Speed limit >90 km/h)`,
-          timestamp: log.taken_at,
-          location: log.address || undefined,
+          type: "speed", title: `🏎️ High Speed: ${kmh} km/h`,
+          detail: `Device GPS recorded ${kmh} km/h (threshold >90 km/h).`,
+          timestamp: log.taken_at, location: log.address || undefined,
         });
       }
 
-      // 2. Future Timestamp
-      if (takenTime > nowTime + 10 * 60 * 1000) {
+      // Rule 2 · Future timestamp
+      if (takenMs > nowTime + 10 * 60 * 1000) {
         eng.time_risk_count++;
         eng.evidence_items.push({
-          id: log.id,
-          type: "future",
-          title: "📅 Future Photo Timestamp",
-          detail: `Photo taken in the future (${formatEgyptDate(log.taken_at)})`,
-          timestamp: log.taken_at,
-          location: log.address || undefined,
+          type: "future", title: "📅 Future Timestamp",
+          detail: `Photo timestamp is set to ${fmtDate(log.taken_at)} — in the future.`,
+          timestamp: log.taken_at, location: log.address || undefined,
         });
       }
 
-      // 3. Fast Clock / Time Shift
-      if (syncedTime && takenTime > syncedTime + 15 * 60 * 1000) {
+      // Rule 3 · Clock drift (taken ahead of synced)
+      if (syncedMs && takenMs > syncedMs + 15 * 60 * 1000) {
         eng.time_risk_count++;
-        const minsAhead = Math.round((takenTime - syncedTime) / (1000 * 60));
+        const mins = Math.round((takenMs - syncedMs) / 60000);
         eng.evidence_items.push({
-          id: log.id,
-          type: "drift",
-          title: "⏳ Clock Fast / Time Drift",
-          detail: `Photo timestamp is ${minsAhead} mins ahead of server upload time`,
-          timestamp: log.taken_at,
-          location: log.address || undefined,
+          type: "drift", title: `⏳ Clock Drift: ${mins} min ahead`,
+          detail: `Photo was timestamped ${mins} minutes ahead of when the server received it.`,
+          timestamp: log.taken_at, location: log.address || undefined,
         });
       }
 
-      // 4. Untrusted Clock / Timezone Mismatch
+      // Rule 4 · Timezone mismatch
       if (log.device_timezone && log.device_timezone !== "Africa/Cairo") {
         eng.time_risk_count++;
         eng.evidence_items.push({
-          id: log.id,
-          type: "tz",
-          title: "🌐 Timezone Mismatch",
-          detail: `Device timezone set to ${log.device_timezone} (Expected Africa/Cairo)`,
-          timestamp: log.taken_at,
-          location: log.address || undefined,
+          type: "tz", title: "🌐 Timezone Mismatch",
+          detail: `Device timezone: ${log.device_timezone} (expected Africa/Cairo).`,
+          timestamp: log.taken_at, location: log.address || undefined,
         });
       }
     }
 
-    // 5. Teleportation Jumps
+    // Rule 5 · Impossible location jump
     for (const [eid, eLogs] of Object.entries(engLogsMap)) {
       const eng = map[eid];
-      const validGpsLogs = eLogs.filter(l => l.latitude && l.longitude)
+      const sorted = eLogs.filter(l => l.latitude && l.longitude)
         .sort((a, b) => new Date(a.taken_at).getTime() - new Date(b.taken_at).getTime());
 
-      for (let i = 0; i < validGpsLogs.length - 1; i++) {
-        const p1 = validGpsLogs[i];
-        const p2 = validGpsLogs[i + 1];
-        const t1 = new Date(p1.taken_at).getTime();
-        const t2 = new Date(p2.taken_at).getTime();
-        const diffMins = (t2 - t1) / (1000 * 60);
-
-        if (diffMins > 0 && diffMins <= 30) {
-          const distKm = getDistanceKm(p1.latitude, p1.longitude, p2.latitude, p2.longitude);
-          const speedKmh = distKm / (diffMins / 60);
-          if (speedKmh > 150 && distKm > 10) {
+      for (let i = 0; i < sorted.length - 1; i++) {
+        const a = sorted[i], b = sorted[i + 1];
+        const diffMin = (new Date(b.taken_at).getTime() - new Date(a.taken_at).getTime()) / 60000;
+        if (diffMin > 0 && diffMin <= 30) {
+          const dist = haversineKm(a.latitude, a.longitude, b.latitude, b.longitude);
+          const speed = dist / (diffMin / 60);
+          if (speed > 150 && dist > 10) {
             eng.gps_risk_count++;
             eng.evidence_items.push({
-              id: p2.id,
               type: "jump",
-              title: "🚀 Teleportation / GPS Jump",
-              detail: `Moved ${distKm.toFixed(1)} km in ${diffMins.toFixed(1)} mins (${Math.round(speedKmh)} km/h implied speed)`,
-              timestamp: p2.taken_at,
-              location: `${p1.address || "Point A"} ➔ ${p2.address || "Point B"}`,
+              title: `🚀 Location Jump: ${dist.toFixed(0)} km in ${diffMin.toFixed(0)} min`,
+              detail: `Implied speed of ${Math.round(speed)} km/h — physically impossible.`,
+              timestamp: b.taken_at,
+              location: `${a.address || "Point A"} → ${b.address || "Point B"}`,
             });
           }
         }
       }
     }
 
-    cachedRiskEngineers = Object.values(map).filter(
-      (e) => e.gps_risk_count > 0 || e.time_risk_count > 0
-    );
+    cachedRiskEngineers = Object.values(map).filter(e => e.gps_risk_count > 0 || e.time_risk_count > 0);
 
-    const totalCount = cachedRiskEngineers.length;
-    const gpsCount = cachedRiskEngineers.filter(e => e.gps_risk_count > 0).length;
-    const timeCount = cachedRiskEngineers.filter(e => e.time_risk_count > 0).length;
-
-    const elTotal = document.getElementById("stat-total-risk");
-    const elGps = document.getElementById("stat-gps-risk");
-    const elTime = document.getElementById("stat-time-risk");
-
-    if (elTotal) elTotal.textContent = String(totalCount);
-    if (elGps) elGps.textContent = String(gpsCount);
-    if (elTime) elTime.textContent = String(timeCount);
+    // Update stats
+    const el = (id: string) => document.getElementById(id);
+    const total = cachedRiskEngineers.length;
+    const gps = cachedRiskEngineers.filter(e => e.gps_risk_count > 0).length;
+    const time = cachedRiskEngineers.filter(e => e.time_risk_count > 0).length;
+    if (el("stat-total-risk")) el("stat-total-risk")!.textContent = String(total);
+    if (el("stat-gps-risk")) el("stat-gps-risk")!.textContent = String(gps);
+    if (el("stat-time-risk")) el("stat-time-risk")!.textContent = String(time);
 
     applyRiskFilters();
   } catch (err) {
@@ -331,26 +256,22 @@ export async function fetchRiskData() {
   }
 }
 
+/* ─── Init ─── */
 document.addEventListener("astro:page-load", () => {
-  if (document.getElementById("risk-table")) {
-    const inputFrom = document.getElementById("input-from") as HTMLInputElement | null;
-    const inputTo = document.getElementById("input-to") as HTMLInputElement | null;
+  if (!document.getElementById("risk-cards-container")) return;
 
-    const todayStr = new Date().toLocaleDateString("en-CA", { timeZone: "Africa/Cairo" });
-    if (inputFrom && !inputFrom.value) inputFrom.value = todayStr;
-    if (inputTo && !inputTo.value) inputTo.value = todayStr;
+  const inputFrom = document.getElementById("input-from") as HTMLInputElement | null;
+  const inputTo = document.getElementById("input-to") as HTMLInputElement | null;
+  const todayStr = new Date().toLocaleDateString("en-CA", { timeZone: "Africa/Cairo" });
+  if (inputFrom && !inputFrom.value) inputFrom.value = todayStr;
+  if (inputTo && !inputTo.value) inputTo.value = todayStr;
 
+  fetchRiskData();
+
+  document.getElementById("search")?.addEventListener("input", applyRiskFilters);
+  document.getElementById("risk-type-filter")?.addEventListener("change", applyRiskFilters);
+  document.getElementById("risk-filter-form")?.addEventListener("submit", (e) => {
+    e.preventDefault();
     fetchRiskData();
-
-    document.getElementById("search")?.addEventListener("input", applyRiskFilters);
-    document.getElementById("risk-type-filter")?.addEventListener("change", applyRiskFilters);
-    document.getElementById("region-filter")?.addEventListener("change", applyRiskFilters);
-
-    document.getElementById("risk-filter-form")?.addEventListener("submit", (e) => {
-      e.preventDefault();
-      fetchRiskData();
-    });
-
-    makeTableSortable("risk-table");
-  }
+  });
 });
