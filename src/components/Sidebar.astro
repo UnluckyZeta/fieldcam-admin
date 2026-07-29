@@ -8,52 +8,71 @@ const adminRole =
     console.log(adminRole)
   ---
 
-  <nav class="sidebar">
-  <a href="/">Dashboard</a>
-  <a href="/engineers">Engineers</a>
-  <a href="/offline-engineers">Offline Engineers</a>
-  <a href="/verify">Verify</a>
-{
-  adminRole ===
-    "super_admin" && (
-    <a href="/admins">
-      Admins
-    </a>
-  )
-}
-  <!-- Theme Toggle Button -->
-  <button
-    id="theme-toggle-btn-sidebar"
-    class="theme-toggle-btn"
-    type="button"
-  >
-    <svg id="theme-icon-sidebar" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-    </svg>
-    <span>Toggle Theme</span>
-  </button>
+<nav class="sidebar">
+  <div class="sidebar-links">
+    <a href="/">Dashboard</a>
+    <a href="/engineers">Engineers</a>
+    <a href="/offline-engineers">Offline Engineers</a>
+    <a href="/verify">Verify</a>
+    {
+      adminRole === "super_admin" && (
+        <a href="/admins">
+          Admins
+        </a>
+      )
+    }
+  </div>
 
-  <button
-    onclick="logout()"
-    class="logout-btn"
-  >
-    Logout
-  </button>
+  <div class="sidebar-footer">
+    <!-- Theme Toggle Button -->
+    <button
+      id="theme-toggle-btn-sidebar"
+      class="theme-toggle-btn"
+      type="button"
+    >
+      <svg id="theme-icon-sidebar" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+      </svg>
+      <span>Toggle Theme</span>
+    </button>
+
+    <button
+      onclick="logout()"
+      class="logout-btn"
+    >
+      Logout
+    </button>
+  </div>
 </nav>
 
 <style>
   .sidebar {
     width: 220px;
-    min-height: 100vh;
+    height: 100vh;
+    position: sticky;
+    top: 0;
     background: white;
     border-right: 1px solid #ddd;
     box-sizing: border-box;
 
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    padding: 20px 20px 16px 20px;
+  }
 
-    padding: 20px;
+  .sidebar-links {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow-y: auto;
+    /* Hide scrollbar */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .sidebar-links::-webkit-scrollbar {
+    display: none;
   }
 
   .sidebar a {
@@ -68,10 +87,17 @@ const adminRole =
     background: #f3f4f6;
   }
 
+  .sidebar-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border-top: 1px solid #eee;
+    padding-top: 16px;
+    margin-top: 12px;
+  }
+
   .theme-toggle-btn {
     width: 100%;
-    margin-top: auto;
-    margin-bottom: 8px;
     padding: 10px;
     border: 1px solid #ddd;
     border-radius: 6px;
@@ -89,7 +115,6 @@ const adminRole =
 
   .logout-btn {
     width: 100%;
-    margin-top: 0;
     padding: 10px;
     border: none;
     border-radius: 6px;

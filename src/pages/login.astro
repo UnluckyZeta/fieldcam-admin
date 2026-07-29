@@ -148,6 +148,8 @@ import AdminLayout from "../layouts/AdminLayout.astro";
 
 import { supabase }
   from "../lib/supabase";
+import { navigate }
+  from "astro:transitions/client";
 
 const {
   data: { session },
@@ -155,7 +157,7 @@ const {
 
 if (session) {
   document.cookie = `admin_id=${session.user.id}; path=/; max-age=2592000; SameSite=Lax`;
-  location.href = "/";
+  navigate("/");
 }
 
 document
@@ -226,7 +228,7 @@ document
         body: JSON.stringify({}),
       }).catch((err) => console.warn("Background sync error:", err));
 
-      location.href = "/";
+      navigate("/");
     } catch (err) {
       alert("Login error: " + err);
       if (submitBtn) {

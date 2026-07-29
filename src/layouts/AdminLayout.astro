@@ -36,6 +36,14 @@ const isLoginPage =
     {
       isLoginPage ? (
         <main class="login-main">
+          <!-- Mobile-like Theme Toggle Floating on Login Page -->
+          <div class="login-theme-toggle">
+            <button id="theme-toggle-btn-login" class="theme-toggle-btn-header" aria-label="Toggle Theme">
+              <svg id="theme-icon-login" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+              </svg>
+            </button>
+          </div>
           <slot />
         </main>
       ) : (
@@ -129,16 +137,19 @@ const isLoginPage =
     // 3. Theme toggle logic
     const themeBtnHeader = document.getElementById("theme-toggle-btn-header");
     const themeBtnSidebar = document.getElementById("theme-toggle-btn-sidebar");
+    const themeBtnLogin = document.getElementById("theme-toggle-btn-login");
 
     const updateIcons = (isDark) => {
       const headerIcon = document.getElementById("theme-icon-header");
       const sidebarIcon = document.getElementById("theme-icon-sidebar");
+      const loginIcon = document.getElementById("theme-icon-login");
       
       const sunPath = `<circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>`;
       const moonPath = `<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>`;
       
       if (headerIcon) headerIcon.innerHTML = isDark ? sunPath : moonPath;
       if (sidebarIcon) sidebarIcon.innerHTML = isDark ? sunPath : moonPath;
+      if (loginIcon) loginIcon.innerHTML = isDark ? sunPath : moonPath;
     };
 
     const isCurrentlyDark = () => document.documentElement.classList.contains("dark-theme");
@@ -155,6 +166,9 @@ const isLoginPage =
     }
     if (themeBtnSidebar) {
       themeBtnSidebar.addEventListener("click", toggleTheme);
+    }
+    if (themeBtnLogin) {
+      themeBtnLogin.addEventListener("click", toggleTheme);
     }
   });
 </script>
@@ -260,7 +274,10 @@ const isLoginPage =
   }
 
   .menu-toggle-btn:hover {
-    background: #f3f4f6;
+    background: rgba(0, 0, 0, 0.05);
+  }
+  :global(.dark-theme) .menu-toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
   }
 
   .mobile-logo {
@@ -285,7 +302,17 @@ const isLoginPage =
   }
 
   .theme-toggle-btn-header:hover {
-    background: #f3f4f6;
+    background: rgba(0, 0, 0, 0.05);
+  }
+  :global(.dark-theme) .theme-toggle-btn-header:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .login-theme-toggle {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 1000;
   }
 
   .sidebar-backdrop {
