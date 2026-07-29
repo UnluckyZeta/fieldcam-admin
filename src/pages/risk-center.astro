@@ -288,23 +288,23 @@ import AdminLayout from "../layouts/AdminLayout.astro";
     flex-direction: column;
     justify-content: space-between;
     gap: 6px;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     overflow: hidden;
     min-width: 0;
   }
   :global(.ev-card-strong) {
-    background: #fff5f5; color: #991b1b; border-left: 4px solid #ef4444; border-color: #fca5a5;
+    background: #1e1b2e; color: #fecdd3; border-left: 4px solid #ef4444; border-color: rgba(239, 68, 68, 0.3);
   }
   :global(.ev-card-sig) {
-    background: #fffbeb; color: #92400e; border-left: 4px solid #f97316; border-color: #fdba74;
+    background: #251c1d; color: #ffedd5; border-left: 4px solid #f97316; border-color: rgba(249, 115, 22, 0.3);
   }
   :global(.ev-card-supp) {
-    background: #fefce8; color: #854d0e; border-left: 4px solid #eab308; border-color: #fef08a;
+    background: #22221b; color: #fef08a; border-left: 4px solid #eab308; border-color: rgba(234, 179, 8, 0.3);
   }
   :global(.rc-badge-sev-strong) { background: #ef4444; color: white; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-left: 4px; }
   :global(.rc-badge-sev-sig) { background: #f97316; color: white; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-left: 4px; }
-  :global(.rc-badge-sev-supp) { background: #eab308; color: white; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-left: 4px; }
+  :global(.rc-badge-sev-supp) { background: #eab308; color: #1e293b; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-left: 4px; }
 
   :global(.ev-card-top) {
     display: flex;
@@ -313,7 +313,7 @@ import AdminLayout from "../layouts/AdminLayout.astro";
     gap: 8px;
     margin-bottom: 2px;
   }
-  :global(.ev-title) { font-weight: 700; font-size: 13px; display: flex; align-items: center; flex-wrap: wrap; min-width: 0; }
+  :global(.ev-title) { font-weight: 700; font-size: 13px; color: #f8fafc; display: flex; align-items: center; flex-wrap: wrap; min-width: 0; gap: 4px; }
   :global(.ev-actions) {
     display: flex;
     gap: 4px;
@@ -390,28 +390,29 @@ import AdminLayout from "../layouts/AdminLayout.astro";
     background: #4b5563;
   }
   :global(.ev-tag-link) {
-    background: rgba(0, 0, 0, 0.05);
+    background: rgba(56, 189, 248, 0.15);
     padding: 2px 6px;
     border-radius: 4px;
     font-size: 10px;
     font-weight: 600;
-    color: #2563eb !important;
+    color: #38bdf8 !important;
     text-decoration: underline !important;
     white-space: nowrap;
     cursor: pointer;
-    transition: color 0.15s;
+    transition: color 0.15s, background 0.15s;
   }
   :global(.ev-tag-link:hover) {
-    color: #1d4ed8 !important;
+    background: rgba(56, 189, 248, 0.25);
+    color: #7dd3fc !important;
   }
-  :global(.ev-detail) { font-size: 12px; line-height: 1.5; color: #475569; word-break: break-word; overflow-wrap: break-word; }
+  :global(.ev-detail) { font-size: 12px; line-height: 1.5; color: #cbd5e1; word-break: break-word; overflow-wrap: break-word; }
   :global(.ev-footer) {
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
     margin-top: 4px;
     font-size: 11px;
-    opacity: 0.85;
+    color: #94a3b8;
     gap: 8px;
   }
   :global(.ev-footer-right) {
