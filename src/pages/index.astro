@@ -1,70 +1,5 @@
 ---
 import AdminLayout from "../layouts/AdminLayout.astro";
-import { getDashboard, getEngineers } from "../lib/api";
-
-function formatEgyptDate(
-  date: string,
-) {
-  return new Date(date)
-    .toLocaleString(
-      "en-US",
-      {
-        timeZone:
-          "Africa/Cairo",
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true,
-      },
-    )
-    .replace(",", " •");
-}
-const today = new Date().toLocaleDateString("en-CA", {
-  timeZone: "Africa/Cairo",
-});
-
-const from =
-  Astro.url.searchParams.get(
-    "from",
-  ) ?? today;
-
-const to =
-  Astro.url.searchParams.get(
-    "to",
-  ) ?? today;
-
-const adminId =
-  Astro.cookies
-    .get("admin_id")
-    ?.value ?? "";
-    
-
-const [data, engineersData] = await Promise.all([
-  getDashboard(from, to, adminId),
-  getEngineers("", "", adminId),
-]);
-
-const profilesMap = new Map(
-  (engineersData.engineers ?? []).map((e: any) => [e.id || e.engineer_id, e])
-);
-
-// Compute offline engineers: those with NO activity in the selected date range
-const activeIds = new Set(
-  (data.engineers_today ?? []).map((e: any) => e.id || e.engineer_id)
-);
-const offlineEngineers = (engineersData.engineers ?? []).filter(
-  (e: any) => !activeIds.has(e.id || e.engineer_id)
-);
-
-// Compute photos count in the selected date range
-const photosInRange = (data.engineers_today ?? []).reduce(
-  (acc: number, e: any) => acc + (Number(e.photos) || 0),
-  0
-);
-const isDefaultToday = from === today && to === today;
-
 ---
 
 <AdminLayout title="Dashboard">
@@ -73,15 +8,15 @@ const isDefaultToday = from === today && to === today;
   <form method="GET" class="filters">
     <input
       type="date"
+      id="input-from"
       name="from"
-      value={from}
       onfocus="this.showPicker()"
     />
 
     <input
       type="date"
+      id="input-to"
       name="to"
-      value={to}
       onfocus="this.showPicker()"
     />
 
@@ -123,113 +58,26 @@ const isDefaultToday = from === today && to === today;
   <div class="stats">
     <div class="stat-card">
       <h3>Total Engineers</h3>
-      <p>
-        {data.total_engineers}
-      </p>
+      <p id="stat-total" class="stat-val skeleton-text skeleton"></p>
     </div>
 
     <div class="stat-card">
-      <h3>{isDefaultToday ? "Photos Today" : "Photos in Range"}</h3>
-      <p>
-        {photosInRange}
-      </p>
+      <h3 id="stat-photos-title">Photos Today</h3>
+      <p id="stat-photos" class="stat-val skeleton-text skeleton"></p>
     </div>
 
     <div class="stat-card">
       <h3>Active Engineers</h3>
-      <p>
-        {(data.engineers_today ?? []).length}
-      </p>
+      <p id="stat-active" class="stat-val skeleton-text skeleton"></p>
     </div>
 
-    <div class="stat-card">
-      <h3>GPS Risk</h3>
-
-      <p
-        class={
-          data.gps_risk_engineers >
-          0
-            ? "danger"
-            : "success"
-        }
-      >
-        {
-          data.gps_risk_engineers
-        }
-      </p>
-    </div>
-
-    <a href={`/offline-engineers?from=${from}&to=${to}`} class="stat-card stat-card-warn stat-card-link">
+    <a id="offline-link" href="/offline-engineers" class="stat-card stat-card-warn stat-card-link">
       <h3>Offline Engineers</h3>
-      <p class={offlineEngineers.length > 0 ? "danger" : "success"}>
-        {offlineEngineers.length}
-      </p>
+      <p id="stat-offline" class="stat-val skeleton-text skeleton"></p>
     </a>
   </div>
 
 <div class="dashboard-grid">
-  <div class="section">
-    <h2>
-      High Risk Engineers
-    </h2>
-
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Code</th>
-          <th>Region</th>
-          <th>Subregion</th>
-          <th>Risk</th>
-          <th>View</th>
-        </tr>
-      </thead>
-
-      <tbody>
-        {(data.high_risk_engineers ?? []).map(
-          (
-            engineer: any,
-          ) => {
-            const p = profilesMap.get(engineer.id);
-            const region = engineer.region || p?.region || "-";
-            const subregion = engineer.subregion || p?.subregion || "-";
-            return (
-              <tr>
-                <td>
-                  {engineer.full_name}
-                </td>
-
-                <td>
-                  {engineer.engineer_code}
-                </td>
-
-                <td>
-                  {region}
-                </td>
-
-                <td>
-                  {subregion}
-                </td>
-
-                <td>
-                  ⚠ High
-                </td>
-
-                <td>
-                  <a
-                    class="btn"
-                    href={`/engineers/${engineer.id}`}
-                  >
-                    View
-                  </a>
-                </td>
-              </tr>
-            );
-          },
-        )}
-      </tbody>
-    </table>
-  </div>
   <div class="section">
   <h2>
     Engineers Active Today
@@ -248,60 +96,65 @@ const isDefaultToday = from === today && to === today;
       </tr>
     </thead>
 
-    <tbody>
-      {
-        data.engineers_today?.map(
-          (engineer: any) => {
-            const engineerId = engineer.id || engineer.engineer_id;
-            const p = profilesMap.get(engineerId);
-            const region = engineer.region || p?.region || "-";
-            const subregion = engineer.subregion || p?.subregion || "-";
-            return (
-              <tr>
-                <td>
-                  {engineer.full_name}
-                </td>
-
-                <td>
-                  {engineer.engineer_code}
-                </td>
-
-                <td>
-                  {region}
-                </td>
-
-                <td>
-                  {subregion}
-                </td>
-
-                <td>
-                  {engineer.photos}
-                </td>
-
-                <td>
-                  {formatEgyptDate(engineer.last_photo)}
-                </td>
-
-                <td>
-                  <a
-                    class="btn"
-                    href={`/engineers/${engineerId}`}
-                  >
-                    View
-                  </a>
-                </td>
-              </tr>
-            );
-          },
-        )
-      }
+    <tbody id="today-table-body">
+      <!-- Skeleton Rows -->
+      <tr class="skeleton-row">
+        <td><div class="skeleton" style="height: 20px; width: 120px;"></div></td>
+        <td><div class="skeleton" style="height: 20px; width: 80px;"></div></td>
+        <td><div class="skeleton" style="height: 20px; width: 90px;"></div></td>
+        <td><div class="skeleton" style="height: 20px; width: 90px;"></div></td>
+        <td><div class="skeleton" style="height: 20px; width: 60px;"></div></td>
+        <td><div class="skeleton" style="height: 20px; width: 140px;"></div></td>
+        <td><div class="skeleton" style="height: 20px; width: 60px;"></div></td>
+      </tr>
+      <tr class="skeleton-row">
+        <td><div class="skeleton" style="height: 20px; width: 120px;"></div></td>
+        <td><div class="skeleton" style="height: 20px; width: 80px;"></div></td>
+        <td><div class="skeleton" style="height: 20px; width: 90px;"></div></td>
+        <td><div class="skeleton" style="height: 20px; width: 90px;"></div></td>
+        <td><div class="skeleton" style="height: 20px; width: 60px;"></div></td>
+        <td><div class="skeleton" style="height: 20px; width: 140px;"></div></td>
+        <td><div class="skeleton" style="height: 20px; width: 60px;"></div></td>
+      </tr>
+      <tr class="skeleton-row">
+        <td><div class="skeleton" style="height: 20px; width: 120px;"></div></td>
+        <td><div class="skeleton" style="height: 20px; width: 80px;"></div></td>
+        <td><div class="skeleton" style="height: 20px; width: 90px;"></div></td>
+        <td><div class="skeleton" style="height: 20px; width: 90px;"></div></td>
+        <td><div class="skeleton" style="height: 20px; width: 60px;"></div></td>
+        <td><div class="skeleton" style="height: 20px; width: 140px;"></div></td>
+        <td><div class="skeleton" style="height: 20px; width: 60px;"></div></td>
+      </tr>
     </tbody>
   </table>
 </div>
 </div>
 </AdminLayout>
 
-<style>
+<style is:global>
+  /* Shimmering Skeleton Animations */
+  .skeleton {
+    background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite linear;
+    border-radius: 6px;
+  }
+
+  .skeleton-text {
+    height: 28px;
+    width: 90px;
+    margin-top: 8px;
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
+
   .stats {
     display: grid;
     grid-template-columns:
@@ -457,10 +310,10 @@ const isDefaultToday = from === today && to === today;
 
   .success {
     color: #16a34a;
-  }input[  type="date"
-      onfocus="this.showPicker()"] {
-  cursor: pointer;
-}
+  }
+  input[type="date"] {
+    cursor: pointer;
+  }
 .dashboard-grid{
   display:grid;
   gap:24px;
@@ -493,46 +346,8 @@ const isDefaultToday = from === today && to === today;
   color: #2563eb;
 }
 
-.section-offline h2 {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.offline-count {
-  font-size: 16px;
-  color: #6b7280;
-  font-weight: 400;
-}
-
-.offline-hint {
-  font-size: 14px;
-  color: #6b7280;
-  margin-bottom: 16px;
-}
-
-.all-active-msg {
-  font-size: 16px;
-  color: #16a34a;
-  font-weight: 600;
-  padding: 24px 0;
-  text-align: center;
-}
-
 .stat-card-warn {
   border-left: 4px solid #f59e0b;
-}
-
-.btn-export-offline {
-  padding: 8px 16px;
-  background: #f59e0b;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  margin-bottom: 16px;
 }
 
 .stat-card-link {
@@ -547,12 +362,155 @@ const isDefaultToday = from === today && to === today;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 </style>
-<script type="module">
-  import "../scripts/dashboard";
-    import {
-    requireAdmin,
-  } from "../lib/auth";
 
+<script>
+  import "../scripts/dashboard";
+  import { getDashboard } from "../lib/api";
+  import { requireAdmin } from "../lib/auth";
+  import { makeTableSortable } from "../scripts/table-sort";
+
+  // Enforce admin login check
   requireAdmin();
 
+  function formatEgyptDate(dateStr) {
+    if (!dateStr) return "-";
+    return new Date(dateStr)
+      .toLocaleString("en-US", {
+        timeZone: "Africa/Cairo",
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      })
+      .replace(",", " •");
+  }
+
+  document.addEventListener("astro:page-load", async () => {
+    // 1. Resolve date parameters client-side
+    const today = new Date().toLocaleDateString("en-CA", {
+      timeZone: "Africa/Cairo",
+    });
+
+    const params = new URLSearchParams(window.location.search);
+    const from = params.get("from") || today;
+    const to = params.get("to") || today;
+
+    // Set input default dates
+    const fromInput = document.getElementById("input-from");
+    const toInput = document.getElementById("input-to");
+    if (fromInput) fromInput.value = from;
+    if (toInput) toInput.value = to;
+
+    // Set links
+    const offlineLink = document.getElementById("offline-link");
+    if (offlineLink) {
+      offlineLink.href = `/offline-engineers?from=${from}&to=${to}`;
+    }
+
+    const isDefaultToday = from === today && to === today;
+    const photosTitle = document.getElementById("stat-photos-title");
+    if (photosTitle) {
+      photosTitle.textContent = isDefaultToday ? "Photos Today" : "Photos in Range";
+    }
+
+    const adminId = document.cookie
+      .split("; ")
+      .find((row) => row.startsWith("admin_id="))
+      ?.split("=")[1] || "";
+
+    try {
+      // 2. Query dashboard edge function asynchronously in the background
+      const data = await getDashboard(from, to, adminId);
+      
+      const totalEl = document.getElementById("stat-total");
+      const photosEl = document.getElementById("stat-photos");
+      const activeEl = document.getElementById("stat-active");
+      const offlineEl = document.getElementById("stat-offline");
+
+      const photosInRange = (data.engineers_today ?? []).reduce(
+        (acc, e) => acc + (Number(e.photos) || 0),
+        0
+      );
+
+      // Render stats text and disable skeletons
+      if (totalEl) {
+        totalEl.textContent = String(data.total_engineers ?? 0);
+        totalEl.classList.remove("skeleton", "skeleton-text");
+      }
+      if (photosEl) {
+        photosEl.textContent = String(photosInRange);
+        photosEl.classList.remove("skeleton", "skeleton-text");
+      }
+      if (activeEl) {
+        activeEl.textContent = String((data.engineers_today ?? []).length);
+        activeEl.classList.remove("skeleton", "skeleton-text");
+      }
+      if (offlineEl) {
+        const offlineCount = data.offline_engineers ?? 0;
+        offlineEl.textContent = String(offlineCount);
+        offlineEl.className = "stat-val " + (offlineCount > 0 ? "danger" : "success");
+        offlineEl.classList.remove("skeleton", "skeleton-text");
+      }
+
+      // 3. Render Today's Active Engineers table
+      const tbody = document.getElementById("today-table-body");
+      if (tbody) {
+        const engineers = data.engineers_today ?? [];
+        if (engineers.length === 0) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="7" style="text-align: center; color: #94a3b8; padding: 32px;">
+                No active engineers in this date range.
+              </td>
+            </tr>
+          `;
+        } else {
+          tbody.innerHTML = engineers.map((engineer) => {
+            const engineerId = engineer.id || engineer.engineer_id;
+            const region = engineer.region || "-";
+            const subregion = engineer.subregion || "-";
+            return `
+              <tr>
+                <td>${engineer.full_name || ""}</td>
+                <td>${engineer.engineer_code || ""}</td>
+                <td>${region}</td>
+                <td>${subregion}</td>
+                <td>${engineer.photos || 0}</td>
+                <td>${formatEgyptDate(engineer.last_photo)}</td>
+                <td>
+                  <a class="btn" href="/engineers/${engineerId}">View</a>
+                </td>
+              </tr>
+            `;
+          }).join("");
+        }
+      }
+
+      // Bind search filtering dynamically
+      document.getElementById("dashboard-search")?.addEventListener("input", (e) => {
+        const query = e.target.value.toLowerCase().trim();
+        const rows = document.querySelectorAll("#today-table tbody tr");
+        rows.forEach((row) => {
+          const text = row.textContent?.toLowerCase() ?? "";
+          row.style.display = text.includes(query) ? "" : "none";
+        });
+      });
+
+      makeTableSortable("today-table");
+    } catch (e) {
+      console.error("Failed to load dashboard stats:", e);
+      const tbody = document.getElementById("today-table-body");
+      if (tbody) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7" style="text-align: center; color: red; padding: 32px;">
+              Failed to load dashboard stats.
+            </td>
+          </tr>
+        `;
+      }
+    }
+  });
 </script>

@@ -94,89 +94,35 @@ async function exportCsv(allTime = false) {
     const from = (!allTime && fromInput) ? fromInput.value : "";
     const to = (!allTime && toInput) ? toInput.value : "";
 
-    const result =
-      await exportLogs(
-        from,
-        to,
-      );
+    const response = await exportLogs(from, to);
+    if (!response.ok) {
+      throw new Error(`Export failed with status: ${response.status}`);
+    }
 
-    const rows =
-      result.logs ?? [];
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
 
-    const csv = [
-      [
-        "Engineer",
-        "Engineer Code",
-        "Region",
-        "Photo Tag",
-        "Latitude",
-        "Longitude",
-        "Address",
-        "Date",
-        "Time",
-      ].join(","),
-      ...rows.map(
-        (row: any) => {
-          let dateStr = "";
-          let timeStr = "";
-          if (row.taken_at) {
-            try {
-              const d = new Date(row.taken_at);
-              if (!isNaN(d.getTime())) {
-                dateStr = d.toLocaleDateString("en-CA", { timeZone: "Africa/Cairo" });
-                timeStr = d.toLocaleTimeString("en-GB", { timeZone: "Africa/Cairo" });
-              } else {
-                const parts = String(row.taken_at).split(/[T ]/);
-                dateStr = parts[0] ?? "";
-                timeStr = parts[1] ?? "";
-              }
-            } catch {
-              const parts = String(row.taken_at).split(/[T ]/);
-              dateStr = parts[0] ?? "";
-              timeStr = parts[1] ?? "";
-            }
-          }
-          const region = getRegionData(row);
-
-          return [
-            `"${(row.full_name ?? "").replace(/"/g, '""')}"`,
-            `"${(row.engineer_code ?? "").replace(/"/g, '""')}"`,
-            `"${region.replace(/"/g, '""')}"`,
-            `"${(row.photo_tag ?? "").replace(/"/g, '""')}"`,
-            row.latitude ?? "",
-            row.longitude ?? "",
-            `"${(row.address ?? "").replace(/"/g, '""')}"`,
-            dateStr,
-            timeStr,
-          ].join(",");
-        }
-      ),
-    ].join("\n");
-
-    const blob =
-      new Blob([csv], {
-        type: "text/csv",
-      });
-
-    const url =
-      URL.createObjectURL(
-        blob,
-      );
-
-    const a =
-      document.createElement("a");
-
+    const a = document.createElement("a");
     a.href = url;
 
-    a.download = allTime
-      ? "fieldcam-logs-all-time.csv"
-      : "fieldcam-logs.csv";
+    // Use Content-Disposition header filename if present
+    const disposition = response.headers.get("Content-Disposition");
+    let filename = allTime ? "fieldcam-logs-all-time.csv" : "fieldcam-logs.csv";
+    if (disposition && disposition.includes("attachment")) {
+      const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+      const matches = filenameRegex.exec(disposition);
+      if (matches != null && matches[1]) {
+        filename = matches[1].replace(/['"]/g, '');
+      }
+    }
 
+    a.download = filename;
     a.click();
 
-    URL.revokeObjectURL(
-      url,
-    );
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error("Export logs error:", error);
+    alert("Failed to export logs. Please check console for details.");
   } finally {
     if (btn) {
       setTimeout(() => {
@@ -189,26 +135,23 @@ async function exportCsv(allTime = false) {
   }
 }
 
-window.addEventListener(
-  "DOMContentLoaded",
+document.addEventListener(
+  "astro:page-load",
   () => {
-    document
-      .getElementById(
-        "export-btn",
-      )
-      ?.addEventListener(
-        "click",
-        () => exportCsv(false),
-      );
+    const exportBtn = document.getElementById("export-btn");
+    const exportAllBtn = document.getElementById("export-all-btn");
 
-    document
-      .getElementById(
-        "export-all-btn",
-      )
-      ?.addEventListener(
-        "click",
-        () => exportCsv(true),
-      );
+    if (exportBtn) {
+      const newBtn = exportBtn.cloneNode(true) as HTMLButtonElement;
+      exportBtn.replaceWith(newBtn);
+      newBtn.addEventListener("click", () => exportCsv(false));
+    }
+
+    if (exportAllBtn) {
+      const newAllBtn = exportAllBtn.cloneNode(true) as HTMLButtonElement;
+      exportAllBtn.replaceWith(newAllBtn);
+      newAllBtn.addEventListener("click", () => exportCsv(true));
+    }
 
     document
       .getElementById("dashboard-search")
@@ -222,6 +165,8 @@ window.addEventListener(
             (row as HTMLElement).style.display = text.includes(query) ? "" : "none";
           });
         });
-      });  },
+      });
+
+    makeTableSortable("today-table");
+  },
 );
-makeTableSortable("today-table");

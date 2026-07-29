@@ -109,7 +109,7 @@ export async function exportLogs(
   from = "",
   to = "",
   engineer_id = "",
-) {
+): Promise<Response> {
   const response = await fetch(
     `${BASE_URL}/export-logs`,
     {
@@ -123,7 +123,7 @@ export async function exportLogs(
     },
   );
 
-  return response.json();
+  return response;
 }
 export async function updateEngineerRegion(
   engineerId: string,

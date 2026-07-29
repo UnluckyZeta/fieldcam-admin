@@ -1,49 +1,12 @@
 ---
 import AdminLayout from "../layouts/AdminLayout.astro";
-import { getDashboard, getEngineers } from "../lib/api";
-
-function formatEgyptDate(date: string) {
-  if (!date) return "Never";
-  return new Date(date)
-    .toLocaleString("en-US", {
-      timeZone: "Africa/Cairo",
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    })
-    .replace(",", " •");
-}
-
-const today = new Date().toLocaleDateString("en-CA", {
-  timeZone: "Africa/Cairo",
-});
-
-const from = Astro.url.searchParams.get("from") ?? today;
-const to = Astro.url.searchParams.get("to") ?? today;
-const adminId = Astro.cookies.get("admin_id")?.value ?? "";
-
-const [data, engineersData] = await Promise.all([
-  getDashboard(from, to, adminId),
-  getEngineers("", "", adminId),
-]);
-
-// Active engineers in date range
-const activeIds = new Set((data.engineers_today ?? []).map((e: any) => e.id || e.engineer_id));
-
-// Offline engineers = all engineers minus active ones
-const offlineEngineers = (engineersData.engineers ?? []).filter(
-  (e: any) => !activeIds.has(e.id || e.engineer_id)
-);
 ---
 
 <AdminLayout title="Offline Engineers">
   <div class="page-header">
-    <h1>🔴 Offline Engineers ({offlineEngineers.length})</h1>
+    <h1>🔴 Offline Engineers (<span id="title-offline-count">...</span>)</h1>
     <p class="subtitle">
-      Showing engineers who captured <strong>0 photos</strong> between {from} and {to}.
+      Showing engineers who captured <strong>0 photos</strong> between <span id="text-from">...</span> and <span id="text-to">...</span>.
     </p>
   </div>
 
@@ -51,15 +14,15 @@ const offlineEngineers = (engineersData.engineers ?? []).filter(
     <form method="GET" class="filters">
       <input
         type="date"
+        id="input-from"
         name="from"
-        value={from}
         onfocus="this.showPicker()"
       />
 
       <input
         type="date"
+        id="input-to"
         name="to"
-        value={to}
         onfocus="this.showPicker()"
       />
 
@@ -75,7 +38,7 @@ const offlineEngineers = (engineersData.engineers ?? []).filter(
       />
 
       <button
-        id="export-btn"
+        id="export-offline-btn"
         type="button"
         class="btn-export-offline"
       >
@@ -87,68 +50,81 @@ const offlineEngineers = (engineersData.engineers ?? []).filter(
   <div class="stats">
     <div class="stat-card">
       <h3>Offline Engineers</h3>
-      <p class={offlineEngineers.length > 0 ? "danger" : "success"}>
-        {offlineEngineers.length}
-      </p>
+      <p id="stat-offline" class="stat-val skeleton-text skeleton"></p>
     </div>
 
     <div class="stat-card">
       <h3>Total Engineers</h3>
-      <p>{engineersData.engineers?.length ?? 0}</p>
+      <p id="stat-total" class="stat-val skeleton-text skeleton"></p>
     </div>
 
     <div class="stat-card">
       <h3>Active Engineers in Range</h3>
-      <p>{activeIds.size}</p>
+      <p id="stat-active" class="stat-val skeleton-text skeleton"></p>
     </div>
   </div>
 
-  <div class="section">
-    {offlineEngineers.length === 0 ? (
-      <div class="empty-state">
-        <p class="all-active-msg">🎉 All engineers were active during this period!</p>
-      </div>
-    ) : (
-      <table id="offline-table" class="offline-table">
-        <thead>
-          <tr>
-            <th class="sortable">Name</th>
-            <th class="sortable">Code</th>
-            <th class="sortable">Email</th>
-            <th class="sortable">Governorate / Region</th>
-            <th class="sortable">Subregion</th>
-            <th class="sortable">Last Active</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {offlineEngineers.map((engineer: any) => {
-            const region = engineer.region || engineer.auto_region || "-";
-            const subregion = engineer.subregion || engineer.auto_subregion || "-";
-            return (
-              <tr>
-                <td><strong>{engineer.full_name || "Unnamed"}</strong></td>
-                <td><code>{engineer.engineer_code || "-"}</code></td>
-                <td>{engineer.email || "-"}</td>
-                <td>{region}</td>
-                <td>{subregion}</td>
-                <td>{engineer.last_photo_at ? formatEgyptDate(engineer.last_photo_at) : "Never"}</td>
-                <td>
-                  <a class="btn-view" href={`/engineers/${engineer.id}`}>
-                    View Profile
-                  </a>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    )}
+  <div class="section" id="table-container">
+    <table id="offline-table" class="offline-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Code</th>
+          <th>Email</th>
+          <th>Governorate / Region</th>
+          <th>Subregion</th>
+          <th>Last Active</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="offline-tbody">
+        <tr class="skeleton-row">
+          <td><div class="skeleton" style="height: 20px; width: 140px;"></div></td>
+          <td><div class="skeleton" style="height: 20px; width: 80px;"></div></td>
+          <td><div class="skeleton" style="height: 20px; width: 160px;"></div></td>
+          <td><div class="skeleton" style="height: 20px; width: 100px;"></div></td>
+          <td><div class="skeleton" style="height: 20px; width: 100px;"></div></td>
+          <td><div class="skeleton" style="height: 20px; width: 140px;"></div></td>
+          <td><div class="skeleton" style="height: 20px; width: 80px;"></div></td>
+        </tr>
+        <tr class="skeleton-row">
+          <td><div class="skeleton" style="height: 20px; width: 140px;"></div></td>
+          <td><div class="skeleton" style="height: 20px; width: 80px;"></div></td>
+          <td><div class="skeleton" style="height: 20px; width: 160px;"></div></td>
+          <td><div class="skeleton" style="height: 20px; width: 100px;"></div></td>
+          <td><div class="skeleton" style="height: 20px; width: 100px;"></div></td>
+          <td><div class="skeleton" style="height: 20px; width: 140px;"></div></td>
+          <td><div class="skeleton" style="height: 20px; width: 80px;"></div></td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 </AdminLayout>
 
-<style>
+<style is:global>
+  /* Shimmering Skeleton Animations */
+  .skeleton {
+    background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite linear;
+    border-radius: 6px;
+  }
+
+  .skeleton-text {
+    height: 28px;
+    width: 90px;
+    margin-top: 8px;
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
+
   .page-header {
     margin-bottom: 24px;
   }
@@ -326,70 +302,214 @@ const offlineEngineers = (engineersData.engineers ?? []).filter(
   }
 </style>
 
-<script type="module">
+<script>
+  import { getDashboard, getEngineers } from "../lib/api";
   import { requireAdmin } from "../lib/auth";
   import { makeTableSortable } from "../scripts/table-sort";
 
   requireAdmin();
 
-  // Search functionality
-  document.getElementById("search")?.addEventListener("input", (e) => {
-    const query = e.target.value.toLowerCase().trim();
-    const rows = document.querySelectorAll("#offline-table tbody tr");
-    rows.forEach((row) => {
-      const text = row.textContent?.toLowerCase() ?? "";
-      row.style.display = text.includes(query) ? "" : "none";
+  function formatEgyptDate(dateStr) {
+    if (!dateStr) return "Never";
+    return new Date(dateStr)
+      .toLocaleString("en-US", {
+        timeZone: "Africa/Cairo",
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      })
+      .replace(",", " •");
+  }
+
+  document.addEventListener("astro:page-load", async () => {
+    const today = new Date().toLocaleDateString("en-CA", {
+      timeZone: "Africa/Cairo",
     });
-  });
 
-  // Export CSV functionality
-  document.getElementById("export-btn")?.addEventListener("click", (e) => {
-    const btn = e.currentTarget as HTMLButtonElement;
-    const originalText = btn.textContent ?? "Export Offline CSV";
+    const params = new URLSearchParams(window.location.search);
+    const from = params.get("from") || today;
+    const to = params.get("to") || today;
 
-    btn.disabled = true;
-    btn.textContent = "⏳ Exporting CSV...";
-    btn.style.opacity = "0.7";
-    btn.style.cursor = "wait";
+    const textFrom = document.getElementById("text-from");
+    const textTo = document.getElementById("text-to");
+    if (textFrom) textFrom.textContent = from;
+    if (textTo) textTo.textContent = to;
+
+    const fromInput = document.getElementById("input-from") as HTMLInputElement;
+    const toInput = document.getElementById("input-to") as HTMLInputElement;
+    if (fromInput) fromInput.value = from;
+    if (toInput) toInput.value = to;
+
+    const adminId = document.cookie
+      .split("; ")
+      .find((row) => row.startsWith("admin_id="))
+      ?.split("=")[1] || "";
 
     try {
-      const table = document.getElementById("offline-table");
-      if (!table) {
-        alert("No offline engineers to export.");
-        return;
+      // Fetch stats concurrently in the background
+      const [data, engineersData] = await Promise.all([
+        getDashboard(from, to, adminId),
+        getEngineers("", "", adminId),
+      ]);
+
+      const activeIds = new Set((data.engineers_today ?? []).map((e: any) => e.id || e.engineer_id));
+      const offlineEngineers = (engineersData.engineers ?? []).filter(
+        (e: any) => !activeIds.has(e.id || e.engineer_id)
+      );
+
+      // Render count in header title
+      const titleCountEl = document.getElementById("title-offline-count");
+      if (titleCountEl) titleCountEl.textContent = String(offlineEngineers.length);
+
+      const statOfflineEl = document.getElementById("stat-offline");
+      const statTotalEl = document.getElementById("stat-total");
+      const statActiveEl = document.getElementById("stat-active");
+
+      if (statOfflineEl) {
+        statOfflineEl.textContent = String(offlineEngineers.length);
+        statOfflineEl.className = "stat-val " + (offlineEngineers.length > 0 ? "danger" : "success");
+        statOfflineEl.classList.remove("skeleton", "skeleton-text");
+      }
+      if (statTotalEl) {
+        statTotalEl.textContent = String(engineersData.engineers?.length ?? 0);
+        statTotalEl.classList.remove("skeleton", "skeleton-text");
+      }
+      if (statActiveEl) {
+        statActiveEl.textContent = String(activeIds.size);
+        statActiveEl.classList.remove("skeleton", "skeleton-text");
       }
 
-      const headers = ["Name", "Code", "Email", "Region", "Subregion", "Last Active"];
-      const rows = table.querySelectorAll("tbody tr");
-      const csvRows = [headers.join(",")];
-
-      rows.forEach((row) => {
-        const cells = row.querySelectorAll("td");
-        const values = [];
-        for (let i = 0; i < cells.length - 1; i++) {
-          const text = (cells[i].textContent ?? "").trim().replace(/"/g, '""');
-          values.push(`"${text}"`);
+      // Render table layout dynamically
+      const container = document.getElementById("table-container");
+      if (container) {
+        if (offlineEngineers.length === 0) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <p class="all-active-msg">🎉 All engineers were active during this period!</p>
+            </div>
+          `;
+        } else {
+          container.innerHTML = `
+            <table id="offline-table" class="offline-table">
+              <thead>
+                <tr>
+                  <th class="sortable">Name</th>
+                  <th class="sortable">Code</th>
+                  <th class="sortable">Email</th>
+                  <th class="sortable">Governorate / Region</th>
+                  <th class="sortable">Subregion</th>
+                  <th class="sortable">Last Active</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="offline-tbody">
+                ${offlineEngineers.map((engineer: any) => {
+                  const region = engineer.region || engineer.auto_region || "-";
+                  const subregion = engineer.subregion || engineer.auto_subregion || "-";
+                  const lastActive = engineer.last_photo_at ? formatEgyptDate(engineer.last_photo_at) : "Never";
+                  return `
+                    <tr>
+                      <td><strong>${engineer.full_name || "Unnamed"}</strong></td>
+                      <td><code>${engineer.engineer_code || "-"}</code></td>
+                      <td>${engineer.email || "-"}</td>
+                      <td>${region}</td>
+                      <td>${subregion}</td>
+                      <td>${lastActive}</td>
+                      <td>
+                        <a class="btn-view" href="/engineers/${engineer.id}">
+                          View Profile
+                        </a>
+                      </td>
+                    </tr>
+                  `;
+                }).join("")}
+              </tbody>
+            </table>
+          `;
+          
+          makeTableSortable("offline-table");
         }
-        csvRows.push(values.join(","));
+      }
+
+      // Bind search filtering
+      document.getElementById("search")?.addEventListener("input", (e) => {
+        const query = (e.target as HTMLInputElement).value.toLowerCase().trim();
+        const rows = document.querySelectorAll("#offline-table tbody tr");
+        rows.forEach((row) => {
+          const text = row.textContent?.toLowerCase() ?? "";
+          (row as HTMLElement).style.display = text.includes(query) ? "" : "none";
+        });
       });
 
-      const csv = csvRows.join("\n");
-      const blob = new Blob([csv], { type: "text/csv" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "fieldcam-offline-engineers.csv";
-      a.click();
-      URL.revokeObjectURL(url);
-    } finally {
-      setTimeout(() => {
-        btn.disabled = false;
-        btn.textContent = originalText;
-        btn.style.opacity = "1";
-        btn.style.cursor = "pointer";
-      }, 500);
+      // Bind export button with UTF-8 BOM representation, cloning to strip duplicate listeners
+      const exportOfflineBtn = document.getElementById("export-offline-btn");
+      if (exportOfflineBtn) {
+        const newBtn = exportOfflineBtn.cloneNode(true) as HTMLButtonElement;
+        exportOfflineBtn.replaceWith(newBtn);
+        newBtn.addEventListener("click", () => {
+          newBtn.disabled = true;
+          newBtn.textContent = "⏳ Exporting CSV...";
+          newBtn.style.opacity = "0.7";
+          newBtn.style.cursor = "wait";
+
+          try {
+            const table = document.getElementById("offline-table");
+            if (!table || offlineEngineers.length === 0) {
+              alert("No offline engineers to export.");
+              return;
+            }
+
+            const headers = ["Name", "Code", "Email", "Region", "Subregion", "Last Active"];
+            const csvRows = [headers.join(",")];
+
+            offlineEngineers.forEach((engineer: any) => {
+              const region = engineer.region || engineer.auto_region || "-";
+              const subregion = engineer.subregion || engineer.auto_subregion || "-";
+              const lastActive = engineer.last_photo_at ? formatEgyptDate(engineer.last_photo_at) : "Never";
+              
+              csvRows.push([
+                `"${(engineer.full_name ?? "").replace(/"/g, '""')}"`,
+                `"${(engineer.engineer_code ?? "").replace(/"/g, '""')}"`,
+                `"${(engineer.email ?? "").replace(/"/g, '""')}"`,
+                `"${region.replace(/"/g, '""')}"`,
+                `"${subregion.replace(/"/g, '""')}"`,
+                `"${lastActive.replace(/"/g, '""')}"`,
+              ].join(","));
+            });
+
+            // UTF-8 BOM helps Excel recognize Arabic characters correctly
+            const csv = "\uFEFF" + csvRows.join("\r\n");
+            const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `fieldcam-offline-engineers-${from}-to-${to}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+          } finally {
+            setTimeout(() => {
+              newBtn.disabled = false;
+              newBtn.textContent = "Export Offline CSV";
+              newBtn.style.opacity = "1";
+              newBtn.style.cursor = "pointer";
+            }, 500);
+          }
+        });
+      }
+
+    } catch (e) {
+      console.error("Failed to load offline statistics:", e);
+      const container = document.getElementById("table-container");
+      if (container) {
+        container.innerHTML = `
+          <div style="text-align: center; color: red; padding: 40px 0;">
+            Failed to load offline statistics.
+          </div>
+        `;
+      }
     }
   });
-
-  makeTableSortable("offline-table");
 </script>
