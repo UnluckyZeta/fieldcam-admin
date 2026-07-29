@@ -243,11 +243,14 @@ import AdminLayout from "../layouts/AdminLayout.astro";
     border-radius: 8px;
     padding: 20px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .offline-table {
     width: 100%;
     border-collapse: collapse;
+    min-width: 600px;
   }
 
   .offline-table th,
@@ -260,6 +263,18 @@ import AdminLayout from "../layouts/AdminLayout.astro";
   .offline-table th {
     background: #f8fafc;
     font-weight: 600;
+  }
+
+  @media (max-width: 768px) {
+    .filters {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 8px;
+    }
+    .filters input, .filters button, .btn-reset, .search-input, .btn-export-offline {
+      width: 100% !important;
+      box-sizing: border-box;
+    }
   }
 
   .btn-view {

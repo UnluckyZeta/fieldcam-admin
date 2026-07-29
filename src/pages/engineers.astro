@@ -139,9 +139,11 @@ const engineers = [];
     </div>
   </div>
 
-  <EngineersTable
-    engineers={engineers}
-  />
+  <div class="table-scroll-wrapper">
+    <EngineersTable
+      engineers={engineers}
+    />
+  </div>
 </AdminLayout>
 
 <style>
@@ -256,6 +258,38 @@ const engineers = [];
   .filter-select {
     min-width: 180px;
     cursor: pointer;
+  }
+
+  .table-scroll-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    background: white;
+  }
+
+  @media (max-width: 768px) {
+    .create-form {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 8px;
+    }
+    .create-form input, .create-form select, .create-form button {
+      width: 100% !important;
+      min-width: 0 !important;
+      box-sizing: border-box;
+    }
+    .toolbar-controls {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 8px;
+    }
+    .toolbar-controls input, .toolbar-controls select {
+      width: 100% !important;
+      min-width: 0 !important;
+      max-width: none !important;
+      box-sizing: border-box;
+    }
   }
 </style>
 

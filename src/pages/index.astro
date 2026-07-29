@@ -277,11 +277,14 @@ import AdminLayout from "../layouts/AdminLayout.astro";
     background: white;
     border-radius: 8px;
     padding: 20px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   table {
     width: 100%;
     border-collapse: collapse;
+    min-width: 600px; /* Ensures the table doesn't compress too small on mobile */
   }
 
   th,
@@ -314,11 +317,23 @@ import AdminLayout from "../layouts/AdminLayout.astro";
   input[type="date"] {
     cursor: pointer;
   }
-.dashboard-grid{
-  display:grid;
-  gap:24px;
-  margin-top:24px;
-}
+  .dashboard-grid{
+    display:grid;
+    gap:24px;
+    margin-top:24px;
+  }
+
+  @media (max-width: 768px) {
+    .filters {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 8px;
+    }
+    .filters input, .filters button, .btn-reset, .search-input, .btn-export, .btn-export-all {
+      width: 100% !important;
+      box-sizing: border-box;
+    }
+  }
 
 @media(max-width:1000px){
 

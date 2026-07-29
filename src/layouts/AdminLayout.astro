@@ -33,7 +33,22 @@ const isLoginPage =
         </main>
       ) : (
         <div class="app">
+          <!-- Mobile Header Bar -->
+          <header class="mobile-header">
+            <button id="menu-toggle-btn" class="menu-toggle-btn" aria-label="Toggle Menu">
+              <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+              </svg>
+            </button>
+            <span class="mobile-logo">FieldCam Admin</span>
+          </header>
+
           <Sidebar />
+
+          <!-- Backdrop overlay for mobile menu -->
+          <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
 
           <main>
             <slot />
@@ -61,6 +76,7 @@ const isLoginPage =
   });
 
   document.addEventListener("astro:page-load", () => {
+    // 1. Navigation loading progress bar
     const bar = document.getElementById("nav-progress-bar");
     if (bar) {
       bar.style.width = "100%";
@@ -69,6 +85,34 @@ const isLoginPage =
         bar.style.width = "0%";
       }, 200);
     }
+
+    // 2. Mobile menu toggle logic
+    const toggleBtn = document.getElementById("menu-toggle-btn");
+    const appEl = document.querySelector(".app");
+    const backdrop = document.getElementById("sidebar-backdrop");
+
+    if (appEl) {
+      appEl.classList.remove("menu-open");
+    }
+
+    const toggleMenu = () => {
+      if (appEl) appEl.classList.toggle("menu-open");
+    };
+
+    if (toggleBtn) {
+      toggleBtn.addEventListener("click", toggleMenu);
+    }
+    if (backdrop) {
+      backdrop.addEventListener("click", toggleMenu);
+    }
+
+    // Auto-close menu when sidebar navigation link is clicked
+    const sidebarLinks = document.querySelectorAll(".sidebar a");
+    sidebarLinks.forEach((link) => {
+      link.addEventListener("click", () => {
+        if (appEl) appEl.classList.remove("menu-open");
+      });
+    });
   });
 </script>
 
@@ -102,6 +146,7 @@ const isLoginPage =
   main {
     flex: 1;
     padding: 24px;
+    min-width: 0; /* Prevents wide flex items from overflowing */
   }
 
   .login-main {
@@ -109,5 +154,76 @@ const isLoginPage =
     display: flex;
     justify-content: center;
     align-items: center;
+  }
+
+  /* Mobile Responsive Styling */
+  .mobile-header {
+    display: none;
+    height: 56px;
+    background: white;
+    border-bottom: 1px solid #e5e7eb;
+    align-items: center;
+    padding: 0 16px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 999;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+
+  .menu-toggle-btn {
+    background: none;
+    border: none;
+    padding: 8px;
+    cursor: pointer;
+    color: #374151;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: background 0.2s;
+  }
+
+  .menu-toggle-btn:hover {
+    background: #f3f4f6;
+  }
+
+  .mobile-logo {
+    font-size: 16px;
+    font-weight: 700;
+    margin-left: 12px;
+    color: #111827;
+  }
+
+  .sidebar-backdrop {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 998;
+    backdrop-filter: blur(2px);
+  }
+
+  @media (max-width: 767px) {
+    .app {
+      flex-direction: column;
+      padding-top: 56px; /* Header spacing */
+    }
+
+    .mobile-header {
+      display: flex;
+    }
+
+    main {
+      padding: 16px;
+    }
+
+    .app.menu-open .sidebar-backdrop {
+      display: block;
+    }
   }
 </style>
