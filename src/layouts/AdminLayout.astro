@@ -80,6 +80,16 @@ const isLoginPage =
 </html>
 
 <script>
+  // Persist dark theme class during client-side view transition swaps
+  document.addEventListener("astro:after-swap", () => {
+    const theme = localStorage.getItem("theme");
+    if (theme === "dark") {
+      document.documentElement.classList.add("dark-theme");
+    } else {
+      document.documentElement.classList.remove("dark-theme");
+    }
+  });
+
   document.addEventListener("astro:before-preparation", () => {
     const bar = document.getElementById("nav-progress-bar");
     if (bar) {
@@ -363,6 +373,18 @@ const isLoginPage =
     background-color: var(--bg-secondary) !important;
     color: var(--text-primary) !important;
     border-color: var(--border-color) !important;
+  }
+
+  /* Protect color indication borders on warning stats */
+  .dark-theme .stat-card-warn {
+    border-left: 4px solid #f59e0b !important;
+  }
+
+  /* Suppress browser default shadow glows on inputs/selects in dark theme */
+  .dark-theme input,
+  .dark-theme select,
+  .dark-theme textarea {
+    box-shadow: none !important;
   }
 
   .dark-theme .sidebar a {
