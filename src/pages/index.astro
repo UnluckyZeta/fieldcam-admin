@@ -99,31 +99,31 @@ import AdminLayout from "../layouts/AdminLayout.astro";
     <tbody id="today-table-body">
       <!-- Skeleton Rows -->
       <tr class="skeleton-row">
-        <td><div class="skeleton" style="height: 20px; width: 120px;"></div></td>
-        <td><div class="skeleton" style="height: 20px; width: 80px;"></div></td>
-        <td><div class="skeleton" style="height: 20px; width: 90px;"></div></td>
-        <td><div class="skeleton" style="height: 20px; width: 90px;"></div></td>
-        <td><div class="skeleton" style="height: 20px; width: 60px;"></div></td>
-        <td><div class="skeleton" style="height: 20px; width: 140px;"></div></td>
-        <td><div class="skeleton" style="height: 20px; width: 60px;"></div></td>
+        <td data-label="Engineer"><div class="skeleton" style="height: 20px; width: 120px;"></div></td>
+        <td data-label="Code"><div class="skeleton" style="height: 20px; width: 80px;"></div></td>
+        <td data-label="Region"><div class="skeleton" style="height: 20px; width: 90px;"></div></td>
+        <td data-label="Subregion"><div class="skeleton" style="height: 20px; width: 90px;"></div></td>
+        <td data-label="Photos"><div class="skeleton" style="height: 20px; width: 60px;"></div></td>
+        <td data-label="Last Photo"><div class="skeleton" style="height: 20px; width: 140px;"></div></td>
+        <td data-label="View"><div class="skeleton" style="height: 20px; width: 60px;"></div></td>
       </tr>
       <tr class="skeleton-row">
-        <td><div class="skeleton" style="height: 20px; width: 120px;"></div></td>
-        <td><div class="skeleton" style="height: 20px; width: 80px;"></div></td>
-        <td><div class="skeleton" style="height: 20px; width: 90px;"></div></td>
-        <td><div class="skeleton" style="height: 20px; width: 90px;"></div></td>
-        <td><div class="skeleton" style="height: 20px; width: 60px;"></div></td>
-        <td><div class="skeleton" style="height: 20px; width: 140px;"></div></td>
-        <td><div class="skeleton" style="height: 20px; width: 60px;"></div></td>
+        <td data-label="Engineer"><div class="skeleton" style="height: 20px; width: 120px;"></div></td>
+        <td data-label="Code"><div class="skeleton" style="height: 20px; width: 80px;"></div></td>
+        <td data-label="Region"><div class="skeleton" style="height: 20px; width: 90px;"></div></td>
+        <td data-label="Subregion"><div class="skeleton" style="height: 20px; width: 90px;"></div></td>
+        <td data-label="Photos"><div class="skeleton" style="height: 20px; width: 60px;"></div></td>
+        <td data-label="Last Photo"><div class="skeleton" style="height: 20px; width: 140px;"></div></td>
+        <td data-label="View"><div class="skeleton" style="height: 20px; width: 60px;"></div></td>
       </tr>
       <tr class="skeleton-row">
-        <td><div class="skeleton" style="height: 20px; width: 120px;"></div></td>
-        <td><div class="skeleton" style="height: 20px; width: 80px;"></div></td>
-        <td><div class="skeleton" style="height: 20px; width: 90px;"></div></td>
-        <td><div class="skeleton" style="height: 20px; width: 90px;"></div></td>
-        <td><div class="skeleton" style="height: 20px; width: 60px;"></div></td>
-        <td><div class="skeleton" style="height: 20px; width: 140px;"></div></td>
-        <td><div class="skeleton" style="height: 20px; width: 60px;"></div></td>
+        <td data-label="Engineer"><div class="skeleton" style="height: 20px; width: 120px;"></div></td>
+        <td data-label="Code"><div class="skeleton" style="height: 20px; width: 80px;"></div></td>
+        <td data-label="Region"><div class="skeleton" style="height: 20px; width: 90px;"></div></td>
+        <td data-label="Subregion"><div class="skeleton" style="height: 20px; width: 90px;"></div></td>
+        <td data-label="Photos"><div class="skeleton" style="height: 20px; width: 60px;"></div></td>
+        <td data-label="Last Photo"><div class="skeleton" style="height: 20px; width: 140px;"></div></td>
+        <td data-label="View"><div class="skeleton" style="height: 20px; width: 60px;"></div></td>
       </tr>
     </tbody>
   </table>
@@ -488,13 +488,13 @@ import AdminLayout from "../layouts/AdminLayout.astro";
             const subregion = engineer.subregion || "-";
             return `
               <tr>
-                <td>${engineer.full_name || ""}</td>
-                <td>${engineer.engineer_code || ""}</td>
-                <td>${region}</td>
-                <td>${subregion}</td>
-                <td>${engineer.photos || 0}</td>
-                <td>${formatEgyptDate(engineer.last_photo)}</td>
-                <td>
+                <td data-label="Engineer">${engineer.full_name || ""}</td>
+                <td data-label="Code">${engineer.engineer_code || ""}</td>
+                <td data-label="Region">${region}</td>
+                <td data-label="Subregion">${subregion}</td>
+                <td data-label="Photos">${engineer.photos || 0}</td>
+                <td data-label="Last Photo">${formatEgyptDate(engineer.last_photo)}</td>
+                <td data-label="View">
                   <a class="btn" href="/engineers/${engineerId}">View</a>
                 </td>
               </tr>

@@ -29,30 +29,30 @@ const { engineers } =
   <tbody>
     {engineers.map((engineer) => (
       <tr>
-        <td>{engineer.full_name}</td>
+        <td data-label="Name">{engineer.full_name}</td>
 
-        <td>{engineer.email}</td>
+        <td data-label="Email">{engineer.email}</td>
 
-        <td>{engineer.engineer_code}</td>
+        <td data-label="Code">{engineer.engineer_code}</td>
 
-        <td>{engineer.status}</td>
-<td title={engineer.device_id}>
-  {
-    engineer.device_id
-      ? engineer.device_id.slice(0, 8)
-      : "Not Registered"
-  }
-</td>
-<td>
-  {
-    engineer.last_photo_at
-      ? new Date(
-          engineer.last_photo_at,
-        ).toLocaleDateString()
-      : "Never"
-  }
-</td>
-        <td>
+        <td data-label="Status">{engineer.status}</td>
+        <td data-label="Device ID" title={engineer.device_id}>
+          {
+            engineer.device_id
+              ? engineer.device_id.slice(0, 8)
+              : "Not Registered"
+          }
+        </td>
+        <td data-label="Last Photo">
+          {
+            engineer.last_photo_at
+              ? new Date(
+                  engineer.last_photo_at,
+                ).toLocaleDateString()
+              : "Never"
+          }
+        </td>
+        <td data-label="GPS">
           <span
             class={
               engineer.gps_risk === "high"
@@ -65,59 +65,59 @@ const { engineers } =
               : "Normal"}
           </span>
         </td>
-<td title="Assigned or Auto-detected region">
-  {engineer.region || (engineer as any).auto_region || "-"}
-</td>
+        <td data-label="Region" title="Assigned or Auto-detected region">
+          {engineer.region || (engineer as any).auto_region || "-"}
+        </td>
 
-<td title="Assigned or Auto-detected subregion">
-  {engineer.subregion || (engineer as any).auto_subregion || "-"}
-</td>
-<td class="actions">
-  <a
-    class="btn btn-view"
-    href={`/engineers/${engineer.id}`}
-  >
-    View
-  </a>
+        <td data-label="Subregion" title="Assigned or Auto-detected subregion">
+          {engineer.subregion || (engineer as any).auto_subregion || "-"}
+        </td>
+        <td data-label="Actions" class="actions">
+          <a
+            class="btn btn-view"
+            href={`/engineers/${engineer.id}`}
+          >
+            View
+          </a>
 
-  <button
-    class="btn btn-edit"
-    onclick={`editEngineerUi(
-      '${engineer.id}',
-      '${engineer.full_name}',
-      '${engineer.email}' ,
-      '${engineer.phone ?? ""}'
+          <button
+            class="btn btn-edit"
+            onclick={`editEngineerUi(
+              '${engineer.id}',
+              '${engineer.full_name}',
+              '${engineer.email}' ,
+              '${engineer.phone ?? ""}'
 
-    )`}
-  >
-    Edit
-  </button>
+            )`}
+          >
+            Edit
+          </button>
 
-  <button
-    class="btn btn-delete"
-    onclick={`deleteEngineerUi(
-      '${engineer.id}'
-    )`}
-  >
-    Delete
-  </button>
-  <button class="btn btn-password"
-  onclick={`resetPasswordUi(
-    '${engineer.id}'
-  )`}
->
-  Reset Password
-</button>
+          <button
+            class="btn btn-delete"
+            onclick={`deleteEngineerUi(
+              '${engineer.id}'
+            )`}
+          >
+            Delete
+          </button>
+          <button class="btn btn-password"
+            onclick={`resetPasswordUi(
+              '${engineer.id}'
+            )`}
+          >
+            Reset Password
+          </button>
 
-  <button
-    class="btn btn-reset"
-    onclick={`resetDeviceUi(
-      '${engineer.id}'
-    )`}
-  >
-    Reset Device
-  </button>
-</td>
+          <button
+            class="btn btn-reset"
+            onclick={`resetDeviceUi(
+              '${engineer.id}'
+            )`}
+          >
+            Reset Device
+          </button>
+        </td>
       </tr>
     ))}
   </tbody>

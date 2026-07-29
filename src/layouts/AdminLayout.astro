@@ -227,3 +227,83 @@ const isLoginPage =
     }
   }
 </style>
+
+<style is:global>
+  @media (max-width: 767px) {
+    /* Responsive login container fluid width */
+    .login-container {
+      padding: 16px !important;
+      box-sizing: border-box;
+      width: 100% !important;
+    }
+    .login-card {
+      width: 100% !important;
+      max-width: 400px !important;
+      box-sizing: border-box;
+    }
+
+    /* Transform standard tables to structured list cards on mobile */
+    table {
+      border: none !important;
+      background: transparent !important;
+    }
+
+    table thead {
+      display: none !important;
+    }
+
+    table tbody, 
+    table tr, 
+    table td {
+      display: block !important;
+      width: 100% !important;
+      box-sizing: border-box;
+    }
+
+    table tr {
+      background: white !important;
+      border: 1px solid #e2e8f0 !important;
+      border-radius: 12px !important;
+      padding: 16px !important;
+      margin-bottom: 16px !important;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
+    }
+
+    table td {
+      border: none !important;
+      border-bottom: 1px solid #f1f5f9 !important;
+      padding: 10px 0 !important;
+      display: flex !important;
+      justify-content: space-between !important;
+      align-items: center !important;
+      text-align: right !important;
+      font-size: 14px !important;
+    }
+
+    table td:last-child {
+      border-bottom: none !important;
+      padding-bottom: 0 !important;
+      margin-top: 10px !important;
+      justify-content: flex-end !important;
+    }
+
+    table td::before {
+      content: attr(data-label);
+      font-weight: 600 !important;
+      color: #64748b !important;
+      text-align: left !important;
+      margin-right: 16px !important;
+      font-size: 12px !important;
+      text-transform: uppercase !important;
+      letter-spacing: 0.5px !important;
+    }
+
+    /* Actions buttons cell styling */
+    table td.actions {
+      display: flex !important;
+      flex-wrap: wrap !important;
+      justify-content: flex-end !important;
+      gap: 6px !important;
+    }
+  }
+</style>

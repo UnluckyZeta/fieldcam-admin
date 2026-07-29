@@ -79,22 +79,22 @@ import AdminLayout from "../layouts/AdminLayout.astro";
       </thead>
       <tbody id="offline-tbody">
         <tr class="skeleton-row">
-          <td><div class="skeleton" style="height: 20px; width: 140px;"></div></td>
-          <td><div class="skeleton" style="height: 20px; width: 80px;"></div></td>
-          <td><div class="skeleton" style="height: 20px; width: 160px;"></div></td>
-          <td><div class="skeleton" style="height: 20px; width: 100px;"></div></td>
-          <td><div class="skeleton" style="height: 20px; width: 100px;"></div></td>
-          <td><div class="skeleton" style="height: 20px; width: 140px;"></div></td>
-          <td><div class="skeleton" style="height: 20px; width: 80px;"></div></td>
+          <td data-label="Name"><div class="skeleton" style="height: 20px; width: 140px;"></div></td>
+          <td data-label="Code"><div class="skeleton" style="height: 20px; width: 80px;"></div></td>
+          <td data-label="Email"><div class="skeleton" style="height: 20px; width: 160px;"></div></td>
+          <td data-label="Governorate / Region"><div class="skeleton" style="height: 20px; width: 100px;"></div></td>
+          <td data-label="Subregion"><div class="skeleton" style="height: 20px; width: 100px;"></div></td>
+          <td data-label="Last Active"><div class="skeleton" style="height: 20px; width: 140px;"></div></td>
+          <td data-label="Action"><div class="skeleton" style="height: 20px; width: 80px;"></div></td>
         </tr>
         <tr class="skeleton-row">
-          <td><div class="skeleton" style="height: 20px; width: 140px;"></div></td>
-          <td><div class="skeleton" style="height: 20px; width: 80px;"></div></td>
-          <td><div class="skeleton" style="height: 20px; width: 160px;"></div></td>
-          <td><div class="skeleton" style="height: 20px; width: 100px;"></div></td>
-          <td><div class="skeleton" style="height: 20px; width: 100px;"></div></td>
-          <td><div class="skeleton" style="height: 20px; width: 140px;"></div></td>
-          <td><div class="skeleton" style="height: 20px; width: 80px;"></div></td>
+          <td data-label="Name"><div class="skeleton" style="height: 20px; width: 140px;"></div></td>
+          <td data-label="Code"><div class="skeleton" style="height: 20px; width: 80px;"></div></td>
+          <td data-label="Email"><div class="skeleton" style="height: 20px; width: 160px;"></div></td>
+          <td data-label="Governorate / Region"><div class="skeleton" style="height: 20px; width: 100px;"></div></td>
+          <td data-label="Subregion"><div class="skeleton" style="height: 20px; width: 100px;"></div></td>
+          <td data-label="Last Active"><div class="skeleton" style="height: 20px; width: 140px;"></div></td>
+          <td data-label="Action"><div class="skeleton" style="height: 20px; width: 80px;"></div></td>
         </tr>
       </tbody>
     </table>
@@ -422,13 +422,13 @@ import AdminLayout from "../layouts/AdminLayout.astro";
                   const lastActive = engineer.last_photo_at ? formatEgyptDate(engineer.last_photo_at) : "Never";
                   return `
                     <tr>
-                      <td><strong>${engineer.full_name || "Unnamed"}</strong></td>
-                      <td><code>${engineer.engineer_code || "-"}</code></td>
-                      <td>${engineer.email || "-"}</td>
-                      <td>${region}</td>
-                      <td>${subregion}</td>
-                      <td>${lastActive}</td>
-                      <td>
+                      <td data-label="Name"><strong>${engineer.full_name || "Unnamed"}</strong></td>
+                      <td data-label="Code"><code>${engineer.engineer_code || "-"}</code></td>
+                      <td data-label="Email">${engineer.email || "-"}</td>
+                      <td data-label="Region">${region}</td>
+                      <td data-label="Subregion">${subregion}</td>
+                      <td data-label="Last Active">${lastActive}</td>
+                      <td data-label="Action">
                         <a class="btn-view" href="/engineers/${engineer.id}">
                           View Profile
                         </a>
