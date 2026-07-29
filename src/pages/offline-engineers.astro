@@ -303,7 +303,7 @@ import AdminLayout from "../layouts/AdminLayout.astro";
 </style>
 
 <script>
-  import { getDashboard, getEngineers } from "../lib/api";
+  import { getOfflineStats } from "../lib/api";
   import { requireAdmin } from "../lib/auth";
   import { makeTableSortable } from "../scripts/table-sort";
 
@@ -349,16 +349,11 @@ import AdminLayout from "../layouts/AdminLayout.astro";
       ?.split("=")[1] || "";
 
     try {
-      // Fetch stats concurrently in the background
-      const [data, engineersData] = await Promise.all([
-        getDashboard(from, to, adminId),
-        getEngineers("", "", adminId),
-      ]);
-
-      const activeIds = new Set((data.engineers_today ?? []).map((e: any) => e.id || e.engineer_id));
-      const offlineEngineers = (engineersData.engineers ?? []).filter(
-        (e: any) => !activeIds.has(e.id || e.engineer_id)
-      );
+      // Fetch stats using our new optimized single RPC endpoint
+      const data = await getOfflineStats(from, to, adminId);
+      const offlineEngineers = data.offline_engineers ?? [];
+      const totalCount = data.total_engineers ?? 0;
+      const activeCount = data.active_count ?? 0;
 
       // Render count in header title
       const titleCountEl = document.getElementById("title-offline-count");
@@ -374,11 +369,11 @@ import AdminLayout from "../layouts/AdminLayout.astro";
         statOfflineEl.classList.remove("skeleton", "skeleton-text");
       }
       if (statTotalEl) {
-        statTotalEl.textContent = String(engineersData.engineers?.length ?? 0);
+        statTotalEl.textContent = String(totalCount);
         statTotalEl.classList.remove("skeleton", "skeleton-text");
       }
       if (statActiveEl) {
-        statActiveEl.textContent = String(activeIds.size);
+        statActiveEl.textContent = String(activeCount);
         statActiveEl.classList.remove("skeleton", "skeleton-text");
       }
 

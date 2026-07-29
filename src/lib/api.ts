@@ -105,6 +105,26 @@ export async function getDashboard(  from = "",
 
   return response.json();
 }
+export async function getOfflineStats(
+  from = "",
+  to = "",
+  admin_id = "",
+) {
+  const response = await fetch(
+    `${BASE_URL}/offline-stats`,
+    {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify({
+        from,
+        to,
+        admin_id,
+      }),
+    },
+  );
+
+  return response.json();
+}
 export async function exportLogs(
   from = "",
   to = "",
