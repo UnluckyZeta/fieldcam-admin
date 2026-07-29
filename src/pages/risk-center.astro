@@ -57,6 +57,15 @@ import AdminLayout from "../layouts/AdminLayout.astro";
     </form>
   </div>
 
+  <!-- Track Engineer By Name -->
+  <div class="track-search-panel">
+    <div class="track-search-row">
+      <input id="track-name-search" type="text" class="search-input" placeholder="🔍 Search any engineer by name or code to add to watchlist..." />
+      <button id="track-search-btn" type="button">Search</button>
+    </div>
+    <div id="track-search-results"></div>
+  </div>
+
   <!-- Risk Cards Container (rendered by JS) -->
   <div id="risk-cards-container">
     <div class="loading-placeholder">
@@ -120,6 +129,48 @@ import AdminLayout from "../layouts/AdminLayout.astro";
   }
   .filters button { background: #2563eb; color: white; border: 1px solid transparent; }
   .btn-reset { background: #6b7280; color: white; }
+
+  /* ── Track Search Panel ── */
+  .track-search-panel {
+    margin-bottom: 18px;
+    background: white;
+    border-radius: 10px;
+    padding: 14px 18px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .track-search-row {
+    display: flex; gap: 10px; align-items: center;
+  }
+  .track-search-row .search-input { flex: 1; }
+  .track-search-row button {
+    height: 36px; padding: 0 16px; border-radius: 6px;
+    background: #6366f1; color: white; border: none;
+    font-size: 13px; font-weight: 500; cursor: pointer;
+  }
+  :global(#track-search-results) {
+    margin-top: 10px;
+  }
+  :global(.tsr-item) {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 12px; border-radius: 8px;
+    border: 1px solid #e2e8f0; margin-bottom: 6px;
+    gap: 12px;
+  }
+  :global(.tsr-item:hover) { background: #f8fafc; }
+  :global(.tsr-info) { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+  :global(.tsr-avatar) {
+    width: 34px; height: 34px; border-radius: 8px;
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    color: white; display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 13px; flex-shrink: 0;
+  }
+  :global(.tsr-name) { font-weight: 600; font-size: 13px; }
+  :global(.tsr-meta) { font-size: 11px; color: #64748b; }
+  :global(.tsr-actions) { display: flex; gap: 6px; flex-shrink: 0; }
+  :global(.tsr-already) {
+    font-size: 11px; color: #10b981; font-weight: 600;
+    display: flex; align-items: center; gap: 4px;
+  }
 
   /* ── Risk Engineer Cards ── */
   :global(.risk-card) {
@@ -344,10 +395,15 @@ import AdminLayout from "../layouts/AdminLayout.astro";
 
   /* ═══ Dark Theme ═══ */
   :global(.dark-theme) .stat-card,
-  :global(.dark-theme .risk-card) {
+  :global(.dark-theme .risk-card),
+  :global(.dark-theme) .track-search-panel {
     background-color: var(--bg-secondary) !important;
     color: var(--text-primary) !important;
   }
+  :global(.dark-theme .tsr-item) { border-color: var(--border-color); }
+  :global(.dark-theme .tsr-item:hover) { background: rgba(255,255,255,0.03); }
+  :global(.dark-theme .tsr-name) { color: #f1f5f9; }
+  :global(.dark-theme .tsr-meta) { color: #94a3b8; }
   :global(.dark-theme .risk-card-tracked) {
     border-color: #3b82f6;
     box-shadow: 0 0 0 1px rgba(59,130,246,0.25), 0 2px 8px rgba(59,130,246,0.15);

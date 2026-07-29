@@ -1,6 +1,6 @@
 export interface RiskEvidenceItem {
   id?: string;
-  type: "speed" | "jump" | "future" | "drift" | "tz" | "manual" | "sequential";
+  type: "speed" | "jump" | "future" | "drift" | "tz" | "manual" | "sequential" | "mock";
   title: string;
   detail: string;
   timestamp: string;
@@ -395,6 +395,21 @@ export async function fetchRiskData() {
           review_status: log.review_status,
         });
       }
+
+      // Rule 7 · Mock Location (suspiciously perfect GPS accuracy ≤ 1.5m)
+      if (log.accuracy !== null && log.accuracy !== undefined && log.accuracy > 0 && log.accuracy <= 1.5) {
+        eng.gps_risk_count++;
+        eng.evidence_items.push({
+          id: log.id,
+          type: "mock",
+          title: `📡 Suspected Mock Location (${log.accuracy.toFixed(2)}m)`,
+          detail: `GPS accuracy of ${log.accuracy.toFixed(2)}m is suspiciously perfect. Real GPS is always noisy (typically 3-20m). Mock location apps report ~1.0m.`,
+          timestamp: log.taken_at,
+          location: log.address || undefined,
+          photo_tag: log.photo_tag || undefined,
+          review_status: log.review_status,
+        });
+      }
     }
 
     // Rule 5 · Impossible location jump (speed > 150 km/h between locations)
@@ -501,6 +516,62 @@ export async function fetchRiskData() {
   }
 }
 
+/* ─── Track By Name Search ─── */
+async function searchAndTrackEngineer() {
+  const input = document.getElementById("track-name-search") as HTMLInputElement | null;
+  const resultsDiv = document.getElementById("track-search-results");
+  if (!input || !resultsDiv) return;
+
+  const q = input.value.trim();
+  if (q.length < 2) {
+    resultsDiv.innerHTML = `<div style="font-size:12px;color:#94a3b8;padding:6px 0;">Type at least 2 characters to search.</div>`;
+    return;
+  }
+
+  resultsDiv.innerHTML = `<div style="font-size:12px;color:#94a3b8;padding:6px 0;">Searching...</div>`;
+
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/profiles?select=id,full_name,engineer_code,email,region&or=(full_name.ilike.*${q}*,engineer_code.ilike.*${q}*)&limit=10`,
+      { headers }
+    );
+    const engineers = await res.json();
+
+    if (!Array.isArray(engineers) || engineers.length === 0) {
+      resultsDiv.innerHTML = `<div style="font-size:12px;color:#94a3b8;padding:6px 0;">No engineers found matching "${q}".</div>`;
+      return;
+    }
+
+    resultsDiv.innerHTML = engineers.map(eng => {
+      const isTracked = trackedSet.has(eng.id);
+      const ini = initials(eng.full_name || "??");
+      const trackBtn = isTracked
+        ? `<span class="tsr-already">👁️ Already Tracked</span>
+           <button class="rc-btn rc-btn-untrack" onclick="event.stopPropagation();toggleTrack('${eng.id}').then(()=>searchAndTrackEngineer())">Untrack</button>`
+        : `<button class="rc-btn rc-btn-track" onclick="event.stopPropagation();toggleTrack('${eng.id}').then(()=>searchAndTrackEngineer())">👁️ Track</button>`;
+
+      return `
+        <div class="tsr-item">
+          <div class="tsr-info">
+            <div class="tsr-avatar">${ini}</div>
+            <div>
+              <div class="tsr-name">${eng.full_name}</div>
+              <div class="tsr-meta">${eng.engineer_code || ""} • ${eng.region || "-"} • ${eng.email || ""}</div>
+            </div>
+          </div>
+          <div class="tsr-actions">
+            ${trackBtn}
+          </div>
+        </div>`;
+    }).join("");
+  } catch (e) {
+    console.error(e);
+    resultsDiv.innerHTML = `<div style="font-size:12px;color:#ef4444;padding:6px 0;">Error searching engineers.</div>`;
+  }
+}
+
+(window as any).searchAndTrackEngineer = searchAndTrackEngineer;
+
 /* ─── Init ─── */
 document.addEventListener("astro:page-load", () => {
   if (!document.getElementById("risk-cards-container")) return;
@@ -518,5 +589,11 @@ document.addEventListener("astro:page-load", () => {
   document.getElementById("risk-filter-form")?.addEventListener("submit", (e) => {
     e.preventDefault();
     fetchRiskData();
+  });
+
+  // Track by name search
+  document.getElementById("track-search-btn")?.addEventListener("click", searchAndTrackEngineer);
+  document.getElementById("track-name-search")?.addEventListener("keydown", (e) => {
+    if ((e as KeyboardEvent).key === "Enter") { e.preventDefault(); searchAndTrackEngineer(); }
   });
 });
