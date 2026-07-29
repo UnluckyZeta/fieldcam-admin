@@ -107,6 +107,37 @@ Deno.serve(async (req) => {
         throw error;
       }
 
+      // Enrich engineers_today with auto_subregion from their latest photo address
+      const engineersToday = data?.engineers_today ?? [];
+      if (engineersToday.length > 0) {
+        const engineerIds = engineersToday.map((e: any) => e.engineer_id || e.id);
+        const { data: latestPhotos } = await supabase
+          .from("photo_logs")
+          .select("engineer_id, address")
+          .in("engineer_id", engineerIds)
+          .not("address", "is", null)
+          .order("taken_at", { ascending: false });
+
+        // Build a map: engineer_id -> first part of address (city/subregion)
+        const subregionMap: Record<string, string> = {};
+        if (latestPhotos) {
+          for (const photo of latestPhotos) {
+            if (!subregionMap[photo.engineer_id] && photo.address) {
+              // Extract city/subregion from address like "Afwah, Beni Suef Governorate, Egypt"
+              const parts = photo.address.split(",").map((s: string) => s.trim());
+              subregionMap[photo.engineer_id] = parts[0] || "";
+            }
+          }
+        }
+
+        for (const eng of engineersToday) {
+          const eid = eng.engineer_id || eng.id;
+          if (!eng.subregion && subregionMap[eid]) {
+            eng.auto_subregion = subregionMap[eid];
+          }
+        }
+      }
+
       return Response.json(
         {
           success: true,
@@ -114,7 +145,7 @@ Deno.serve(async (req) => {
           photos_today: data?.photos_today ?? 0,
           offline_engineers: data?.offline_engineers ?? 0,
           gps_risk_engineers: data?.gps_risk_engineers ?? 0,
-          engineers_today: data?.engineers_today ?? [],
+          engineers_today: engineersToday,
           high_risk_engineers: data?.high_risk_engineers ?? [],
         },
         {
