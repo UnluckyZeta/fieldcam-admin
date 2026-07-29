@@ -427,14 +427,14 @@ export async function fetchRiskData() {
     }
 
     // Rule 6 · Out-of-Order Upload / Sync Timeline Manipulation
-    // Sort engineer's uploads by synced_at ascending (order in which photos were synced to db)
+    // Only check photos that were captured ONLINE — offline photos batch-sync later and are expected to have time gaps.
     for (const [eid, eLogs] of Object.entries(engLogsMap)) {
       const eng = map[eid];
-      const sortedBySync = eLogs.filter(l => l.synced_at && l.review_status !== "verified")
+      const onlineLogs = eLogs.filter(l => l.synced_at && l.captured_online === true && l.review_status !== "verified")
         .sort((a, b) => new Date(a.synced_at).getTime() - new Date(b.synced_at).getTime());
 
-      for (let i = 0; i < sortedBySync.length - 1; i++) {
-        const a = sortedBySync[i], b = sortedBySync[i + 1];
+      for (let i = 0; i < onlineLogs.length - 1; i++) {
+        const a = onlineLogs[i], b = onlineLogs[i + 1];
         const tA = new Date(a.taken_at).getTime();
         const tB = new Date(b.taken_at).getTime();
         const sA = new Date(a.synced_at).getTime();
@@ -443,39 +443,35 @@ export async function fetchRiskData() {
         const dT = tB - tA; // Device reported taken-time diff
         const dS = sB - sA; // Actual sync-time diff
 
-        // Only evaluate chronology if the uploads were synced at least 2 minutes apart.
-        // This prevents false positives from batch uploads where offline photos are synced in the same minute.
-        if (dS >= 2 * 60 * 1000) {
-          // A photo uploaded later (b) has a reported taken_at earlier than the previously uploaded photo (a)
-          if (dT < -15 * 60 * 1000) {
-            const minsDiff = Math.round(Math.abs(dT) / 60000);
-            eng.time_risk_count++;
-            eng.evidence_items.push({
-              id: b.id,
-              type: "sequential",
-              title: "⏳ Out-of-Order Sync Timeline",
-              detail: `Chronology error: Synced later but claims to be taken ${minsDiff} mins earlier than previous photo.`,
-              timestamp: b.taken_at,
-              location: b.address || undefined,
-              photo_tag: b.photo_tag || undefined,
-              review_status: b.review_status,
-            });
-          }
-          // Device clock jumped forward extremely fast relative to real sync elapsed time
-          else if (dT > dS + 15 * 60 * 1000) {
-            const jumpMins = Math.round((dT - dS) / 60000);
-            eng.time_risk_count++;
-            eng.evidence_items.push({
-              id: b.id,
-              type: "sequential",
-              title: "⏳ Clock Speed-up Spoof",
-              detail: `Chronology error: Clock jumped forward by ${jumpMins} mins between sequential photo syncs.`,
-              timestamp: b.taken_at,
-              location: b.address || undefined,
-              photo_tag: b.photo_tag || undefined,
-              review_status: b.review_status,
-            });
-          }
+        // A photo uploaded later (b) has a reported taken_at earlier than the previously uploaded photo (a)
+        if (dT < -15 * 60 * 1000) {
+          const minsDiff = Math.round(Math.abs(dT) / 60000);
+          eng.time_risk_count++;
+          eng.evidence_items.push({
+            id: b.id,
+            type: "sequential",
+            title: "⏳ Out-of-Order Sync Timeline",
+            detail: `Chronology error: Synced later (online) but claims to be taken ${minsDiff} mins earlier than previous photo.`,
+            timestamp: b.taken_at,
+            location: b.address || undefined,
+            photo_tag: b.photo_tag || undefined,
+            review_status: b.review_status,
+          });
+        }
+        // Device clock jumped forward extremely fast relative to real sync elapsed time
+        else if (dT > dS + 15 * 60 * 1000) {
+          const jumpMins = Math.round((dT - dS) / 60000);
+          eng.time_risk_count++;
+          eng.evidence_items.push({
+            id: b.id,
+            type: "sequential",
+            title: "⏳ Clock Speed-up Spoof",
+            detail: `Chronology error: Both photos synced online, but clock jumped forward by ${jumpMins} mins.`,
+            timestamp: b.taken_at,
+            location: b.address || undefined,
+            photo_tag: b.photo_tag || undefined,
+            review_status: b.review_status,
+          });
         }
       }
     }
