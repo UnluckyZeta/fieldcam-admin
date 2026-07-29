@@ -10,11 +10,24 @@ export interface RiskEngineer {
   time_risk_count: number;
   primary_risk_type: "gps" | "time" | "both";
   evidence: string[];
-  max_speed_kmh?: number;
   last_activity: string;
 }
 
 let cachedRiskEngineers: RiskEngineer[] = [];
+
+function getDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) *
+      Math.cos(lat2 * (Math.PI / 180)) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
 
 export function applyRiskFilters() {
   const searchInput = document.getElementById("search") as HTMLInputElement | null;
@@ -134,16 +147,13 @@ export async function fetchRiskData() {
   const fromVal = inputFrom?.value || todayStr;
   const toVal = inputTo?.value || todayStr;
 
-  const fromStr = `${fromVal}T00:00:00+03:00`;
-  const toStr = `${toVal}T23:59:59+03:00`;
-
   const supabaseUrl = "https://vwdwpswpvqdfpsrkmgzy.supabase.co";
   const token = "sb_publishable_yI6-VfmXaCmbr7E8GCq6zg_zTUe-rMB";
 
   try {
-    // Query high speed, untrusted clock, or timezone mismatch photo logs
+    // Query photo logs with engineer details within selected date range
     const res = await fetch(
-      `${supabaseUrl}/rest/v1/photo_logs_with_engineer?select=id,engineer_id,engineer_code,full_name,region,speed,accuracy,time_confidence,device_timezone,captured_online,taken_at,address&taken_at=gte.${fromVal}T00:00:00%2B03:00&taken_at=lte.${toVal}T23:59:59%2B03:00&or=(speed.gt.25,time_confidence.eq.untrusted)&order=taken_at.desc&limit=500`,
+      `${supabaseUrl}/rest/v1/photo_logs_with_engineer?select=id,engineer_id,engineer_code,full_name,region,speed,accuracy,latitude,longitude,time_confidence,device_timezone,captured_online,taken_at,synced_at,address&taken_at=gte.${fromVal}T00:00:00%2B03:00&taken_at=lte.${toVal}T23:59:59%2B03:00&order=taken_at.desc&limit=1000`,
       {
         headers: {
           apikey: token,
@@ -161,8 +171,11 @@ export async function fetchRiskData() {
       return;
     }
 
+    const nowTime = Date.now();
+
     // Group logs by engineer
     const map: Record<string, RiskEngineer> = {};
+    const engLogsMap: Record<string, any[]> = {};
 
     for (const log of logs) {
       const eid = log.engineer_id;
@@ -183,18 +196,42 @@ export async function fetchRiskData() {
         };
       }
 
-      const eng = map[eid];
+      if (!engLogsMap[eid]) {
+        engLogsMap[eid] = [];
+      }
+      engLogsMap[eid].push(log);
 
+      const eng = map[eid];
+      const takenTime = new Date(log.taken_at).getTime();
+      const syncedTime = log.synced_at ? new Date(log.synced_at).getTime() : null;
+
+      // 1. High Speed Movement (>90 km/h)
       if (log.speed && log.speed > 25) {
         eng.gps_risk_count++;
         const kmh = Math.round(log.speed * 3.6);
-        const reason = `Recorded speed of ${kmh} km/h (Limit >90 km/h)`;
+        const reason = `High speed recorded: ${kmh} km/h (Limit >90 km/h)`;
         if (!eng.evidence.includes(reason)) eng.evidence.push(reason);
       }
 
+      // 2. Future Timestamp ("picture taken tmrw / future")
+      if (takenTime > nowTime + 10 * 60 * 1000) {
+        eng.time_risk_count++;
+        const reason = `Future timestamp: Taken in future (${formatEgyptDate(log.taken_at)})`;
+        if (!eng.evidence.includes(reason)) eng.evidence.push(reason);
+      }
+
+      // 3. Fast Clock / Time Drift ("picture taken in an hour but synced now")
+      if (syncedTime && takenTime > syncedTime + 15 * 60 * 1000) {
+        eng.time_risk_count++;
+        const minsAhead = Math.round((takenTime - syncedTime) / (1000 * 60));
+        const reason = `Clock Fast / Time Offset: Taken ${minsAhead} mins ahead of server sync`;
+        if (!eng.evidence.includes(reason)) eng.evidence.push(reason);
+      }
+
+      // 4. Untrusted Clock / Timezone Mismatch
       if (log.time_confidence === "untrusted") {
         eng.time_risk_count++;
-        const reason = `Untrusted device clock (Time spoof risk)`;
+        const reason = `Untrusted hardware clock (Time spoof risk)`;
         if (!eng.evidence.includes(reason)) eng.evidence.push(reason);
       }
 
@@ -205,7 +242,35 @@ export async function fetchRiskData() {
       }
     }
 
-    cachedRiskEngineers = Object.values(map);
+    // 5. Impossible Location Jump (Haversine Distance > 10km within 30 mins)
+    for (const [eid, eLogs] of Object.entries(engLogsMap)) {
+      const eng = map[eid];
+      const validGpsLogs = eLogs.filter(l => l.latitude && l.longitude)
+        .sort((a, b) => new Date(a.taken_at).getTime() - new Date(b.taken_at).getTime());
+
+      for (let i = 0; i < validGpsLogs.length - 1; i++) {
+        const p1 = validGpsLogs[i];
+        const p2 = validGpsLogs[i + 1];
+        const t1 = new Date(p1.taken_at).getTime();
+        const t2 = new Date(p2.taken_at).getTime();
+        const diffMins = (t2 - t1) / (1000 * 60);
+
+        if (diffMins > 0 && diffMins <= 30) {
+          const distKm = getDistanceKm(p1.latitude, p1.longitude, p2.latitude, p2.longitude);
+          const speedKmh = distKm / (diffMins / 60);
+          if (speedKmh > 150 && distKm > 10) {
+            eng.gps_risk_count++;
+            const reason = `Teleportation Jump: Moved ${distKm.toFixed(1)} km in ${diffMins.toFixed(1)} mins (${Math.round(speedKmh)} km/h implied speed)`;
+            if (!eng.evidence.includes(reason)) eng.evidence.push(reason);
+          }
+        }
+      }
+    }
+
+    // Only keep engineers who triggered at least one risk indicator
+    cachedRiskEngineers = Object.values(map).filter(
+      (e) => e.gps_risk_count > 0 || e.time_risk_count > 0
+    );
 
     // Update summary stat cards
     const totalCount = cachedRiskEngineers.length;
