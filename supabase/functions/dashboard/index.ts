@@ -110,19 +110,10 @@ Deno.serve(async (req) => {
       // Enrich engineers_today with auto_subregion from their latest photo address
       const engineersToday = data?.engineers_today ?? [];
       if (engineersToday.length > 0) {
-        const engineerIds = engineersToday.map((e: any) => e.engineer_id || e.id);
-        const { data: latestPhotos } = await supabase
-          .from("photo_logs")
-          .select("engineer_id, address")
-          .in("engineer_id", engineerIds)
-          .not("address", "is", null)
-          .order("taken_at", { ascending: false });
-
         // Generic/meaningless words to skip
         const skipWords = ["egypt", "مصر", "قرية", "village", "unnamed road", "طريق", "street"];
 
         function extractSubregion(address: string): string {
-          // Split by comma and trim each part
           const parts = address.split(",").map((s: string) => s.trim()).filter(Boolean);
 
           // Remove country (last part if it's Egypt/مصر)
@@ -133,46 +124,44 @@ Deno.serve(async (req) => {
             }
           }
 
-          // Remove parts that are just governorate names (e.g. "محافظة الفيوم", "Sohag Governorate")
+          // Remove governorate-only parts
           const filtered = parts.filter((p: string) => {
             const lower = p.toLowerCase();
             return !lower.includes("governorate") && !p.includes("محافظة");
           });
 
-          // From the remaining parts, find the first non-generic one
           for (const part of (filtered.length > 0 ? filtered : parts)) {
             const lower = part.toLowerCase().trim();
-            // Skip generic words and street-like entries
             if (lower && !skipWords.some(w => lower === w) && !lower.includes("street") && !lower.includes("شارع")) {
-              // If this part still contains "Governorate", strip it (e.g. "The New Valley Governorate" → "New Valley")
               let clean = part.replace(/\s*Governorate\s*/i, "").replace(/^The\s+/i, "").trim();
-              // If Arabic, strip محافظة prefix (e.g. "محافظة البحيرة" → "البحيرة")
               clean = clean.replace(/^محافظة\s*/, "").trim();
               if (clean) return clean;
             }
           }
 
-          // Fallback: return the first part of the original address
           return parts[0] || "";
         }
 
-        // Build a map: engineer_id -> extracted subregion
-        const subregionMap: Record<string, string> = {};
-        if (latestPhotos) {
-          for (const photo of latestPhotos) {
-            if (!subregionMap[photo.engineer_id] && photo.address) {
-              const sub = extractSubregion(photo.address);
-              if (sub) subregionMap[photo.engineer_id] = sub;
+        // Query each engineer's latest photo with address in parallel
+        const lookups = engineersToday.map(async (eng: any) => {
+          const eid = eng.engineer_id || eng.id;
+          const { data: photos } = await supabase
+            .from("photo_logs")
+            .select("address")
+            .eq("engineer_id", eid)
+            .not("address", "is", null)
+            .order("taken_at", { ascending: false })
+            .limit(1);
+
+          if (photos && photos.length > 0 && photos[0].address) {
+            const sub = extractSubregion(photos[0].address);
+            if (sub && !eng.subregion) {
+              eng.auto_subregion = sub;
             }
           }
-        }
+        });
 
-        for (const eng of engineersToday) {
-          const eid = eng.engineer_id || eng.id;
-          if (!eng.subregion && subregionMap[eid]) {
-            eng.auto_subregion = subregionMap[eid];
-          }
-        }
+        await Promise.allSettled(lookups);
       }
 
       return Response.json(
