@@ -261,18 +261,6 @@ export async function resetPasswordUi(
   editRegionUi;
 (window as any).resetDeviceUi =
   resetDeviceUi;
-  document
-  .getElementById(
-    "create-engineer-form",
-  )
-  ?.addEventListener(
-    "submit",
-    async (event) => {
-      event.preventDefault();
-
-      await createEngineerUi();
-    },
-  );
   let cachedEngineersData: any[] = [];
 
   function applyEngineersFilter() {
@@ -302,43 +290,6 @@ export async function resetPasswordUi(
     renderEngineersTable(filtered);
   }
 
-  document.getElementById("search")?.addEventListener("input", applyEngineersFilter);
-  document.getElementById("region-filter")?.addEventListener("change", applyEngineersFilter);
-
-  document
-  .getElementById(
-    "copy-engineer-creds",
-  )
-  ?.addEventListener(
-    "click",
-    async () => {
-      const email =
-        document.getElementById(
-          "engineer-email",
-        )?.textContent ?? "";
-
-      const password =
-        document.getElementById(
-          "engineer-password",
-        )?.textContent ?? "";
-
-      const code =
-        document.getElementById(
-          "engineer-code",
-        )?.textContent ?? "";
-
-      await navigator.clipboard.writeText(
-`Engineer Code: ${code}
-Email: ${email}
-Password: ${password}`
-      );
-
-      alert(
-        "Copied to clipboard",
-      );
-    },
-  );
-  
   function renderEngineersTable(engineers: any[]) {
     const tbody = document.querySelector("#engineers-table tbody");
     if (!tbody) return;
@@ -445,10 +396,34 @@ Password: ${password}`
     }
   }
 
-  // Start initialization
-  if (document.getElementById("engineers-table")) {
-    initEngineersList();
-  }
+  // Bind lifecycle listeners inside page-load to persist across view transitions
+  document.addEventListener("astro:page-load", () => {
+    if (document.getElementById("engineers-table")) {
+      initEngineersList();
 
-  makeTableSortable("engineers-table");
-  makeTableSortable("photos-table");
+      document.getElementById("search")?.addEventListener("input", applyEngineersFilter);
+      document.getElementById("region-filter")?.addEventListener("change", applyEngineersFilter);
+
+      document.getElementById("create-engineer-form")?.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        await createEngineerUi();
+      });
+
+      document.getElementById("copy-engineer-creds")?.addEventListener("click", async () => {
+        const email = document.getElementById("engineer-email")?.textContent ?? "";
+        const password = document.getElementById("engineer-password")?.textContent ?? "";
+        const code = document.getElementById("engineer-code")?.textContent ?? "";
+
+        await navigator.clipboard.writeText(
+`Engineer Code: ${code}
+Email: ${email}
+Password: ${password}`
+        );
+
+        alert("Copied to clipboard");
+      });
+    }
+
+    makeTableSortable("engineers-table");
+    makeTableSortable("photos-table");
+  });
