@@ -380,10 +380,17 @@ const isLoginPage =
     border-left: 4px solid #f59e0b !important;
   }
 
-  /* Suppress browser default shadow glows on inputs/selects in dark theme */
+  /* Suppress browser default shadow glows on inputs, selects, and buttons in dark theme */
   .dark-theme input,
   .dark-theme select,
-  .dark-theme textarea {
+  .dark-theme textarea,
+  .dark-theme button,
+  .dark-theme .btn,
+  .dark-theme .btn-reset,
+  .dark-theme .btn-export,
+  .dark-theme .btn-export-all,
+  .dark-theme .filters button,
+  .dark-theme .filters a {
     box-shadow: none !important;
   }
 
