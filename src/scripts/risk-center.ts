@@ -410,6 +410,26 @@ export async function fetchRiskData() {
           review_status: log.review_status,
         });
       }
+
+      // Rule 8 · Round GPS Accuracy (real GPS has 10+ decimal digits, round numbers like 20, 60, 100 are suspicious)
+      if (log.accuracy !== null && log.accuracy !== undefined && log.accuracy > 1.5) {
+        const accStr = String(log.accuracy);
+        const decimalPart = accStr.includes(".") ? accStr.split(".")[1].length : 0;
+        if (decimalPart <= 1) {
+          // Accuracy is a round number (e.g. 20, 60, 100, or 22.5) — real GPS never does this
+          eng.gps_risk_count++;
+          eng.evidence_items.push({
+            id: log.id,
+            type: "mock",
+            title: `📡 Round Accuracy: ${log.accuracy}m`,
+            detail: `GPS accuracy "${log.accuracy}" is suspiciously round. Real phone GPS reports 10+ decimal digits (e.g. 16.277000427). Only 4% of your logs have round values.`,
+            timestamp: log.taken_at,
+            location: log.address || undefined,
+            photo_tag: log.photo_tag || undefined,
+            review_status: log.review_status,
+          });
+        }
+      }
     }
 
     // Rule 5 · Impossible location jump (speed > 150 km/h between locations)
