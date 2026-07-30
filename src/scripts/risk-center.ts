@@ -326,7 +326,8 @@ export async function fetchRiskData() {
   const todayStr = new Date().toLocaleDateString("en-CA", { timeZone: "Africa/Cairo" });
   const thirtyDaysAgoStr = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toLocaleDateString("en-CA", { timeZone: "Africa/Cairo" });
   const fromVal = inputFrom?.value || thirtyDaysAgoStr;
-  const toQuery = inputTo?.value ? `&taken_at=lte.${inputTo.value}T23:59:59%2B03:00` : "";
+  const isPastEndDate = Boolean(inputTo?.value && inputTo.value < todayStr);
+  const toQuery = isPastEndDate ? `&taken_at=lte.${inputTo!.value}T23:59:59%2B03:00` : "";
 
   try {
     if (!currentAdmin) {
