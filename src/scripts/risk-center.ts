@@ -323,11 +323,15 @@ export function applyRiskFilters() {
 export async function fetchRiskData() {
   const inputFrom = document.getElementById("input-from") as HTMLInputElement | null;
   const inputTo = document.getElementById("input-to") as HTMLInputElement | null;
-  const todayStr = new Date().toLocaleDateString("en-CA", { timeZone: "Africa/Cairo" });
-  const thirtyDaysAgoStr = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toLocaleDateString("en-CA", { timeZone: "Africa/Cairo" });
-  const fromVal = inputFrom?.value || thirtyDaysAgoStr;
-  const isPastEndDate = Boolean(inputTo?.value && inputTo.value < todayStr);
-  const toQuery = isPastEndDate ? `&taken_at=lte.${inputTo!.value}T23:59:59%2B03:00` : "";
+  const hasCustomDateFilter = Boolean(inputFrom?.value || inputTo?.value);
+
+  let dateQuery = "";
+  if (inputFrom?.value) {
+    dateQuery += `&taken_at=gte.${inputFrom.value}T00:00:00%2B03:00`;
+  }
+  if (inputTo?.value) {
+    dateQuery += `&taken_at=lte.${inputTo.value}T23:59:59%2B03:00`;
+  }
 
   try {
     if (!currentAdmin) {
@@ -336,7 +340,7 @@ export async function fetchRiskData() {
 
     const [logsRes] = await Promise.all([
       fetch(
-        `${SUPABASE_URL}/rest/v1/photo_logs_with_engineer?select=id,engineer_id,engineer_code,full_name,region,speed,accuracy,latitude,longitude,device_timezone,captured_online,taken_at,synced_at,address,photo_tag,review_status,reviewed_at,reviewed_by,mocked,time_confidence&taken_at=gte.${fromVal}T00:00:00%2B03:00${toQuery}&order=taken_at.desc&limit=1000`,
+        `${SUPABASE_URL}/rest/v1/photo_logs_with_engineer?select=id,engineer_id,engineer_code,full_name,region,speed,accuracy,latitude,longitude,device_timezone,captured_online,taken_at,synced_at,address,photo_tag,review_status,reviewed_at,reviewed_by,mocked,time_confidence${dateQuery}&order=taken_at.desc&limit=1000`,
         { headers }
       ),
       fetchTrackedEngineers(),
@@ -375,8 +379,9 @@ export async function fetchRiskData() {
       const takenMs = new Date(log.taken_at).getTime();
       const syncedMs = log.synced_at ? new Date(log.synced_at).getTime() : null;
 
-      // If photo was verified/approved by Super Admin, exclude it from active risk center view!
-      if (log.review_status === "verified") {
+      // If NO date filter is selected (Default View), skip cleared ("verified") logs.
+      // If a date filter IS selected, include ALL logs (both cleared and uncleared) for full audit history.
+      if (!hasCustomDateFilter && log.review_status === "verified") {
         continue;
       }
 
@@ -524,7 +529,7 @@ export async function fetchRiskData() {
     // Rule 5 · Implausible Location Jump — Significant Anomaly
     for (const [eid, eLogs] of Object.entries(engLogsMap)) {
       const eng = map[eid];
-      const sorted = eLogs.filter(l => l.latitude && l.longitude && l.review_status !== "verified")
+      const sorted = eLogs.filter(l => l.latitude && l.longitude && (hasCustomDateFilter || l.review_status !== "verified"))
         .sort((a, b) => new Date(a.taken_at).getTime() - new Date(b.taken_at).getTime());
 
       for (let i = 0; i < sorted.length - 1; i++) {
@@ -555,7 +560,7 @@ export async function fetchRiskData() {
     for (const [eid, eLogs] of Object.entries(engLogsMap)) {
       const eng = map[eid];
       const onlineLogs = eLogs.filter(l => {
-        if (!l.synced_at || !l.captured_online || l.review_status === "verified") return false;
+        if (!l.synced_at || !l.captured_online || (!hasCustomDateFilter && l.review_status === "verified")) return false;
         const latency = new Date(l.synced_at).getTime() - new Date(l.taken_at).getTime();
         return latency >= 0 && latency <= 2 * 60 * 1000;
       }).sort((a, b) => new Date(a.synced_at).getTime() - new Date(b.synced_at).getTime());
@@ -725,12 +730,6 @@ async function searchAndTrackEngineer() {
 /* ─── Init ─── */
 document.addEventListener("astro:page-load", () => {
   if (!document.getElementById("risk-cards-container")) return;
-
-  const inputFrom = document.getElementById("input-from") as HTMLInputElement | null;
-  const inputTo = document.getElementById("input-to") as HTMLInputElement | null;
-  const todayStr = new Date().toLocaleDateString("en-CA", { timeZone: "Africa/Cairo" });
-  if (inputFrom && !inputFrom.value) inputFrom.value = todayStr;
-  if (inputTo && !inputTo.value) inputTo.value = todayStr;
 
   fetchRiskData();
 
