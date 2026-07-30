@@ -233,7 +233,6 @@ const engineer =
       <th>OTA</th>
       <th>Date</th>
       <th>Address</th>
-      <th>Risk</th>
       <th>Status</th>
       <th>Actions</th>
     </tr>
@@ -261,28 +260,6 @@ const engineer =
 
          <td>
   {photo.address ?? "Address unavailabl, Please verify "}
-</td>
-
-<td>
-  {
-    (() => {
-      const isAnomaly =
-        photo.gps_risk === "high" ||
-        photo.time_risk === "high" ||
-        photo.mocked === true ||
-        photo.time_confidence === "untrusted" ||
-        photo.review_status === "flagged" ||
-        (photo.speed && photo.speed > 25);
-
-      if (photo.review_status === "verified") {
-        return <span class="success">✅ Cleared</span>;
-      }
-      if (isAnomaly) {
-        return <span class="danger">⚠ Anomaly</span>;
-      }
-      return <span class="success">✅ Normal</span>;
-    })()
-  }
 </td>
 
 <td>
