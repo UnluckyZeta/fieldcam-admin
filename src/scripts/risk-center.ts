@@ -7,6 +7,7 @@ export interface RiskEvidenceItem {
   timestamp: string;
   location?: string;
   photo_tag?: string;
+  ota_version?: string;
   review_status?: "verified" | "flagged" | "pending_clear" | null;
 }
 
@@ -258,6 +259,7 @@ function renderCards(engineers: RiskEngineer[]) {
             <span>${item.location ? "📍 " + item.location : ""}</span>
             <div class="ev-footer-right">
               ${tagText}
+              <span style="font-family: monospace; font-size: 10px; color: #38bdf8; font-weight: bold; background: rgba(56, 189, 248, 0.15); padding: 2px 6px; border-radius: 4px;">${item.ota_version ? "OTA: " + item.ota_version : "OTA: Embedded"}</span>
               <span>${fmtDate(item.timestamp)}</span>
             </div>
           </div>
@@ -340,11 +342,11 @@ export async function fetchRiskData() {
 
     const [logsRes, flaggedRes] = await Promise.all([
       fetch(
-        `${SUPABASE_URL}/rest/v1/photo_logs_with_engineer?select=id,engineer_id,engineer_code,full_name,region,speed,accuracy,latitude,longitude,device_timezone,captured_online,taken_at,synced_at,address,photo_tag,review_status,reviewed_at,reviewed_by,mocked,time_confidence${dateQuery}&order=taken_at.desc&limit=1000`,
+        `${SUPABASE_URL}/rest/v1/photo_logs_with_engineer?select=id,engineer_id,engineer_code,full_name,region,speed,accuracy,latitude,longitude,device_timezone,captured_online,taken_at,synced_at,address,photo_tag,review_status,reviewed_at,reviewed_by,mocked,time_confidence,ota_version${dateQuery}&order=taken_at.desc&limit=1000`,
         { headers }
       ),
       fetch(
-        `${SUPABASE_URL}/rest/v1/photo_logs_with_engineer?select=id,engineer_id,engineer_code,full_name,region,speed,accuracy,latitude,longitude,device_timezone,captured_online,taken_at,synced_at,address,photo_tag,review_status,reviewed_at,reviewed_by,mocked,time_confidence&review_status=in.(flagged,pending_clear)`,
+        `${SUPABASE_URL}/rest/v1/photo_logs_with_engineer?select=id,engineer_id,engineer_code,full_name,region,speed,accuracy,latitude,longitude,device_timezone,captured_online,taken_at,synced_at,address,photo_tag,review_status,reviewed_at,reviewed_by,mocked,time_confidence,ota_version&review_status=in.(flagged,pending_clear)`,
         { headers }
       ),
       fetchTrackedEngineers(),
@@ -418,6 +420,7 @@ export async function fetchRiskData() {
           timestamp: log.taken_at,
           location: log.address || undefined,
           photo_tag: log.photo_tag || undefined,
+          ota_version: log.ota_version || undefined,
           review_status: log.review_status,
         });
       }
@@ -435,6 +438,7 @@ export async function fetchRiskData() {
           timestamp: log.taken_at,
           location: log.address || undefined,
           photo_tag: log.photo_tag || undefined,
+          ota_version: log.ota_version || undefined,
           review_status: log.review_status,
         });
       }
@@ -453,6 +457,7 @@ export async function fetchRiskData() {
           timestamp: log.taken_at,
           location: log.address || undefined,
           photo_tag: log.photo_tag || undefined,
+          ota_version: log.ota_version || undefined,
           review_status: log.review_status,
         });
       }
@@ -470,6 +475,7 @@ export async function fetchRiskData() {
           timestamp: log.taken_at,
           location: log.address || undefined,
           photo_tag: log.photo_tag || undefined,
+          ota_version: log.ota_version || undefined,
           review_status: log.review_status,
         });
       }
@@ -487,6 +493,7 @@ export async function fetchRiskData() {
           timestamp: log.taken_at,
           location: log.address || undefined,
           photo_tag: log.photo_tag || undefined,
+          ota_version: log.ota_version || undefined,
           review_status: log.review_status,
         });
       }
@@ -504,6 +511,7 @@ export async function fetchRiskData() {
           timestamp: log.taken_at,
           location: log.address || undefined,
           photo_tag: log.photo_tag || undefined,
+          ota_version: log.ota_version || undefined,
           review_status: log.review_status,
         });
       }
@@ -521,6 +529,7 @@ export async function fetchRiskData() {
           timestamp: log.taken_at,
           location: log.address || undefined,
           photo_tag: log.photo_tag || undefined,
+          ota_version: log.ota_version || undefined,
           review_status: log.review_status,
         });
       }
@@ -537,6 +546,7 @@ export async function fetchRiskData() {
           timestamp: log.taken_at,
           location: log.address || undefined,
           photo_tag: log.photo_tag || undefined,
+          ota_version: log.ota_version || undefined,
           review_status: log.review_status,
         });
       }
