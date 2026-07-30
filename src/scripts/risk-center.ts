@@ -338,16 +338,32 @@ export async function fetchRiskData() {
       await fetchCurrentAdmin();
     }
 
-    const [logsRes] = await Promise.all([
+    const [logsRes, flaggedRes] = await Promise.all([
       fetch(
         `${SUPABASE_URL}/rest/v1/photo_logs_with_engineer?select=id,engineer_id,engineer_code,full_name,region,speed,accuracy,latitude,longitude,device_timezone,captured_online,taken_at,synced_at,address,photo_tag,review_status,reviewed_at,reviewed_by,mocked,time_confidence${dateQuery}&order=taken_at.desc&limit=1000`,
+        { headers }
+      ),
+      fetch(
+        `${SUPABASE_URL}/rest/v1/photo_logs_with_engineer?select=id,engineer_id,engineer_code,full_name,region,speed,accuracy,latitude,longitude,device_timezone,captured_online,taken_at,synced_at,address,photo_tag,review_status,reviewed_at,reviewed_by,mocked,time_confidence&review_status=in.(flagged,pending_clear)`,
         { headers }
       ),
       fetchTrackedEngineers(),
     ]);
 
-    const logs = await logsRes.json();
-    if (!Array.isArray(logs)) { cachedRiskEngineers = []; applyRiskFilters(); return; }
+    const logsArray = await logsRes.json();
+    const flaggedArray = await flaggedRes.json();
+
+    if (!Array.isArray(logsArray)) { cachedRiskEngineers = []; applyRiskFilters(); return; }
+
+    const combinedMap = new Map<string, any>();
+    if (Array.isArray(flaggedArray)) {
+      for (const item of flaggedArray) combinedMap.set(item.id, item);
+    }
+    for (const item of logsArray) {
+      combinedMap.set(item.id, item);
+    }
+
+    const logs = Array.from(combinedMap.values());
 
     const nowTime = Date.now();
     const map: Record<string, RiskEngineer> = {};
