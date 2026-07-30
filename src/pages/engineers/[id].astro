@@ -674,37 +674,34 @@ const engineer =
 
     const rows = Array.from(tbody.querySelectorAll("tr"));
     const totalRows = rows.length;
+    const paginationContainer = document.getElementById("photos-pagination");
+
     if (totalRows === 0) {
-      const container = document.getElementById("photos-pagination");
-      if (container) container.style.display = "none";
+      if (paginationContainer) paginationContainer.style.display = "none";
       return;
     }
 
-    if (totalRows <= pageSize) {
-      const container = document.getElementById("photos-pagination");
-      if (container) {
-        container.style.display = "flex";
-        const paginationInfo = document.getElementById("pagination-info");
-        if (paginationInfo) paginationInfo.textContent = `Showing all ${totalRows} photos`;
-        const prevBtn = document.getElementById("btn-prev-page");
-        const nextBtn = document.getElementById("btn-next-page");
-        if (prevBtn) prevBtn.disabled = true;
-        if (nextBtn) nextBtn.disabled = true;
-      }
-      return;
-    }
-
-    let currentPage = 1;
-    const totalPages = Math.ceil(totalRows / pageSize);
+    if (paginationContainer) paginationContainer.style.display = "flex";
 
     const prevBtn = document.getElementById("btn-prev-page");
     const nextBtn = document.getElementById("btn-next-page");
     const pageNumbersDiv = document.getElementById("page-numbers");
     const paginationInfo = document.getElementById("pagination-info");
 
+    if (totalRows <= pageSize) {
+      if (paginationInfo) paginationInfo.textContent = `Showing all ${totalRows} photos`;
+      if (prevBtn) prevBtn.disabled = true;
+      if (nextBtn) nextBtn.disabled = true;
+      if (pageNumbersDiv) pageNumbersDiv.innerHTML = "";
+      return;
+    }
+
+    let currentPage = 1;
+    const totalPages = Math.ceil(totalRows / pageSize);
+
     function renderPage(page) {
-      currentPage = page;
-      const startIdx = (page - 1) * pageSize;
+      currentPage = Math.max(1, Math.min(page, totalPages));
+      const startIdx = (currentPage - 1) * pageSize;
       const endIdx = Math.min(startIdx + pageSize, totalRows);
 
       rows.forEach((row, idx) => {
@@ -721,25 +718,39 @@ const engineer =
       if (pageNumbersDiv) {
         pageNumbersDiv.innerHTML = "";
         for (let i = 1; i <= totalPages; i++) {
-          const btn = document.createElement("button");
-          btn.className = `btn-page ${i === currentPage ? "active" : ""}`;
-          btn.textContent = String(i);
-          btn.addEventListener("click", () => renderPage(i));
-          pageNumbersDiv.appendChild(btn);
+          if (i === 1 || i === totalPages || Math.abs(i - currentPage) <= 1) {
+            const btn = document.createElement("button");
+            btn.className = `btn-page ${i === currentPage ? "active" : ""}`;
+            btn.textContent = String(i);
+            btn.addEventListener("click", () => renderPage(i));
+            pageNumbersDiv.appendChild(btn);
+          } else if (i === 2 && currentPage > 3) {
+            const ellipsis = document.createElement("span");
+            ellipsis.textContent = "...";
+            ellipsis.style.color = "#a0aec0";
+            ellipsis.style.padding = "0 4px";
+            pageNumbersDiv.appendChild(ellipsis);
+          } else if (i === totalPages - 1 && currentPage < totalPages - 2) {
+            const ellipsis = document.createElement("span");
+            ellipsis.textContent = "...";
+            ellipsis.style.color = "#a0aec0";
+            ellipsis.style.padding = "0 4px";
+            pageNumbersDiv.appendChild(ellipsis);
+          }
         }
       }
     }
 
     if (prevBtn) {
-      prevBtn.addEventListener("click", () => {
+      prevBtn.onclick = () => {
         if (currentPage > 1) renderPage(currentPage - 1);
-      });
+      };
     }
 
     if (nextBtn) {
-      nextBtn.addEventListener("click", () => {
+      nextBtn.onclick = () => {
         if (currentPage < totalPages) renderPage(currentPage + 1);
-      });
+      };
     }
 
     renderPage(1);
@@ -749,9 +760,6 @@ const engineer =
     setupTablePagination("photos-table", 50);
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initPagination);
-  } else {
-    initPagination();
-  }
+  document.addEventListener("astro:page-load", initPagination);
+  initPagination();
 </script>
