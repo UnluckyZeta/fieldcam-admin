@@ -326,7 +326,7 @@ export async function fetchRiskData() {
   const todayStr = new Date().toLocaleDateString("en-CA", { timeZone: "Africa/Cairo" });
   const thirtyDaysAgoStr = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toLocaleDateString("en-CA", { timeZone: "Africa/Cairo" });
   const fromVal = inputFrom?.value || thirtyDaysAgoStr;
-  const toVal = inputTo?.value || todayStr;
+  const toQuery = inputTo?.value ? `&taken_at=lte.${inputTo.value}T23:59:59%2B03:00` : "";
 
   try {
     if (!currentAdmin) {
@@ -335,7 +335,7 @@ export async function fetchRiskData() {
 
     const [logsRes] = await Promise.all([
       fetch(
-        `${SUPABASE_URL}/rest/v1/photo_logs_with_engineer?select=id,engineer_id,engineer_code,full_name,region,speed,accuracy,latitude,longitude,device_timezone,captured_online,taken_at,synced_at,address,photo_tag,review_status,reviewed_at,reviewed_by,mocked,time_confidence&taken_at=gte.${fromVal}T00:00:00%2B03:00&taken_at=lte.${toVal}T23:59:59%2B03:00&order=taken_at.desc&limit=1000`,
+        `${SUPABASE_URL}/rest/v1/photo_logs_with_engineer?select=id,engineer_id,engineer_code,full_name,region,speed,accuracy,latitude,longitude,device_timezone,captured_online,taken_at,synced_at,address,photo_tag,review_status,reviewed_at,reviewed_by,mocked,time_confidence&taken_at=gte.${fromVal}T00:00:00%2B03:00${toQuery}&order=taken_at.desc&limit=1000`,
         { headers }
       ),
       fetchTrackedEngineers(),
