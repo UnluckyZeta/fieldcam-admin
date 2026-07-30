@@ -264,19 +264,25 @@ const engineer =
 </td>
 
 <td>
-  <span
-    class={
-      photo.gps_risk === "high"
-        ? "danger"
-        : "success"
-    }
-  >
-    {
-      photo.gps_risk === "high"
-        ? "⚠ High"
-        : "✅ Normal"
-    }
-  </span>
+  {
+    (() => {
+      const isAnomaly =
+        photo.gps_risk === "high" ||
+        photo.time_risk === "high" ||
+        photo.mocked === true ||
+        photo.time_confidence === "untrusted" ||
+        photo.review_status === "flagged" ||
+        (photo.speed && photo.speed > 25);
+
+      if (photo.review_status === "verified") {
+        return <span class="success">✅ Cleared</span>;
+      }
+      if (isAnomaly) {
+        return <span class="danger">⚠ Anomaly</span>;
+      }
+      return <span class="success">✅ Normal</span>;
+    })()
+  }
 </td>
 
 <td>
