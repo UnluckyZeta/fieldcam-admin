@@ -42,6 +42,24 @@ const data =
     50000,
   );
 
+if (data?.recent_photos && Array.isArray(data.recent_photos) && data.recent_photos.length > 0) {
+  try {
+    const TOKEN = "sb_publishable_yI6-VfmXaCmbr7E8GCq6zg_zTUe-rMB";
+    const res = await fetch(`https://vwdwpswpvqdfpsrkmgzy.supabase.co/rest/v1/photo_logs_with_engineer?engineer_id=eq.${id}&select=id,ota_version`, {
+      headers: { apikey: TOKEN, Authorization: `Bearer ${TOKEN}` }
+    });
+    const extraLogs = await res.json();
+    if (Array.isArray(extraLogs)) {
+      const otaMap = new Map(extraLogs.map((l: any) => [l.id, l.ota_version]));
+      data.recent_photos.forEach((p: any) => {
+        p.ota_version = otaMap.get(p.id) ?? p.ota_version;
+      });
+    }
+  } catch (e) {
+    console.warn("Error enriching engineer photo ota_version:", e);
+  }
+}
+
 const engineer =
   data.engineer;
   

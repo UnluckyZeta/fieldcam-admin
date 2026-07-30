@@ -9,6 +9,23 @@ let result = null;
 
 if (tag) {
   result = await verifyPhoto(tag);
+  if (result?.found && result?.photo?.id) {
+    try {
+      const TOKEN = "sb_publishable_yI6-VfmXaCmbr7E8GCq6zg_zTUe-rMB";
+      const res = await fetch(`https://vwdwpswpvqdfpsrkmgzy.supabase.co/rest/v1/photo_logs_with_engineer?id=eq.${result.photo.id}`, {
+        headers: { apikey: TOKEN, Authorization: `Bearer ${TOKEN}` }
+      });
+      const extra = await res.json();
+      if (Array.isArray(extra) && extra[0]) {
+        result.photo.ota_version = extra[0].ota_version;
+        result.photo.review_status = extra[0].review_status;
+        result.photo.reviewed_at = extra[0].reviewed_at;
+        result.photo.reviewed_by = extra[0].reviewed_by;
+      }
+    } catch (e) {
+      console.warn("Error fetching extra photo metadata:", e);
+    }
+  }
 }
 
 ---
