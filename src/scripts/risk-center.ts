@@ -757,6 +757,19 @@ async function searchAndTrackEngineer() {
 document.addEventListener("astro:page-load", () => {
   if (!document.getElementById("risk-cards-container")) return;
 
+  const urlParams = new URLSearchParams(window.location.search);
+  if (!urlParams.has("from") && !urlParams.has("to")) {
+    const inputFrom = document.getElementById("input-from") as HTMLInputElement | null;
+    const inputTo = document.getElementById("input-to") as HTMLInputElement | null;
+    const inputSearch = document.getElementById("search") as HTMLInputElement | null;
+    const selectRiskType = document.getElementById("risk-type-filter") as HTMLSelectElement | null;
+
+    if (inputFrom) inputFrom.value = "";
+    if (inputTo) inputTo.value = "";
+    if (inputSearch) inputSearch.value = "";
+    if (selectRiskType) selectRiskType.value = "";
+  }
+
   fetchRiskData();
 
   document.getElementById("search")?.addEventListener("input", applyRiskFilters);
