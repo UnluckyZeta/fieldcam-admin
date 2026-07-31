@@ -322,17 +322,19 @@ export function applyRiskFilters() {
 }
 
 /* ─── Fetch ─── */
-export async function fetchRiskData() {
+export async function fetchRiskData(forceNoDateFilter: boolean = false) {
   const inputFrom = document.getElementById("input-from") as HTMLInputElement | null;
   const inputTo = document.getElementById("input-to") as HTMLInputElement | null;
-  const hasCustomDateFilter = Boolean(inputFrom?.value || inputTo?.value);
+  const hasCustomDateFilter = !forceNoDateFilter && Boolean(inputFrom?.value || inputTo?.value);
 
   let dateQuery = "";
-  if (inputFrom?.value) {
-    dateQuery += `&taken_at=gte.${inputFrom.value}T00:00:00%2B03:00`;
-  }
-  if (inputTo?.value) {
-    dateQuery += `&taken_at=lte.${inputTo.value}T23:59:59%2B03:00`;
+  if (!forceNoDateFilter) {
+    if (inputFrom?.value) {
+      dateQuery += `&taken_at=gte.${inputFrom.value}T00:00:00%2B03:00`;
+    }
+    if (inputTo?.value) {
+      dateQuery += `&taken_at=lte.${inputTo.value}T23:59:59%2B03:00`;
+    }
   }
 
   try {
@@ -757,8 +759,8 @@ async function searchAndTrackEngineer() {
 document.addEventListener("astro:page-load", () => {
   if (!document.getElementById("risk-cards-container")) return;
 
-  const urlParams = new URLSearchParams(window.location.search);
-  if (!urlParams.has("from") && !urlParams.has("to")) {
+  const isCleanLoad = !urlParams.has("from") && !urlParams.has("to");
+  if (isCleanLoad) {
     const inputFrom = document.getElementById("input-from") as HTMLInputElement | null;
     const inputTo = document.getElementById("input-to") as HTMLInputElement | null;
     const inputSearch = document.getElementById("search") as HTMLInputElement | null;
@@ -770,7 +772,7 @@ document.addEventListener("astro:page-load", () => {
     if (selectRiskType) selectRiskType.value = "";
   }
 
-  fetchRiskData();
+  fetchRiskData(isCleanLoad);
 
   document.getElementById("search")?.addEventListener("input", applyRiskFilters);
   document.getElementById("risk-type-filter")?.addEventListener("change", applyRiskFilters);

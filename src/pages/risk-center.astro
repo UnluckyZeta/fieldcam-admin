@@ -42,9 +42,9 @@ import AdminLayout from "../layouts/AdminLayout.astro";
 
   <!-- Toolbar -->
   <div class="toolbar-flat">
-    <form id="risk-filter-form" class="filters">
-      <input type="date" id="input-from" name="from" onfocus="this.showPicker()" />
-      <input type="date" id="input-to" name="to" onfocus="this.showPicker()" />
+    <form id="risk-filter-form" class="filters" autocomplete="off">
+      <input type="date" id="input-from" name="from" autocomplete="off" onfocus="this.showPicker()" />
+      <input type="date" id="input-to" name="to" autocomplete="off" onfocus="this.showPicker()" />
       <button type="submit">Apply</button>
       <a href="/risk-center" class="btn-reset">Reset</a>
       <input id="search" type="text" class="search-input" placeholder="Search engineer name, code..." />
