@@ -194,9 +194,11 @@ form {
 input {
   flex: 1;
   padding: 12px 14px;
-  border: 1px solid #d1d5db;
+  border: 1px solid #334155;
   border-radius: 8px;
   font-size: 15px;
+  background: #1e293b;
+  color: #f8fafc;
 }
 
 button {
@@ -216,18 +218,20 @@ button:hover {
 /* ===================== */
 
 .card {
-  background: white;
+  background: #1e293b;
+  border: 1px solid #334155;
   border-radius: 14px;
   padding: 28px;
-  box-shadow:
-    0 6px 24px rgba(0,0,0,.08);
+  color: #f8fafc;
+  box-shadow: 0 6px 24px rgba(0,0,0,.25);
 }
 
 /* ===================== */
 
 .verified-banner {
-  background: #dcfce7;
-  color: #166534;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid #10b981;
+  color: #34d399;
   padding: 18px;
   border-radius: 10px;
   text-align: center;
@@ -237,8 +241,9 @@ button:hover {
 }
 
 .invalid-banner {
-  background: #fee2e2;
-  color: #991b1b;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid #ef4444;
+  color: #f87171;
   padding: 18px;
   border-radius: 10px;
   text-align: center;
@@ -252,12 +257,13 @@ button:hover {
   font-size: 22px;
   font-weight: 700;
   margin-bottom: 20px;
+  color: #f8fafc;
 }
 
 hr {
   margin: 30px 0;
   border: none;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid #334155;
 }
 
 /* ===================== */
@@ -269,7 +275,8 @@ hr {
 }
 
 .info-card {
-  background: #f8fafc;
+  background: #0f172a;
+  border: 1px solid #334155;
   border-radius: 10px;
   padding: 16px;
 }
@@ -277,7 +284,7 @@ hr {
 .info-card strong {
   display: block;
   margin-bottom: 6px;
-  color: #6b7280;
+  color: #94a3b8;
   font-size: 13px;
   text-transform: uppercase;
   letter-spacing: .4px;
@@ -287,28 +294,32 @@ hr {
   margin: 0;
   font-size: 16px;
   font-weight: 600;
-  color: #111827;
+  color: #f8fafc;
   word-break: break-word;
 }
 
 /* ===================== */
 
 .address-box {
-  background: #f8fafc;
-  border-left: 5px solid #2563eb;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-left: 5px solid #3b82f6;
   border-radius: 10px;
   padding: 18px;
+  color: #f8fafc;
   margin-bottom: 20px;
 }
 
 .address-box strong {
   display: block;
   margin-bottom: 8px;
+  color: #94a3b8;
 }
 
 .address-box p {
   margin: 0;
   line-height: 1.6;
+  color: #f8fafc;
 }
 
 /* ===================== */
@@ -317,9 +328,8 @@ hr {
   margin-top: 20px;
   border-radius: 12px;
   overflow: hidden;
-  border: 1px solid #d1d5db;
-  box-shadow:
-    0 2px 8px rgba(0,0,0,.05);
+  border: 1px solid #334155;
+  box-shadow: 0 2px 8px rgba(0,0,0,.15);
 }
 
 .map-card iframe {
@@ -351,36 +361,37 @@ hr {
 }
 
 #save-address-btn:disabled {
-  background: #9ca3af;
+  background: #475569;
   cursor: not-allowed;
 }
 
 /* ===================== */
 
 .gps-good {
-  color: #16a34a;
+  color: #34d399;
   font-weight: 700;
 }
 
 .gps-bad {
-  color: #dc2626;
+  color: #f87171;
   font-weight: 700;
 }
 
 /* ===================== */
 
 .error {
-  background: #fee2e2;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid #ef4444;
   padding: 20px;
   border-radius: 10px;
-  color: #991b1b;
+  color: #f87171;
   font-weight: 600;
 }
 
 /* ===================== */
 
 .verify-review-box {
-  background: #f8fafc;
+  background: #0f172a;
   padding: 18px;
   border-radius: 12px;
   display: flex;
@@ -388,7 +399,8 @@ hr {
   align-items: center;
   flex-wrap: wrap;
   gap: 12px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #334155;
+  color: #f8fafc;
 }
 
 .badge-status {
@@ -401,11 +413,11 @@ hr {
 .badge-verified { background: #10b981; color: white; }
 .badge-flagged { background: #ef4444; color: white; }
 .badge-pending { background: #f59e0b; color: white; }
-.badge-none { background: #e2e8f0; color: #475569; }
+.badge-none { background: #334155; color: #cbd5e1; }
 
 .reviewer-tag {
   font-size: 12px;
-  color: #64748b;
+  color: #94a3b8;
   margin-left: 8px;
 }
 
