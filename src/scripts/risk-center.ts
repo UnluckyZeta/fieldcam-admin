@@ -759,6 +759,7 @@ async function searchAndTrackEngineer() {
 document.addEventListener("astro:page-load", () => {
   if (!document.getElementById("risk-cards-container")) return;
 
+  const urlParams = new URLSearchParams(window.location.search);
   const isCleanLoad = !urlParams.has("from") && !urlParams.has("to");
   if (isCleanLoad) {
     const inputFrom = document.getElementById("input-from") as HTMLInputElement | null;
