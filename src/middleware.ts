@@ -2,10 +2,10 @@ import { defineMiddleware } from "astro:middleware";
 
 export const onRequest = defineMiddleware((context, next) => {
   const { url, cookies, redirect } = context;
-  const isLoginPage = url.pathname === "/login";
+  const isPublicPage = url.pathname === "/login" || url.pathname === "/support";
   const adminId = cookies.get("admin_id")?.value;
 
-  if (!isLoginPage && !adminId) {
+  if (!isPublicPage && !adminId) {
     return redirect("/login");
   }
 
