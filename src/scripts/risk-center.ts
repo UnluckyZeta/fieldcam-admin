@@ -501,7 +501,7 @@ export async function fetchRiskData(forceNoDateFilter: boolean = false) {
       }
 
       // Rule 7 · Unusually High Reported Accuracy — Supporting Signal (Weak anomaly only)
-      if (log.accuracy !== null && log.accuracy !== undefined && log.accuracy > 0 && log.accuracy <= 1.5) {
+      if (log.accuracy !== null && log.accuracy !== undefined && log.accuracy >= 0.9 && log.accuracy <= 1.1) {
         matchedAutoRule = true;
         if (isUnverified) eng.gps_risk_count++;
         eng.evidence_items.push({
@@ -509,7 +509,7 @@ export async function fetchRiskData(forceNoDateFilter: boolean = false) {
           type: "mock",
           severity: "supporting",
           title: `📡 Unusually High Reported Accuracy (${log.accuracy.toFixed(1)}m)`,
-          detail: `Device reported unusually high location accuracy (≤1.5 m). This is a weak anomaly signal only and does not establish mock-location use.`,
+          detail: `Device reported location accuracy of ~1.0 m (${log.accuracy.toFixed(1)}m). This is a weak anomaly signal common in GPS mockers.`,
           timestamp: log.taken_at,
           location: log.address || undefined,
           photo_tag: log.photo_tag || undefined,
